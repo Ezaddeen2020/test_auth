@@ -4,16 +4,16 @@ class UserModel {
   final String name;
   String? password;
   final String? token;
-  final DateTime? createdAt;
-  final DateTime? updatedAt;
+  // final DateTime? createdAt;
+  // final DateTime? updatedAt;
 
   UserModel({
     this.id,
     required this.name,
     this.password,
     this.token,
-    this.createdAt,
-    this.updatedAt,
+    // this.createdAt,
+    // this.updatedAt,
   });
 
   // تحويل من JSON إلى Object
@@ -23,15 +23,15 @@ class UserModel {
       name: json['username'] ?? json['name'] ?? '',
       password: json['password'],
       token: json['token'],
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
-      updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
+      // createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      // updatedAt: json['updated_at'] != null ? DateTime.parse(json['updated_at']) : null,
     );
   }
 
   // تحويل من Object إلى JSON لتسجيل الدخول
   Map<String, dynamic> toJson() {
     return {
-      'username': name, // تصحيح المفتاح من '' إلى 'username'
+      'username': name,
       'password': password,
     };
   }
@@ -43,8 +43,8 @@ class UserModel {
       'username': name,
       'password': password,
       'token': token,
-      'created_at': createdAt?.toIso8601String(),
-      'updated_at': updatedAt?.toIso8601String(),
+      // 'created_at': createdAt?.toIso8601String(),
+      // 'updated_at': updatedAt?.toIso8601String(),
     };
   }
 
@@ -62,8 +62,8 @@ class UserModel {
       name: name ?? this.name,
       password: password ?? this.password,
       token: token ?? this.token,
-      createdAt: createdAt ?? this.createdAt,
-      updatedAt: updatedAt ?? this.updatedAt,
+      // createdAt: createdAt ?? this.createdAt,
+      // updatedAt: updatedAt ?? this.updatedAt,
     );
   }
 

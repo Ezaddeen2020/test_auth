@@ -36,7 +36,7 @@ class AuthApi {
 
       final result = await postGetPage.postData(
         ApiServices.login,
-        userModel.toJson(), // استخدام toJson() العادي للتسجيل
+        userModel.toJson(),
       );
 
       return result.fold(
@@ -61,7 +61,7 @@ class AuthApi {
       log('Testing API with token: $token');
 
       final result = await postGetPage.getDataWithToken(
-        ApiServices.test,
+        ApiServices.salesDataTest, // استخدام الرابط الجديد
         token,
       );
 
@@ -81,7 +81,85 @@ class AuthApi {
     }
   }
 
-  // تسجيل حساب جديد (إذا كان مطلوباً)
+  // جلب بيانات المخزون - وظيفة جديدة
+  Future<Map<String, dynamic>> getStockInfo(String stockCode, String token) async {
+    try {
+      log('Getting stock info for code: $stockCode');
+
+      final result = await postGetPage.getDataWithToken(
+        ApiServices.stockInfo(stockCode),
+        token,
+      );
+
+      return result.fold(
+        (failure) {
+          log('Stock API Error: $failure');
+          return {'status': 'failure', 'message': 'فشل في جلب بيانات المخزون'};
+        },
+        (data) {
+          log('Stock API Success: $data');
+          return data;
+        },
+      );
+    } catch (e) {
+      log('Stock API Exception: $e');
+      return {'status': 'failure', 'message': 'حدث خطأ في جلب بيانات المخزون'};
+    }
+  }
+
+  // جلب بيانات المبيعات - وظيفة جديدة
+  Future<Map<String, dynamic>> getSalesData(String token) async {
+    try {
+      log('Getting sales data with token: $token');
+
+      final result = await postGetPage.getDataWithToken(
+        ApiServices.salesData,
+        token,
+      );
+
+      return result.fold(
+        (failure) {
+          log('Sales Data API Error: $failure');
+          return {'status': 'failure', 'message': 'فشل في جلب بيانات المبيعات'};
+        },
+        (data) {
+          log('Sales Data API Success: $data');
+          return data;
+        },
+      );
+    } catch (e) {
+      log('Sales Data API Exception: $e');
+      return {'status': 'failure', 'message': 'حدث خطأ في جلب بيانات المبيعات'};
+    }
+  }
+
+  // اختبار echo endpoint - وظيفة جديدة للاختبار
+  Future<Map<String, dynamic>> testEchoEndpoint(String stockCode, String token) async {
+    try {
+      log('Testing echo endpoint with stock code: $stockCode');
+
+      final result = await postGetPage.getDataWithToken(
+        "${ApiServices.echo}/$stockCode",
+        token,
+      );
+
+      return result.fold(
+        (failure) {
+          log('Echo API Error: $failure');
+          return {'status': 'failure', 'message': 'فشل في اختبار Echo'};
+        },
+        (data) {
+          log('Echo API Success: $data');
+          return data;
+        },
+      );
+    } catch (e) {
+      log('Echo API Exception: $e');
+      return {'status': 'failure', 'message': 'حدث خطأ في اختبار Echo'};
+    }
+  }
+
+  // تسجيل حساب جديد
   Future<Map<String, dynamic>> postSignUp(UserModel userModel) async {
     try {
       log('Attempting signup with data: ${userModel.toJson()}');
