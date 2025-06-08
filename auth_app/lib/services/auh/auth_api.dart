@@ -1,23 +1,3 @@
-// import 'package:auth_app/models/user_model.dart';
-// import 'package:auth_app/services/api/post_get_api.dart';
-// import 'package:auth_app/services/api_service.dart';
-
-// class AuthApi {
-//   PostGetPage apiReq;
-//   AuthApi(this.apiReq);
-
-//   postlogin(UserModel userModel) async {
-//     var res = await apiReq.postData(ApiServices.login, userModel.toJson());
-//     return res.fold((lef) => lef, (re) => re);
-//   }
-
-//   postSignUp(UserModel userModel) async {
-//     var res = await apiReq.postData(ApiServices.register, userModel.toJson());
-//     return res.fold((lef) => lef, (re) => re);
-//   }
-// }
-
-// services/auth/auth_api.dart
 // services/auth/auth_api.dart
 import 'dart:developer';
 import 'package:auth_app/models/user_model.dart';
