@@ -7,7 +7,6 @@ class InitialBinding extends Bindings {
   @override
   void dependencies() {
     Get.lazyPut<PostGetPage>(() => PostGetPage());
-
     Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
   }
 }

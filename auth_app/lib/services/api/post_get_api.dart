@@ -66,7 +66,7 @@ import 'package:auth_app/functions/status_request.dart';
 import 'package:auth_app/services/api_service.dart';
 import 'package:dartz/dartz.dart';
 import 'package:http/io_client.dart'; // ملاحظة: غيرنا استيراد http العادي
-import 'package:http/http.dart' as http;
+// import 'package:http/http.dart' as http;
 
 class PostGetPage {
   late IOClient client;
