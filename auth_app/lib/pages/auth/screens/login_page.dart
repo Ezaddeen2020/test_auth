@@ -168,13 +168,13 @@
 // }
 
 // views/pages/login_page.dart - محدثة لتتوافق مع API الجديد
-import 'package:auth_app/views/pages/signup_page.dart';
+import 'package:auth_app/pages/auth/screens/signup_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../controllers/auth_controller.dart';
-import '../../validators/auth_validators.dart';
-import '../widgets/custom_text_field.dart';
-import '../widgets/custom_button.dart';
+import '../controllers/auth_controller.dart';
+import '../../../classes/auth_validators.dart';
+import '../../../widgets/custom_text_field.dart';
+import '../../../widgets/custom_button.dart';
 
 class LoginPage extends StatelessWidget {
   final AuthController authController = Get.put(AuthController());

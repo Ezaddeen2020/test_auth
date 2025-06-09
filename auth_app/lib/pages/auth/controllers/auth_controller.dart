@@ -133,14 +133,14 @@
 // }
 
 import 'dart:developer';
-import 'package:auth_app/classes/handling_data.dart';
+import 'package:auth_app/functions/handling_data.dart';
 import 'package:auth_app/classes/shared_preference.dart';
-import 'package:auth_app/classes/status_request.dart';
+import 'package:auth_app/functions/status_request.dart';
 import 'package:auth_app/services/auh/auth_api.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
-import '../models/user_model.dart';
+import '../../../models/user_model.dart';
 
 class AuthController extends GetxController {
   // Observable variables
