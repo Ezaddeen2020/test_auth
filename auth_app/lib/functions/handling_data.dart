@@ -1,4 +1,4 @@
-import 'package:auth_app/classes/status_request.dart';
+import 'package:auth_app/functions/status_request.dart';
 
 handlingData(response) {
   // if the type is from StatusRequest(left) otherwise it return the Map(Right)

@@ -62,7 +62,7 @@ import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
 
-import 'package:auth_app/classes/status_request.dart';
+import 'package:auth_app/functions/status_request.dart';
 import 'package:auth_app/services/api_service.dart';
 import 'package:dartz/dartz.dart';
 import 'package:http/io_client.dart'; // ملاحظة: غيرنا استيراد http العادي
