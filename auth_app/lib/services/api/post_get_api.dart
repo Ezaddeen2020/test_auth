@@ -1,15 +1,31 @@
+// // services/api/post_get_api.dart
 // import 'dart:convert';
 // import 'dart:developer';
+// import 'dart:io';
 
-// import 'package:auth_app/classes/status_request.dart';
+// import 'package:auth_app/functions/status_request.dart';
 // import 'package:auth_app/services/api_service.dart';
 // import 'package:dartz/dartz.dart';
-// import 'package:http/http.dart' as http;
+// import 'package:http/io_client.dart'; // ملاحظة: غيرنا استيراد http العادي
+// // import 'package:http/http.dart' as http;
 
 // class PostGetPage {
+//   late IOClient client;
+
+//   PostGetPage() {
+//     final ioc = HttpClient()
+//       ..badCertificateCallback =
+//           (X509Certificate cert, String host, int port) => true; // تجاوز الشهادة
+
+//     client = IOClient(ioc);
+//   }
+
 //   Future<Either<StatusRequest, Map<String, dynamic>>> getData(String link) async {
 //     try {
-//       var res = await http.get(Uri.parse(link));
+//       var res = await client.get(Uri.parse(link), headers: ApiServices.headers);
+//       log('GET Response Status: ${res.statusCode}');
+//       log('GET Response Body: ${res.body}');
+
 //       if (res.statusCode == 200 || res.statusCode == 201) {
 //         var resBody = jsonDecode(res.body);
 //         return Right(resBody);
@@ -17,7 +33,7 @@
 //         return const Left(StatusRequest.serverfailure);
 //       }
 //     } catch (e) {
-//       log('error:$e');
+//       log('GET Error: $e');
 //       return const Left(StatusRequest.failure);
 //     }
 //   }
@@ -25,25 +41,52 @@
 //   Future<Either<StatusRequest, Map<String, dynamic>>> postData(
 //       String link, Map<String, dynamic> data) async {
 //     try {
+//       log('POST URL: $link');
+//       log('POST Data: ${jsonEncode(data)}');
+
 //       var res =
-//           await http.post(Uri.parse(link), headers: ApiServices.headers, body: jsonEncode(data));
+//           await client.post(Uri.parse(link), headers: ApiServices.headers, body: jsonEncode(data));
+
+//       log('POST Response Status: ${res.statusCode}');
+//       log('POST Response Body: ${res.body}');
+
 //       if (res.statusCode == 200 || res.statusCode == 201) {
 //         var resBody = jsonDecode(res.body);
-
 //         return Right(resBody);
 //       } else {
 //         return const Left(StatusRequest.serverfailure);
 //       }
 //     } catch (e) {
-//       log('Error $e');
+//       log('POST Error: $e');
 //       return const Left(StatusRequest.offlinefailure);
+//     }
+//   }
+
+//   Future<Either<StatusRequest, Map<String, dynamic>>> getDataWithToken(
+//       String link, String token) async {
+//     try {
+//       var res = await client.get(Uri.parse(link), headers: ApiServices.headersWithToken(token));
+
+//       log('GET with Token Response Status: ${res.statusCode}');
+//       log('GET with Token Response Body: ${res.body}');
+
+//       if (res.statusCode == 200 || res.statusCode == 201) {
+//         var resBody = jsonDecode(res.body);
+//         return Right(resBody);
+//       } else {
+//         return const Left(StatusRequest.serverfailure);
+//       }
+//     } catch (e) {
+//       log('GET with Token Error: $e');
+//       return const Left(StatusRequest.failure);
 //     }
 //   }
 
 //   Future<Either<StatusRequest, String>> getDataAsString(String link) async {
 //     try {
-//       var res = await http.get(Uri.parse(link), headers: ApiServices.headers);
-//       // log(res.body);
+//       var res = await client.get(Uri.parse(link), headers: ApiServices.headers);
+//       log('GET String Response Status: ${res.statusCode}');
+
 //       if (res.statusCode == 200 || res.statusCode == 201) {
 //         var resBody = res.body;
 //         return Right(resBody);
@@ -51,50 +94,28 @@
 //         return const Left(StatusRequest.serverfailure);
 //       }
 //     } catch (e) {
-//       log('Error $e');
+//       log('GET String Error: $e');
 //       return const Left(StatusRequest.serverfailure);
 //     }
 //   }
 // }
 
-// services/api/post_get_api.dart
 import 'dart:convert';
 import 'dart:developer';
 import 'dart:io';
-
 import 'package:auth_app/functions/status_request.dart';
 import 'package:auth_app/services/api_service.dart';
 import 'package:dartz/dartz.dart';
-import 'package:http/io_client.dart'; // ملاحظة: غيرنا استيراد http العادي
-// import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 
 class PostGetPage {
   late IOClient client;
 
   PostGetPage() {
     final ioc = HttpClient()
-      ..badCertificateCallback =
-          (X509Certificate cert, String host, int port) => true; // تجاوز الشهادة
+      ..badCertificateCallback = (X509Certificate cert, String host, int port) => true;
 
     client = IOClient(ioc);
-  }
-
-  Future<Either<StatusRequest, Map<String, dynamic>>> getData(String link) async {
-    try {
-      var res = await client.get(Uri.parse(link), headers: ApiServices.headers);
-      log('GET Response Status: ${res.statusCode}');
-      log('GET Response Body: ${res.body}');
-
-      if (res.statusCode == 200 || res.statusCode == 201) {
-        var resBody = jsonDecode(res.body);
-        return Right(resBody);
-      } else {
-        return const Left(StatusRequest.serverfailure);
-      }
-    } catch (e) {
-      log('GET Error: $e');
-      return const Left(StatusRequest.failure);
-    }
   }
 
   Future<Either<StatusRequest, Map<String, dynamic>>> postData(
@@ -124,10 +145,13 @@ class PostGetPage {
   Future<Either<StatusRequest, Map<String, dynamic>>> getDataWithToken(
       String link, String token) async {
     try {
+      log('GET with Token URL: $link');
+      log('Token: $token');
+
       var res = await client.get(Uri.parse(link), headers: ApiServices.headersWithToken(token));
 
-      log('GET with Token Response Status: ${res.statusCode}');
-      log('GET with Token Response Body: ${res.body}');
+      log('GET Response Status: ${res.statusCode}');
+      log('GET Response Body: ${res.body}');
 
       if (res.statusCode == 200 || res.statusCode == 201) {
         var resBody = jsonDecode(res.body);
@@ -136,25 +160,8 @@ class PostGetPage {
         return const Left(StatusRequest.serverfailure);
       }
     } catch (e) {
-      log('GET with Token Error: $e');
+      log('GET Error: $e');
       return const Left(StatusRequest.failure);
-    }
-  }
-
-  Future<Either<StatusRequest, String>> getDataAsString(String link) async {
-    try {
-      var res = await client.get(Uri.parse(link), headers: ApiServices.headers);
-      log('GET String Response Status: ${res.statusCode}');
-
-      if (res.statusCode == 200 || res.statusCode == 201) {
-        var resBody = res.body;
-        return Right(resBody);
-      } else {
-        return const Left(StatusRequest.serverfailure);
-      }
-    } catch (e) {
-      log('GET String Error: $e');
-      return const Left(StatusRequest.serverfailure);
     }
   }
 }

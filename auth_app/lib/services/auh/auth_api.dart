@@ -48,41 +48,21 @@ class AuthApi {
     );
   }
 
-  Future<Map<String, dynamic>> testApiWithToken(String token) async {
-    _log('Test API', 'Testing API with token: $token');
-    return _handleResult(
-      postGetPage.getDataWithToken(ApiServices.salesDataTest, token),
-      'Test API Success',
-      'فشل في اختبار API',
-    );
-  }
+  // Future<Map<String, dynamic>> postlogin(UserModel userModel) async {
+  //   // طباعة مباشرة للتأكد
+  //   const directUrl = "https://qitaf3.dynalias.net:44322/api/Account/login";
+  //   print('DIRECT URL: $directUrl');
+  //   print('ApiServices.server: ${ApiServices.server}');
+  //   print('ApiServices.login: ${ApiServices.login}');
+  //   print('Are they equal? ${directUrl == ApiServices.login}');
 
-  Future<Map<String, dynamic>> getStockInfo(String stockCode, String token) async {
-    _log('Stock Info', 'Getting stock info for code: $stockCode');
-    return _handleResult(
-      postGetPage.getDataWithToken(ApiServices.stockInfo(stockCode), token),
-      'Stock API Success',
-      'فشل في جلب بيانات المخزون',
-    );
-  }
-
-  Future<Map<String, dynamic>> getSalesData(String token) async {
-    _log('Sales Data', 'Getting sales data with token: $token');
-    return _handleResult(
-      postGetPage.getDataWithToken(ApiServices.salesData, token),
-      'Sales Data API Success',
-      'فشل في جلب بيانات المبيعات',
-    );
-  }
-
-  Future<Map<String, dynamic>> testEchoEndpoint(String stockCode, String token) async {
-    _log('Echo Endpoint', 'Testing echo endpoint with stock code: $stockCode');
-    return _handleResult(
-      postGetPage.getDataWithToken("${ApiServices.echo}/$stockCode", token),
-      'Echo API Success',
-      'فشل في اختبار Echo',
-    );
-  }
+  //   _log('Login', 'Attempting login with data: ${userModel.toJson()}');
+  //   return _handleResult(
+  //     postGetPage.postData(directUrl, userModel.toJson()), // استخدم المباشر
+  //     'Login Success',
+  //     'فشل في الاتصال بالخادم',
+  //   );
+  // }
 
   Future<Map<String, dynamic>> postSignUp(UserModel userModel) async {
     _log('Signup', 'Attempting signup with data: ${userModel.toJson()}');
@@ -93,6 +73,46 @@ class AuthApi {
     );
   }
 }
+
+
+  // Future<Map<String, dynamic>> testApiWithToken(String token) async {
+  //   _log('Test API', 'Testing API with token: $token');
+  //   return _handleResult(
+  //     postGetPage.getDataWithToken(ApiServices.salesDataTest, token),
+  //     'Test API Success',
+  //     'فشل في اختبار API',
+  //   );
+  // }
+
+  // Future<Map<String, dynamic>> getStockInfo(String stockCode, String token) async {
+  //   _log('Stock Info', 'Getting stock info for code: $stockCode');
+  //   return _handleResult(
+  //     postGetPage.getDataWithToken(ApiServices.stockInfo(stockCode), token),
+  //     'Stock API Success',
+  //     'فشل في جلب بيانات المخزون',
+  //   );
+  // }
+
+  // Future<Map<String, dynamic>> getSalesData(String token) async {
+  //   _log('Sales Data', 'Getting sales data with token: $token');
+  //   return _handleResult(
+  //     postGetPage.getDataWithToken(ApiServices.salesData, token),
+  //     'Sales Data API Success',
+  //     'فشل في جلب بيانات المبيعات',
+  //   );
+  // }
+
+  // Future<Map<String, dynamic>> testEchoEndpoint(String stockCode, String token) async {
+  //   _log('Echo Endpoint', 'Testing echo endpoint with stock code: $stockCode');
+  //   return _handleResult(
+  //     postGetPage.getDataWithToken("${ApiServices.echo}/$stockCode", token),
+  //     'Echo API Success',
+  //     'فشل في اختبار Echo',
+  //   );
+  // }
+
+  
+
 
 
   // postCheckEmail(String email) async {

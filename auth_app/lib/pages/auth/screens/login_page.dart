@@ -1,10 +1,11 @@
-// import 'package:auth_app/views/pages/signup_page.dart';
+// // views/pages/login_page.dart - محدثة لتتوافق مع API الجديد
+// import 'package:auth_app/pages/auth/screens/signup_page.dart';
 // import 'package:flutter/material.dart';
 // import 'package:get/get.dart';
-// import '../../controllers/auth_controller.dart';
-// import '../../validators/auth_validators.dart';
-// import '../widgets/custom_text_field.dart';
-// import '../widgets/custom_button.dart';
+// import '../controllers/auth_controller.dart';
+// import '../../../classes/auth_validators.dart';
+// import '../../../widgets/custom_text_field.dart';
+// import '../../../widgets/custom_button.dart';
 
 // class LoginPage extends StatelessWidget {
 //   final AuthController authController = Get.put(AuthController());
@@ -62,14 +63,20 @@
 
 //                 const SizedBox(height: 40),
 
-//                 // Email Field
+//                 // تغيير حقل البريد الإلكتروني إلى اسم المستخدم
 //                 CustomTextField(
-//                   controller: authController.emailController,
-//                   label: 'البريد الإلكتروني',
-//                   hint: 'أدخل بريدك الإلكتروني',
-//                   icon: Icons.email,
-//                   keyboardType: TextInputType.emailAddress,
-//                   validator: AuthValidators.validateEmail,
+//                   controller: authController.nameController, // تغيير من emailController
+//                   label: 'اسم المستخدم', // تغيير النص
+//                   hint: 'أدخل اسم المستخدم', // تغيير النص
+//                   icon: Icons.person, // تغيير الأيقونة
+//                   keyboardType: TextInputType.text, // تغيير نوع الكيبورد
+//                   validator: (value) {
+//                     // تغيير validator
+//                     if (value == null || value.isEmpty) {
+//                       return 'يرجى إدخال اسم المستخدم';
+//                     }
+//                     return null;
+//                   },
 //                 ),
 
 //                 const SizedBox(height: 20),
@@ -116,6 +123,37 @@
 //                       onPressed: authController.login,
 //                       isLoading: authController.isLoading.value,
 //                     )),
+
+//                 const SizedBox(height: 30),
+
+//                 // معلومات للاختبار
+//                 Container(
+//                   padding: const EdgeInsets.all(16),
+//                   decoration: BoxDecoration(
+//                     color: Colors.grey[100],
+//                     borderRadius: BorderRadius.circular(8),
+//                   ),
+//                   child: Column(
+//                     children: [
+//                       Text(
+//                         'بيانات الاختبار:',
+//                         style: TextStyle(
+//                           fontWeight: FontWeight.bold,
+//                           color: Colors.grey[700],
+//                         ),
+//                       ),
+//                       const SizedBox(height: 8),
+//                       Text(
+//                         'اسم المستخدم: mms',
+//                         style: TextStyle(color: Colors.grey[600]),
+//                       ),
+//                       Text(
+//                         'كلمة المرور: Awad2015*',
+//                         style: TextStyle(color: Colors.grey[600]),
+//                       ),
+//                     ],
+//                   ),
+//                 ),
 
 //                 const SizedBox(height: 30),
 
@@ -167,12 +205,9 @@
 //   }
 // }
 
-// views/pages/login_page.dart - محدثة لتتوافق مع API الجديد
-import 'package:auth_app/pages/auth/screens/signup_page.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
-import '../../../classes/auth_validators.dart';
 import '../../../widgets/custom_text_field.dart';
 import '../../../widgets/custom_button.dart';
 
@@ -193,7 +228,7 @@ class LoginPage extends StatelessWidget {
               children: [
                 const SizedBox(height: 50),
 
-                // Logo or App Icon
+                // Logo
                 Container(
                   height: 100,
                   width: 100,
@@ -232,17 +267,19 @@ class LoginPage extends StatelessWidget {
 
                 const SizedBox(height: 40),
 
-                // تغيير حقل البريد الإلكتروني إلى اسم المستخدم
+                // Username Field
                 CustomTextField(
-                  controller: authController.nameController, // تغيير من emailController
-                  label: 'اسم المستخدم', // تغيير النص
-                  hint: 'أدخل اسم المستخدم', // تغيير النص
-                  icon: Icons.person, // تغيير الأيقونة
-                  keyboardType: TextInputType.text, // تغيير نوع الكيبورد
+                  controller: authController.usernameController,
+                  label: 'اسم المستخدم',
+                  hint: 'أدخل اسم المستخدم',
+                  icon: Icons.person,
+                  keyboardType: TextInputType.text,
                   validator: (value) {
-                    // تغيير validator
                     if (value == null || value.isEmpty) {
                       return 'يرجى إدخال اسم المستخدم';
+                    }
+                    if (value.length < 3) {
+                      return 'اسم المستخدم يجب أن يكون 3 أحرف على الأقل';
                     }
                     return null;
                   },
@@ -257,7 +294,15 @@ class LoginPage extends StatelessWidget {
                       hint: 'أدخل كلمة المرور',
                       icon: Icons.lock,
                       obscureText: !authController.isPasswordVisible.value,
-                      validator: AuthValidators.validatePassword,
+                      validator: (value) {
+                        if (value == null || value.isEmpty) {
+                          return 'يرجى إدخال كلمة المرور';
+                        }
+                        if (value.length < 6) {
+                          return 'كلمة المرور يجب أن تكون 6 أحرف على الأقل';
+                        }
+                        return null;
+                      },
                       suffixIcon: IconButton(
                         icon: Icon(
                           authController.isPasswordVisible.value
@@ -267,22 +312,6 @@ class LoginPage extends StatelessWidget {
                         onPressed: authController.togglePasswordVisibility,
                       ),
                     )),
-
-                const SizedBox(height: 10),
-
-                // Forgot Password
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: TextButton(
-                    onPressed: () {
-                      // Handle forgot password
-                    },
-                    child: const Text(
-                      'نسيت كلمة المرور؟',
-                      style: TextStyle(color: Colors.blue),
-                    ),
-                  ),
-                ),
 
                 const SizedBox(height: 30),
 
@@ -295,12 +324,13 @@ class LoginPage extends StatelessWidget {
 
                 const SizedBox(height: 30),
 
-                // معلومات للاختبار
+                // معلومات الاختبار
                 Container(
                   padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     color: Colors.grey[100],
                     borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.grey[300]!),
                   ),
                   child: Column(
                     children: [
@@ -309,16 +339,23 @@ class LoginPage extends StatelessWidget {
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.grey[700],
+                          fontSize: 16,
                         ),
                       ),
                       const SizedBox(height: 8),
                       Text(
                         'اسم المستخدم: mms',
-                        style: TextStyle(color: Colors.grey[600]),
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
                       ),
                       Text(
                         'كلمة المرور: Awad2015*',
-                        style: TextStyle(color: Colors.grey[600]),
+                        style: TextStyle(
+                          color: Colors.grey[600],
+                          fontSize: 14,
+                        ),
                       ),
                     ],
                   ),
@@ -326,44 +363,48 @@ class LoginPage extends StatelessWidget {
 
                 const SizedBox(height: 30),
 
-                // Divider
-                Row(
-                  children: [
-                    const Expanded(child: Divider()),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      child: Text(
-                        'أو',
-                        style: TextStyle(color: Colors.grey[600]),
-                      ),
-                    ),
-                    const Expanded(child: Divider()),
-                  ],
-                ),
-
-                const SizedBox(height: 30),
-
-                // Sign Up Link
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'ليس لديك حساب؟ ',
-                      style: TextStyle(color: Colors.grey[600]),
-                    ),
-                    GestureDetector(
-                      onTap: () {
-                        Get.to(() => SignUpPage());
-                      },
-                      child: const Text(
-                        'إنشاء حساب',
+                // API Info
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.blue[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.blue[200]!),
+                  ),
+                  child: Column(
+                    children: [
+                      Text(
+                        'معلومات الـ API:',
                         style: TextStyle(
-                          color: Colors.blue,
                           fontWeight: FontWeight.bold,
+                          color: Colors.blue[700],
+                          fontSize: 16,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      Text(
+                        'Server: qitaf3.dynalias.net:44322',
+                        style: TextStyle(
+                          color: Colors.blue[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        'Login API: /api/Account/login',
+                        style: TextStyle(
+                          color: Colors.blue[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                      Text(
+                        'Test API: /api/SalesDataVTec/Test',
+                        style: TextStyle(
+                          color: Colors.blue[600],
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -373,7 +414,6 @@ class LoginPage extends StatelessWidget {
     );
   }
 }
-
 
 
 // import 'package:auth_app/pages/signup_page.dart';

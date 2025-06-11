@@ -240,9 +240,9 @@ class CustomTextField extends StatelessWidget {
   final String hint;
   final IconData icon;
   final bool obscureText;
-  final Widget? suffixIcon;
-  final String? Function(String?)? validator;
   final TextInputType keyboardType;
+  final String? Function(String?)? validator;
+  final Widget? suffixIcon;
 
   const CustomTextField({
     Key? key,
@@ -251,9 +251,9 @@ class CustomTextField extends StatelessWidget {
     required this.hint,
     required this.icon,
     this.obscureText = false,
-    this.suffixIcon,
-    this.validator,
     this.keyboardType = TextInputType.text,
+    this.validator,
+    this.suffixIcon,
   }) : super(key: key);
 
   @override
@@ -272,13 +272,17 @@ class CustomTextField extends StatelessWidget {
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(color: Colors.grey[300]!),
+        ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.blue, width: 2),
+          borderSide: const BorderSide(color: Colors.blue),
         ),
         errorBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: Colors.red, width: 2),
+          borderSide: const BorderSide(color: Colors.red),
         ),
         filled: true,
         fillColor: Colors.grey[50],
@@ -286,3 +290,58 @@ class CustomTextField extends StatelessWidget {
     );
   }
 }
+
+// import 'package:flutter/material.dart';
+
+// class CustomTextField extends StatelessWidget {
+//   final TextEditingController controller;
+//   final String label;
+//   final String hint;
+//   final IconData icon;
+//   final bool obscureText;
+//   final Widget? suffixIcon;
+//   final String? Function(String?)? validator;
+//   final TextInputType keyboardType;
+
+//   const CustomTextField({
+//     Key? key,
+//     required this.controller,
+//     required this.label,
+//     required this.hint,
+//     required this.icon,
+//     this.obscureText = false,
+//     this.suffixIcon,
+//     this.validator,
+//     this.keyboardType = TextInputType.text,
+//   }) : super(key: key);
+
+//   @override
+//   Widget build(BuildContext context) {
+//     return TextFormField(
+//       controller: controller,
+//       obscureText: obscureText,
+//       keyboardType: keyboardType,
+//       validator: validator,
+//       textDirection: TextDirection.rtl,
+//       decoration: InputDecoration(
+//         labelText: label,
+//         hintText: hint,
+//         prefixIcon: Icon(icon),
+//         suffixIcon: suffixIcon,
+//         border: OutlineInputBorder(
+//           borderRadius: BorderRadius.circular(12),
+//         ),
+//         focusedBorder: OutlineInputBorder(
+//           borderRadius: BorderRadius.circular(12),
+//           borderSide: const BorderSide(color: Colors.blue, width: 2),
+//         ),
+//         errorBorder: OutlineInputBorder(
+//           borderRadius: BorderRadius.circular(12),
+//           borderSide: const BorderSide(color: Colors.red, width: 2),
+//         ),
+//         filled: true,
+//         fillColor: Colors.grey[50],
+//       ),
+//     );
+//   }
+// }

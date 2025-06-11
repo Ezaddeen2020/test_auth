@@ -21,7 +21,7 @@ class SignUpPage extends StatelessWidget {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Form(
-            key: authController.signupFormKey,
+            // key: authController.signupFormKey,
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
@@ -67,25 +67,25 @@ class SignUpPage extends StatelessWidget {
                 const SizedBox(height: 40),
 
                 // Name Field
-                CustomTextField(
-                  controller: authController.nameController,
-                  label: 'الاسم الكامل',
-                  hint: 'أدخل اسمك الكامل',
-                  icon: Icons.person,
-                  validator: AuthValidators.validateName,
-                ),
+                // CustomTextField(
+                //   controller: authController.nameController,
+                //   label: 'الاسم الكامل',
+                //   hint: 'أدخل اسمك الكامل',
+                //   icon: Icons.person,
+                //   validator: AuthValidators.validateName,
+                // ),
 
                 const SizedBox(height: 20),
 
                 // Email Field
-                CustomTextField(
-                  controller: authController.emailController,
-                  label: 'البريد الإلكتروني',
-                  hint: 'أدخل بريدك الإلكتروني',
-                  icon: Icons.email,
-                  keyboardType: TextInputType.emailAddress,
-                  validator: AuthValidators.validateEmail,
-                ),
+                // CustomTextField(
+                //   controller: authController.emailController,
+                //   label: 'البريد الإلكتروني',
+                //   hint: 'أدخل بريدك الإلكتروني',
+                //   icon: Icons.email,
+                //   keyboardType: TextInputType.emailAddress,
+                //   validator: AuthValidators.validateEmail,
+                // ),
 
                 const SizedBox(height: 20),
 
@@ -110,25 +110,25 @@ class SignUpPage extends StatelessWidget {
                 const SizedBox(height: 20),
 
                 // Confirm Password Field
-                Obx(() => CustomTextField(
-                      controller: authController.confirmPasswordController,
-                      label: 'تأكيد كلمة المرور',
-                      hint: 'أعد إدخال كلمة المرور',
-                      icon: Icons.lock_outline,
-                      obscureText: !authController.isConfirmPasswordVisible.value,
-                      validator: (value) => AuthValidators.validateConfirmPassword(
-                        value,
-                        authController.passwordController.text,
-                      ),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          authController.isConfirmPasswordVisible.value
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                        ),
-                        onPressed: authController.toggleConfirmPasswordVisibility,
-                      ),
-                    )),
+                // Obx(() => CustomTextField(
+                //       // controller: authController.confirmPasswordController,
+                //       label: 'تأكيد كلمة المرور',
+                //       hint: 'أعد إدخال كلمة المرور',
+                //       icon: Icons.lock_outline,
+                //       // obscureText: !authController.isConfirmPasswordVisible.value,
+                //       validator: (value) => AuthValidators.validateConfirmPassword(
+                //         value,
+                //         authController.passwordController.text,
+                //       ),
+                //       suffixIcon: IconButton(
+                //         icon: Icon(
+                //           // authController.isConfirmPasswordVisible.value
+                //               ? Icons.visibility
+                //               : Icons.visibility_off,
+                //         ),
+                //         // onPressed: authController.toggleConfirmPasswordVisibility,
+                //       ),
+                //     )),
 
                 const SizedBox(height: 30),
 
@@ -156,12 +156,12 @@ class SignUpPage extends StatelessWidget {
                 const SizedBox(height: 30),
 
                 // Sign Up Button
-                Obx(() => CustomButton(
-                      text: 'إنشاء حساب',
-                      onPressed: authController.signUp,
-                      isLoading: authController.isLoading.value,
-                      backgroundColor: Colors.green,
-                    )),
+                // Obx(() => CustomButton(
+                //       text: 'إنشاء حساب',
+                //       // onPressed: authController.signUp,
+                //       isLoading: authController.isLoading.value,
+                //       // backgroundColor: Colors.green,
+                //     )),
 
                 const SizedBox(height: 30),
 
@@ -195,6 +195,8 @@ class SignUpPage extends StatelessWidget {
     );
   }
 }
+
+
 
 
 

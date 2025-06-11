@@ -1,124 +1,270 @@
-import 'package:auth_app/pages/auth/controllers/auth_controller.dart';
-import 'package:auth_app/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../auth/controllers/auth_controller.dart';
 
 class HomePage extends StatelessWidget {
   final AuthController authController = Get.find<AuthController>();
 
   @override
   Widget build(BuildContext context) {
-    // نفترض getCurrentUser() ترجع المستخدم المسجل
-    UserModel? currentUser = authController.getCurrentUser();
-
-    // إذا صادفنا null بشكل غير متوقع، يمكن التعامل معه
-    if (currentUser == null) {
-      // هذه حالة استثنائية، ربما نعيد توجيه المستخدم لتسجيل الدخول
-      Future.microtask(() => Get.offAllNamed('/login'));
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
-    }
-
-    // المحتوى الطبيعي للصفحة هنا
     return Scaffold(
-      backgroundColor: Colors.white,
       appBar: AppBar(
         title: const Text('الصفحة الرئيسية'),
-        backgroundColor: Colors.blue,
-        foregroundColor: Colors.white,
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () {
-              _showLogoutDialog(context);
-            },
+            onPressed: () => _showLogoutDialog(context),
           ),
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // محتوى الصفحة كما كان
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'مرحباً!',
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.blue,
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'مرحباً، ${authController.getCurrentUser()?.name ?? 'المستخدم'}',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'البريد الإلكتروني: ${currentUser.name}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: Colors.grey[700],
+                    const SizedBox(height: 8),
+                    Text(
+                      'تم تسجيل الدخول بنجاح',
+                      style: TextStyle(
+                        fontSize: 16,
+                        color: Colors.grey[600],
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
             ),
 
-            // باقي الصفحة كما هو...
+            const SizedBox(height: 20),
+
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'معلومات الـ Token:',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[100],
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        authController.authToken ?? 'لم يتم العثور على Token',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontFamily: 'monospace',
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // زر اختبار الـ API
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: authController.testApiWithToken,
+                child: const Text('اختبار الـ API'),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            // زر تسجيل الخروج
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: () => _showLogoutDialog(context),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                ),
+                child: const Text('تسجيل الخروج'),
+              ),
+            ),
           ],
         ),
       ),
     );
   }
 
-  // تابع تسجيل الخروج كما لديك
   void _showLogoutDialog(BuildContext context) {
-    Get.dialog(
-      AlertDialog(
-        title: const Text('تسجيل الخروج'),
-        content: const Text('هل أنت متأكد من أنك تريد تسجيل الخروج؟'),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('إلغاء'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Get.back();
-              authController.logout();
-              Get.offAllNamed('/login'); // إعادة توجيه لتسجيل الدخول بعد تسجيل الخروج
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('تسجيل الخروج'),
+          content: const Text('هل تريد تسجيل الخروج؟'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('إلغاء'),
             ),
-            child: const Text('تسجيل الخروج'),
-          ),
-        ],
-      ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                authController.logout();
+              },
+              child: const Text('تأكيد'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
-// class MyWidget extends StatelessWidget {
-//   const MyWidget({super.key});
+
+
+
+// import 'package:auth_app/pages/auth/controllers/auth_controller.dart';
+// import 'package:auth_app/models/user_model.dart';
+// import 'package:flutter/material.dart';
+// import 'package:get/get.dart';
+
+// class HomePage extends StatelessWidget {
+//   final AuthController authController = Get.find<AuthController>();
 
 //   @override
 //   Widget build(BuildContext context) {
+//     // نفترض getCurrentUser() ترجع المستخدم المسجل
+//     UserModel? currentUser = authController.getCurrentUser();
+
+//     // إذا صادفنا null بشكل غير متوقع، يمكن التعامل معه
+//     if (currentUser == null) {
+//       // هذه حالة استثنائية، ربما نعيد توجيه المستخدم لتسجيل الدخول
+//       Future.microtask(() => Get.offAllNamed('/login'));
+//       return const Scaffold(
+//         body: Center(
+//           child: CircularProgressIndicator(),
+//         ),
+//       );
+//     }
+
+//     // المحتوى الطبيعي للصفحة هنا
 //     return Scaffold(
+//       backgroundColor: Colors.white,
 //       appBar: AppBar(
-//         actions: const [Text('Home_page')],
+//         title: const Text('الصفحة الرئيسية'),
+//         backgroundColor: Colors.blue,
+//         foregroundColor: Colors.white,
+//         actions: [
+//           IconButton(
+//             icon: const Icon(Icons.logout),
+//             onPressed: () {
+//               _showLogoutDialog(context);
+//             },
+//           ),
+//         ],
+//       ),
+//       body: Padding(
+//         padding: const EdgeInsets.all(20),
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             // محتوى الصفحة كما كان
+//             Container(
+//               width: double.infinity,
+//               padding: const EdgeInsets.all(20),
+//               decoration: BoxDecoration(
+//                 color: Colors.blue.withOpacity(0.1),
+//                 borderRadius: BorderRadius.circular(12),
+//               ),
+//               child: Column(
+//                 crossAxisAlignment: CrossAxisAlignment.start,
+//                 children: [
+//                   const Text(
+//                     'مرحباً!',
+//                     style: TextStyle(
+//                       fontSize: 24,
+//                       fontWeight: FontWeight.bold,
+//                       color: Colors.blue,
+//                     ),
+//                   ),
+//                   const SizedBox(height: 8),
+//                   Text(
+//                     'البريد الإلكتروني: ${currentUser.name}',
+//                     style: TextStyle(
+//                       fontSize: 16,
+//                       color: Colors.grey[700],
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             ),
+
+//             // باقي الصفحة كما هو...
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+
+//   // تابع تسجيل الخروج كما لديك
+//   void _showLogoutDialog(BuildContext context) {
+//     Get.dialog(
+//       AlertDialog(
+//         title: const Text('تسجيل الخروج'),
+//         content: const Text('هل أنت متأكد من أنك تريد تسجيل الخروج؟'),
+//         actions: [
+//           TextButton(
+//             onPressed: () => Get.back(),
+//             child: const Text('إلغاء'),
+//           ),
+//           ElevatedButton(
+//             onPressed: () {
+//               Get.back();
+//               authController.logout();
+//               Get.offAllNamed('/login'); // إعادة توجيه لتسجيل الدخول بعد تسجيل الخروج
+//             },
+//             style: ElevatedButton.styleFrom(
+//               backgroundColor: Colors.red,
+//               foregroundColor: Colors.white,
+//             ),
+//             child: const Text('تسجيل الخروج'),
+//           ),
+//         ],
 //       ),
 //     );
 //   }
 // }
+
+// // class MyWidget extends StatelessWidget {
+// //   const MyWidget({super.key});
+
+// //   @override
+// //   Widget build(BuildContext context) {
+// //     return Scaffold(
+// //       appBar: AppBar(
+// //         actions: const [Text('Home_page')],
+// //       ),
+// //     );
+// //   }
+// // }
