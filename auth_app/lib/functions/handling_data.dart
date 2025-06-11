@@ -1,39 +1,50 @@
-import 'package:auth_app/functions/status_request.dart';
+import 'dart:developer';
 
-handlingData(response) {
-  // if the type is from StatusRequest(left) otherwise it return the Map(Right)
-  if (response is StatusRequest) {
-    return response;
+import 'package:auth_app/functions/status_request.dart';
+import 'package:dartz/dartz.dart';
+
+void logMessage(String tag, String message) {
+  log('$tag: $message');
+}
+
+// دالة مساعدة للتعامل مع Either
+Future<Map<String, dynamic>> handleEitherResult(
+  Future<Either<StatusRequest, Map<String, dynamic>>> future,
+  String successTag,
+  String failureMessage,
+) async {
+  try {
+    final result = await future;
+    return result.fold(
+      (failure) {
+        logMessage('API Error', failure.toString());
+        return {'status': 'failure', 'message': failureMessage};
+      },
+      (data) {
+        logMessage(successTag, data.toString());
+        return data;
+      },
+    );
+  } catch (e) {
+    logMessage('API Exception', e.toString());
+    return {'status': 'failure', 'message': 'حدث خطأ غير متوقع'};
+  }
+}
+
+// تحويل استجابة Map إلى StatusRequest
+StatusRequest handleResult(Map<String, dynamic> response) {
+  if (response['status'] == 'failure') {
+    return StatusRequest.failure;
   } else {
     return StatusRequest.success;
   }
 }
 
-
-// lib/classes/handling_data.dart
-
-// import 'status_request.dart';
-
-// StatusRequest handlingData(response) {
+// handlingData(response) {
+//   // if the type is from StatusRequest(left) otherwise it return the Map(Right)
 //   if (response is StatusRequest) {
 //     return response;
-//   } else if (response is Map<String, dynamic>) {
-//     // التحقق من وجود مفاتيح النجاح
-//     if (response.containsKey('user') || 
-//         response.containsKey('token') || 
-//         response.containsKey('message')) {
-//       return StatusRequest.success;
-//     }
-//     // التحقق من وجود أخطاء
-//     else if (response.containsKey('errors') || 
-//              response.containsKey('error')) {
-//       return StatusRequest.failure;
-//     }
-//     // إذا كانت الاستجابة فارغة أو غير متوقعة
-//     else {
-//       return StatusRequest.failure;
-//     }
 //   } else {
-//     return StatusRequest.failure;
+//     return StatusRequest.success;
 //   }
 // }
