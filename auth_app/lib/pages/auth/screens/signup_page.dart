@@ -3,7 +3,6 @@ import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import '../../../classes/auth_validators.dart';
 import '../../../widgets/custom_text_field.dart';
-import '../../../widgets/custom_button.dart';
 
 class SignUpPage extends StatelessWidget {
   final AuthController authController = Get.find<AuthController>();
