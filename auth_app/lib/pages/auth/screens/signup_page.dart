@@ -7,6 +7,8 @@ import '../../../widgets/custom_text_field.dart';
 class SignUpPage extends StatelessWidget {
   final AuthController authController = Get.find<AuthController>();
 
+  SignUpPage({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
