@@ -17,6 +17,7 @@ class AuthController extends GetxController {
   final TextEditingController usernameController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final GlobalKey<FormState> loginFormKey = GlobalKey<FormState>();
+  final GlobalKey<FormState> registerFormKey = GlobalKey<FormState>();
 
   final PostGetPage postGetPage = PostGetPage();
   late final AuthApi authApi;
@@ -46,6 +47,53 @@ class AuthController extends GetxController {
 
   UserModel? getCurrentUser() {
     return Preferences.getDataUser();
+  }
+
+  // تسجيل حساب جديد
+  Future<void> signUp() async {
+    if (registerFormKey.currentState!.validate()) {
+      isLoading.value = true;
+      EasyLoading.show(status: 'جاري إنشاء الحساب...');
+
+      UserModel userModel = UserModel(
+        name: usernameController.text.trim(),
+        password: passwordController.text,
+      );
+
+      try {
+        final res = await authApi.postSignUp(userModel);
+        statusRequest = handleResult(res);
+
+        EasyLoading.dismiss();
+
+        if (statusRequest == StatusRequest.success && res['status'] == 'success') {
+          await Preferences.setBoolean(Preferences.isLogin, true);
+          Get.offAllNamed('/home');
+          log('تم إنشاء الحساب بنجاح');
+
+          Get.showSnackbar(const GetSnackBar(
+            title: 'نجح',
+            message: 'تم إنشاء الحساب بنجاح',
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ));
+        } else {
+          throw Exception(res['message'] ?? 'فشل في إنشاء الحساب');
+        }
+      } catch (e) {
+        EasyLoading.dismiss();
+        log('Signup Error: $e');
+
+        Get.showSnackbar(const GetSnackBar(
+          title: 'خطأ',
+          message: 'فشل في إنشاء الحساب',
+          backgroundColor: Colors.red,
+          duration: Duration(seconds: 3),
+        ));
+      }
+
+      isLoading.value = false;
+    }
   }
 
   Future<void> login() async {

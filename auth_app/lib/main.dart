@@ -1,12 +1,11 @@
+// lib/main.dart
+
 import 'package:auth_app/binding/initial_binding.dart';
 import 'package:auth_app/classes/shared_preference.dart';
-import 'package:auth_app/pages/home/home_page.dart';
+import 'package:auth_app/routes/app_routes.dart'; // <-- استيراد ملف التوجيه
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
-import 'package:get/get_navigation/src/root/get_material_app.dart';
-import 'package:get/get_navigation/src/routes/get_route.dart';
-
-import 'pages/auth/screens/login_page.dart';
+import 'package:get/get.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -28,11 +27,8 @@ class MyApp extends StatelessWidget {
         fontFamily: 'Cairo',
       ),
       initialRoute: _getInitialRoute(),
-      initialBinding: InitialBinding(), // 👈 ضروري لتسجيل AuthController
-      getPages: [
-        GetPage(name: '/login', page: () => LoginPage()),
-        GetPage(name: '/home', page: () => HomePage()),
-      ],
+      initialBinding: InitialBinding(),
+      getPages: AppRoutes.routes, // <-- استخدم routes من AppRoutes
       builder: EasyLoading.init(),
     );
   }
@@ -42,8 +38,8 @@ class MyApp extends StatelessWidget {
     String savedToken = Preferences.getString('auth_token');
 
     if (isLoggedIn && savedToken.isNotEmpty) {
-      return '/home';
+      return AppRoutes.home;
     }
-    return '/login';
+    return AppRoutes.login;
   }
 }

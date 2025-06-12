@@ -61,14 +61,14 @@ class Preferences {
     await pref.remove(key);
   }
 
-  static Future<void> setDataUser(UserModel userModel) async {
-    var userEncode = jsonEncode(userModel.toJson());
-    await pref.setString(user, userEncode);
-  }
-
   static Future<bool> removeString(String key) async {
     final SharedPreferences prefs = await SharedPreferences.getInstance();
     return await prefs.remove(key);
+  }
+
+  static Future<void> setDataUser(UserModel userModel) async {
+    var userEncode = jsonEncode(userModel.toJson());
+    await pref.setString(user, userEncode);
   }
 
   static UserModel? getDataUser() {
