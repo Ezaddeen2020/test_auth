@@ -174,12 +174,10 @@
 //   }
 // }
 
-import 'package:auth_app/widgets/custom_button.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../controllers/auth_controller.dart';
 import '../../../classes/auth_validators.dart';
-import '../../../widgets/custom_text_field.dart';
 
 class SignUpPage extends StatelessWidget {
   final AuthController authController = Get.find<AuthController>();
@@ -330,21 +328,21 @@ class SignUpPage extends StatelessWidget {
                                 fontSize: 14,
                                 height: 1.4,
                               ),
-                              children: [
-                                const TextSpan(text: 'أوافق على '),
+                              children: const [
+                                TextSpan(text: 'أوافق على '),
                                 TextSpan(
                                   text: 'الشروط والأحكام',
                                   style: TextStyle(
-                                    color: const Color(0xFF10B981),
+                                    color: Color(0xFF10B981),
                                     fontWeight: FontWeight.w600,
                                     decoration: TextDecoration.underline,
                                   ),
                                 ),
-                                const TextSpan(text: ' و '),
+                                TextSpan(text: ' و '),
                                 TextSpan(
                                   text: 'سياسة الخصوصية',
                                   style: TextStyle(
-                                    color: const Color(0xFF10B981),
+                                    color: Color(0xFF10B981),
                                     fontWeight: FontWeight.w600,
                                     decoration: TextDecoration.underline,
                                   ),

@@ -18,6 +18,10 @@ dependencies:
   dartz: ^0.10.1
   flutter_native_splash: ^2.4.1
   flutter_launcher_icons: ^0.14.3
+  network_info_plus: ^6.1.4
+  network_tools: ^5.0.2
+  ping_discover_network_forked: ^0.0.1
+  permission_handler: ^11.3.1
 
 dev_dependencies:
   flutter_test:

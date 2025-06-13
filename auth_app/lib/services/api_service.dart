@@ -8,6 +8,9 @@ class ApiServices {
   static String login = "$server/api/Account/login";
   static String register = "$server/api/Account/register";
   static String testApi = "$server/api/SalesDataVTec/Test";
+  static String getStockItem(String code) {
+    return "$server/api/StockSAPWPOS1/$code";
+  }
 
   // Headers مع Bearer Token
   static Map<String, String> headersWithToken(String token) {
@@ -18,6 +21,10 @@ class ApiServices {
     };
   }
 }
+
+
+
+
 
 // // services/api_service.dart
 // class ApiServices {

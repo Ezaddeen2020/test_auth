@@ -25,6 +25,15 @@ class AuthApi {
       'فشل في إنشاء الحساب',
     );
   }
+
+  // Future<Map<String, dynamic>> getStockInfo(String stockCode, String token) async {
+  //   logMessage('Stock Info', 'Getting stock info for code: $stockCode');
+  //   return handleEitherResult(
+  //     postGetPage.getDataWithToken(ApiServices.stockInfo(stockCode), token),
+  //     'Stock API Success',
+  //     'فشل في جلب بيانات المخزون',
+  //   );
+  // }
 }
 
 

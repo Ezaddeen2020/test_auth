@@ -1,9 +1,8 @@
 import 'package:auth_app/pages/auth/controllers/auth_controller.dart';
 import 'package:auth_app/pages/auth/screens/signup_page.dart';
+import 'package:auth_app/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import '../../../widgets/custom_text_field.dart';
-import '../../../widgets/custom_button.dart';
 
 class LoginPage extends StatelessWidget {
   final AuthController authController = Get.find<AuthController>();
@@ -447,6 +446,8 @@ class LoginPage extends StatelessWidget {
             ),
           ],
         ),
+
+        // من أي مكان في التطبيق
       ),
     );
   }
