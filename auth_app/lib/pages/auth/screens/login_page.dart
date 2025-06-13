@@ -1,6 +1,5 @@
 import 'package:auth_app/pages/auth/controllers/auth_controller.dart';
 import 'package:auth_app/pages/auth/screens/signup_page.dart';
-import 'package:auth_app/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
