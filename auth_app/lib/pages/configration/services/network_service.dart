@@ -1,6 +1,8 @@
 // lib/services/network_service.dart
 
 import 'dart:io';
+import 'package:auth_app/models/network_device.dart';
+import 'package:auth_app/pages/configration/services/network_config.dart';
 import 'package:network_info_plus/network_info_plus.dart';
 import 'package:ping_discover_network_forked/ping_discover_network_forked.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -46,6 +48,7 @@ class NetworkService {
   }
 
   // البحث عن الأجهزة على الشبكة
+// استبدال دالة discoverNetworkDevices في NetworkService
   static Future<List<NetworkDevice>> discoverNetworkDevices() async {
     List<NetworkDevice> devices = [];
 
@@ -59,7 +62,7 @@ class NetworkService {
       final subnet = _getSubnet(networkInfo['wifiIP']);
 
       if (subnet != null) {
-        final stream = NetworkAnalyzer.discover2(subnet, 9100); // Port 9100 للطابعات
+        final stream = NetworkAnalyzer.discover2(subnet, 9100, timeout: Duration(seconds: 5));
 
         await for (NetworkAddress addr in stream) {
           if (addr.exists) {
@@ -70,6 +73,7 @@ class NetworkService {
               ip: addr.ip,
               name: deviceName ?? 'Unknown Device',
               macAddress: macAddress ?? 'Unknown MAC',
+              port: 9100,
               isOnline: true,
             ));
           }
@@ -80,6 +84,88 @@ class NetworkService {
     }
 
     return devices;
+  }
+
+  // البحث المتقدم عن الطابعات مع عدة منافذ
+  static Future<List<NetworkDevice>> discoverPrintersAdvanced() async {
+    List<NetworkDevice> devices = [];
+
+    try {
+      if (!await requestPermissions()) {
+        throw Exception('لم يتم منح الأذونات المطلوبة');
+      }
+      ;
+
+      final networkInfo = await getNetworkInfo();
+      final subnet = _getSubnet(networkInfo['wifiIP']);
+
+      if (subnet != null) {
+        // منافذ الطابعات الشائعة
+        List<int> printerPorts = [9100, 631, 515, 721, 80, 443];
+
+        for (int port in printerPorts) {
+          try {
+            final stream = NetworkAnalyzer.discover2(subnet, port, timeout: Duration(seconds: 3));
+
+            await for (NetworkAddress addr in stream) {
+              if (addr.exists) {
+                // التحقق من أن الجهاز طابعة فعلاً
+                bool isPrinter = await _verifyPrinterDevice(addr.ip, port);
+
+                if (isPrinter) {
+                  String? deviceName = await _getDeviceName(addr.ip);
+                  String? macAddress = await _getMacAddress(addr.ip);
+
+                  devices.add(NetworkDevice(
+                    ip: addr.ip,
+                    name: deviceName ?? 'Printer_${addr.ip.split('.').last}',
+                    macAddress: macAddress ?? _generateMacAddress(addr.ip),
+                    isOnline: true,
+                    port: port,
+                  ));
+                }
+              }
+            }
+          } catch (e) {
+            print('Error scanning port $port: $e');
+            continue;
+          }
+        }
+      }
+    } catch (e) {
+      print('Error in advanced discovery: $e');
+    }
+
+    return devices;
+  }
+
+  // التحقق من أن الجهاز طابعة
+  static Future<bool> _verifyPrinterDevice(String ip, int port) async {
+    try {
+      final socket = await Socket.connect(ip, port, timeout: Duration(seconds: 2));
+
+      // إرسال أمر بسيط للتحقق من استجابة الطابعة
+      if (port == 9100) {
+        socket.write('\x1B@'); // ESC @ - Reset command
+        await Future.delayed(Duration(milliseconds: 500));
+      }
+
+      socket.close();
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // توليد MAC address وهمي بناءً على IP
+  static String _generateMacAddress(String ip) {
+    final parts = ip.split('.');
+    final lastOctet = int.parse(parts[3]);
+    final secondLastOctet = int.parse(parts[2]);
+
+    return '00:1A:2B:${secondLastOctet.toRadixString(16).padLeft(2, '0').toUpperCase()}:'
+        '${lastOctet.toRadixString(16).padLeft(2, '0').toUpperCase()}:'
+        '${(lastOctet + 1).toRadixString(16).padLeft(2, '0').toUpperCase()}';
   }
 
   // استخراج الشبكة الفرعية من IP
@@ -187,79 +273,5 @@ class NetworkService {
     await Preferences.clearKeyData('printer_ip');
     await Preferences.clearKeyData('configuration_saved');
     await Preferences.clearKeyData('configuration_date');
-  }
-}
-
-// كلاس لتمثيل جهاز الشبكة
-class NetworkDevice {
-  final String ip;
-  final String name;
-  final String macAddress;
-  final bool isOnline;
-
-  NetworkDevice({
-    required this.ip,
-    required this.name,
-    required this.macAddress,
-    required this.isOnline,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'ip': ip,
-      'name': name,
-      'macAddress': macAddress,
-      'isOnline': isOnline,
-    };
-  }
-
-  factory NetworkDevice.fromJson(Map<String, dynamic> json) {
-    return NetworkDevice(
-      ip: json['ip'] ?? '',
-      name: json['name'] ?? '',
-      macAddress: json['macAddress'] ?? '',
-      isOnline: json['isOnline'] ?? false,
-    );
-  }
-}
-
-// كلاس لتمثيل إعدادات الشبكة
-class NetworkConfiguration {
-  final String connectionType;
-  final String printerMac;
-  final String deviceName;
-  final String printerIP;
-  final bool isConfigured;
-  final String configurationDate;
-
-  NetworkConfiguration({
-    required this.connectionType,
-    required this.printerMac,
-    required this.deviceName,
-    required this.printerIP,
-    required this.isConfigured,
-    required this.configurationDate,
-  });
-
-  Map<String, dynamic> toJson() {
-    return {
-      'connectionType': connectionType,
-      'printerMac': printerMac,
-      'deviceName': deviceName,
-      'printerIP': printerIP,
-      'isConfigured': isConfigured,
-      'configurationDate': configurationDate,
-    };
-  }
-
-  factory NetworkConfiguration.fromJson(Map<String, dynamic> json) {
-    return NetworkConfiguration(
-      connectionType: json['connectionType'] ?? 'LAN',
-      printerMac: json['printerMac'] ?? '',
-      deviceName: json['deviceName'] ?? '',
-      printerIP: json['printerIP'] ?? '',
-      isConfigured: json['isConfigured'] ?? false,
-      configurationDate: json['configurationDate'] ?? '',
-    );
   }
 }

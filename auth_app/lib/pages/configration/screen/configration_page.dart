@@ -37,6 +37,11 @@ class ConfigurationPage extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                TextButton(
+                    onPressed: () {
+                      Get.toNamed('/login');
+                    },
+                    child: const Text('go to login')),
                 NetworkInfoCard(controller: controller),
                 const SizedBox(height: 20),
                 ConnectionTypeCard(controller: controller),
@@ -48,7 +53,7 @@ class ConfigurationPage extends StatelessWidget {
                 PrinterConfigCard(controller: controller),
                 if (controller.discoveredDevices.isNotEmpty) ...[
                   const SizedBox(height: 20),
-                  DiscoveredDevicesCard(controller: controller),
+                  DeviceInfoCard(controller: controller),
                 ],
                 if (controller.connectionStatus.isNotEmpty) ...[
                   const SizedBox(height: 20),
@@ -64,6 +69,7 @@ class ConfigurationPage extends StatelessWidget {
     );
   }
 }
+
 
 
   // // lib/pages/configuration/configuration_page.dart

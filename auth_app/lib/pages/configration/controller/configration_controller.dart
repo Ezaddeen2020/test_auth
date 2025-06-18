@@ -2,6 +2,8 @@
 
 import 'dart:io';
 import 'dart:async';
+import 'package:auth_app/models/network_device.dart';
+import 'package:auth_app/pages/configration/services/network_service.dart';
 import 'package:auth_app/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -29,6 +31,7 @@ class ConfigurationController extends GetxController {
   String? currentNetworkIP;
   String? currentNetworkName;
   String? currentSubnet;
+  String? currentGateway;
   List<NetworkDevice> discoveredDevices = [];
 
   // Network Info Service
@@ -39,6 +42,7 @@ class ConfigurationController extends GetxController {
     super.onInit();
     loadSavedConfiguration();
     _initializeNetworkInfo();
+    // getNetworkStatusInfo();
   }
 
   @override
@@ -55,6 +59,7 @@ class ConfigurationController extends GetxController {
     try {
       currentNetworkIP = await _networkInfo.getWifiIP();
       currentNetworkName = await _networkInfo.getWifiName();
+      currentGateway = await _networkInfo.getWifiGatewayIP();
       currentSubnet = _getSubnet(currentNetworkIP ?? '');
       customSubnetController.text = currentSubnet ?? '192.168.1';
       update();
@@ -119,12 +124,12 @@ class ConfigurationController extends GetxController {
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.blue.withOpacity(0.8),
         colorText: Colors.white,
-        duration: Duration(seconds: 3),
+        duration: const Duration(seconds: 3),
       );
     }
   }
 
-  // Auto-detect printer based on connection type
+  // استبدال المحتوى من السطر 90 إلى 120
   Future<void> autoDetectPrinter() async {
     if (!await _requestPermissions()) {
       return;
@@ -134,6 +139,19 @@ class ConfigurationController extends GetxController {
     isScanning = true;
     discoveredDevices.clear();
     update();
+
+    EasyLoading.show(status: 'بدء البحث عن الطابعات...');
+
+    // إضافة timeout للعملية كاملة
+    Timer timeoutTimer = Timer(const Duration(minutes: 2), () {
+      if (isScanning) {
+        isScanning = false;
+        isLoading = false;
+        EasyLoading.dismiss();
+        EasyLoading.showInfo('انتهت مهلة البحث. جرب مرة أخرى.');
+        update();
+      }
+    });
 
     try {
       switch (connectionType) {
@@ -147,19 +165,21 @@ class ConfigurationController extends GetxController {
     } catch (e) {
       connectionStatus = 'خطأ في البحث: ${e.toString()}';
       isConnected = false;
-      EasyLoading.showError('حدث خطأ أثناء البحث: ${e.toString()}');
+      EasyLoading.showError('حدث خطأ أثناء البحث');
     } finally {
+      timeoutTimer.cancel(); // إلغاء المؤقت
       isLoading = false;
       isScanning = false;
+      EasyLoading.dismiss();
       update();
     }
   }
 
-  // Scan local network (LAN)
+  // استبدال المحتوى الكامل للدالة:
+  // استبدال دالة _scanLocalNetwork بالكامل
   Future<void> _scanLocalNetwork() async {
     EasyLoading.show(status: 'جاري البحث في الشبكة المحلية...');
 
-    // Get current network info
     await _initializeNetworkInfo();
 
     if (currentNetworkIP == null) {
@@ -170,36 +190,147 @@ class ConfigurationController extends GetxController {
         ? customSubnetController.text
         : _getSubnet(currentNetworkIP!);
 
-    // Common printer ports to scan
-    List<int> printerPorts = [9100, 631, 515, 721];
+    try {
+      List<NetworkDevice> foundDevices = [];
 
-    EasyLoading.show(status: 'فحص الشبكة: $subnet.x\nالمنافذ: ${printerPorts.join(", ")}');
+      // البحث المتقدم من NetworkService
+      EasyLoading.show(status: 'البحث المتقدم...');
+      List<NetworkDevice> advancedDevices = await NetworkService.discoverPrintersAdvanced();
+      foundDevices.addAll(advancedDevices);
 
-    Completer<void> scanCompleter = Completer<void>();
-    int completedScans = 0;
-    int totalPorts = printerPorts.length;
+      // البحث التقليدي مع تحسينات
+      List<int> printerPorts = [9100, 631, 515];
 
-    // Scan each port
-    for (int port in printerPorts) {
-      _scanPortForPrinters(subnet, port).then((devices) {
-        discoveredDevices.addAll(devices);
-        completedScans++;
+      for (int port in printerPorts) {
+        EasyLoading.show(status: 'فحص المنفذ $port...');
 
-        EasyLoading.show(status: 'فحص المنفذ $port... (${completedScans}/${totalPorts})');
+        List<NetworkDevice> portDevices = await _scanPortWithEnhancement(subnet, port);
+        foundDevices.addAll(portDevices);
+      }
 
-        if (completedScans == totalPorts) {
-          scanCompleter.complete();
+      // فحص IPs محددة شائعة للطابعات
+      List<String> commonPrinterIPs = [
+        '$subnet.100',
+        '$subnet.101',
+        '$subnet.200',
+        '$subnet.201',
+        '$subnet.10',
+        '$subnet.20',
+        '$subnet.30',
+        '$subnet.50'
+      ];
+
+      EasyLoading.show(status: 'فحص عناوين IP الشائعة...');
+
+      for (String ip in commonPrinterIPs) {
+        if (await _testSpecificIP(ip)) {
+          NetworkDevice device = NetworkDevice(
+            ip: ip,
+            name: 'Printer_${ip.split('.').last}',
+            macAddress: _generateFakeMac(),
+            port: 9100,
+            isOnline: true,
+          );
+          foundDevices.add(device);
         }
-      }).catchError((error) {
-        print('Error scanning port $port: $error');
-        completedScans++;
-        if (completedScans == totalPorts) {
-          scanCompleter.complete();
+      }
+
+      discoveredDevices = foundDevices;
+      _processDiscoveredDevices();
+    } catch (e) {
+      print('Error in enhanced scan: $e');
+      // العودة للطريقة التقليدية عند الفشل
+      await _fallbackScan(subnet);
+    }
+  }
+
+  // فحص محسن للمنفذ
+  Future<List<NetworkDevice>> _scanPortWithEnhancement(String subnet, int port) async {
+    List<NetworkDevice> devices = [];
+
+    try {
+      final stream = NetworkAnalyzer.discover2(subnet, port, timeout: Duration(seconds: 4));
+
+      await for (NetworkAddress addr in stream) {
+        if (addr.exists) {
+          // تأكيد إضافي أن الجهاز يستجيب
+          bool isResponding = await _testSpecificIP(addr.ip);
+
+          if (isResponding) {
+            String deviceName = await _identifyPrinterDevice(addr.ip, port);
+            String macAddress = await _getMacAddress(addr.ip) ?? _generateFakeMac();
+
+            devices.add(NetworkDevice(
+              ip: addr.ip,
+              name: deviceName,
+              macAddress: macAddress,
+              port: port,
+              isOnline: true,
+            ));
+          }
         }
-      });
+      }
+    } catch (e) {
+      print('Error in enhanced port scan: $e');
     }
 
-    await scanCompleter.future;
+    return devices;
+  }
+
+  // اختبار IP محدد
+  Future<bool> _testSpecificIP(String ip) async {
+    try {
+      // اختبار عدة منافذ
+      List<int> testPorts = [9100, 631, 515, 80];
+
+      for (int port in testPorts) {
+        try {
+          Socket socket = await Socket.connect(ip, port, timeout: Duration(seconds: 2));
+          socket.close();
+          return true;
+        } catch (e) {
+          continue;
+        }
+      }
+
+      // إذا فشل Socket، جرب ping
+      return await _pingDevice(ip);
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // البحث الاحتياطي
+  Future<void> _fallbackScan(String subnet) async {
+    EasyLoading.show(status: 'البحث الاحتياطي...');
+
+    List<NetworkDevice> fallbackDevices = [];
+
+    // فحص مجموعة IPs محددة يدوياً
+    for (int i = 1; i <= 254; i++) {
+      String testIP = '$subnet.$i';
+
+      if (i % 50 == 0) {
+        EasyLoading.show(status: 'فحص: $testIP');
+      }
+
+      bool responds = await _testSpecificIP(testIP);
+
+      if (responds) {
+        fallbackDevices.add(NetworkDevice(
+          ip: testIP,
+          name: 'Device_$i',
+          macAddress: _generateFakeMac(),
+          port: 9100,
+          isOnline: true,
+        ));
+
+        // إيقاف البحث بعد العثور على 3 أجهزة
+        if (fallbackDevices.length >= 3) break;
+      }
+    }
+
+    discoveredDevices = fallbackDevices;
     _processDiscoveredDevices();
   }
 
@@ -228,6 +359,8 @@ class ConfigurationController extends GetxController {
 
     if (isReachable) {
       // Create a device entry for the WAN printer
+
+      // استبدال الكود في دالة _handleWANConnection حوالي السطر 250:
       NetworkDevice wanDevice = NetworkDevice(
         ip: ipAddressController.text,
         name: deviceNameController.text.isNotEmpty
@@ -266,34 +399,34 @@ class ConfigurationController extends GetxController {
 
     await Get.dialog(
       AlertDialog(
-        title: Text('إدخال IP الطابعة'),
+        title: const Text('إدخال IP الطابعة'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text('يرجى إدخال عنوان IP للطابعة للاتصال عبر WAN'),
-            SizedBox(height: 16),
+            const Text('يرجى إدخال عنوان IP للطابعة للاتصال عبر WAN'),
+            const SizedBox(height: 16),
             TextField(
               controller: tempController,
-              decoration: InputDecoration(
+              decoration: const InputDecoration(
                 labelText: 'عنوان IP',
                 hintText: '192.168.1.100',
                 border: OutlineInputBorder(),
               ),
-              keyboardType: TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Get.back(),
-            child: Text('إلغاء'),
+            child: const Text('إلغاء'),
           ),
           ElevatedButton(
             onPressed: () {
               ipAddressController.text = tempController.text;
               Get.back();
             },
-            child: Text('تأكيد'),
+            child: const Text('تأكيد'),
           ),
         ],
       ),
@@ -308,7 +441,7 @@ class ConfigurationController extends GetxController {
 
       for (int port in portsToTest) {
         try {
-          Socket socket = await Socket.connect(ip, port, timeout: Duration(seconds: 5));
+          Socket socket = await Socket.connect(ip, port, timeout: const Duration(seconds: 5));
           socket.close();
           return true; // If any port responds, consider it reachable
         } catch (e) {
@@ -427,12 +560,13 @@ class ConfigurationController extends GetxController {
     return '192.168.1'; // Default fallback
   }
 
-  // Scan specific port for printers
+  // استبدال دالة _scanPortForPrinters:
+  // استبدال دالة _scanPortForPrinters بالكامل
   Future<List<NetworkDevice>> _scanPortForPrinters(String subnet, int port) async {
     List<NetworkDevice> devices = [];
 
     try {
-      final stream = NetworkAnalyzer.discover2(subnet, port, timeout: Duration(seconds: 3));
+      final stream = NetworkAnalyzer.discover2(subnet, port, timeout: const Duration(seconds: 3));
 
       await for (NetworkAddress addr in stream) {
         if (addr.exists) {
@@ -458,7 +592,7 @@ class ConfigurationController extends GetxController {
   // Identify if device is a printer
   Future<String> _identifyPrinterDevice(String ip, int port) async {
     try {
-      Socket socket = await Socket.connect(ip, port, timeout: Duration(seconds: 2));
+      Socket socket = await Socket.connect(ip, port, timeout: const Duration(seconds: 2));
       socket.close();
 
       String deviceType = _getDeviceTypeByPort(port);
@@ -574,7 +708,7 @@ class ConfigurationController extends GetxController {
 
       // Fallback: try socket connection
       try {
-        Socket socket = await Socket.connect(ip, 9100, timeout: Duration(seconds: 3));
+        Socket socket = await Socket.connect(ip, 9100, timeout: const Duration(seconds: 3));
         socket.close();
         return true;
       } catch (e) {
@@ -583,7 +717,7 @@ class ConfigurationController extends GetxController {
     }
   }
 
-  // Save configuration
+  // Save configuration - محسنة
   Future<void> saveConfiguration() async {
     if (macAddressController.text.isEmpty || deviceNameController.text.isEmpty) {
       EasyLoading.showError('يرجى ملء جميع الحقول المطلوبة');
@@ -604,20 +738,50 @@ class ConfigurationController extends GetxController {
     EasyLoading.show(status: 'جاري حفظ إعدادات $connectionType...');
 
     try {
-      await Preferences.setString('connection_type', connectionType);
-      await Preferences.setString('printer_mac_address', macAddressController.text);
-      await Preferences.setString('device_name', deviceNameController.text);
-      await Preferences.setString('printer_ip', ipAddressController.text);
-      await Preferences.setString('custom_subnet', customSubnetController.text);
-      await Preferences.setBoolean('configuration_saved', true);
-      await Preferences.setString('configuration_date', DateTime.now().toIso8601String());
+      // حفظ جميع البيانات مع التأكد من الثبات
+      await Future.wait([
+        Preferences.setString('connection_type', connectionType),
+        Preferences.setString('printer_mac_address', macAddressController.text),
+        Preferences.setString('device_name', deviceNameController.text),
+        Preferences.setString('printer_ip', ipAddressController.text),
+        Preferences.setString('custom_subnet', customSubnetController.text),
+        Preferences.setString('current_network_name', currentNetworkName ?? ''),
+        Preferences.setString('current_network_ip', currentNetworkIP ?? ''),
+        Preferences.setString('current_gateway', currentGateway ?? ''),
+        Preferences.setBoolean('configuration_saved', true),
+        Preferences.setString('configuration_date', DateTime.now().toIso8601String()),
+      ]);
 
-      EasyLoading.showSuccess('تم حفظ إعدادات $connectionType بنجاح!');
+      // التحقق من نجاح الحفظ
+      bool saveVerification = await _verifySavedConfiguration();
 
-      await Future.delayed(const Duration(milliseconds: 1500));
-      Get.offAllNamed(AppRoutes.login);
+      if (saveVerification) {
+        EasyLoading.showSuccess('تم حفظ إعدادات $connectionType بنجاح!\nالبيانات محفوظة بشكل دائم');
+
+        await Future.delayed(const Duration(milliseconds: 1500));
+        Get.offAllNamed(AppRoutes.login);
+      } else {
+        EasyLoading.showError('فشل في التحقق من حفظ البيانات، حاول مرة أخرى');
+      }
     } catch (e) {
-      EasyLoading.showError('حدث خطأ أثناء الحفظ');
+      EasyLoading.showError('حدث خطأ أثناء الحفظ: ${e.toString()}');
+    }
+  }
+
+  // التحقق من نجاح حفظ الإعدادات
+  Future<bool> _verifySavedConfiguration() async {
+    try {
+      String savedConnectionType = Preferences.getString('connection_type');
+      String savedMac = Preferences.getString('printer_mac_address');
+      String savedDeviceName = Preferences.getString('device_name');
+      bool isConfigSaved = Preferences.getBoolean('configuration_saved');
+
+      return savedConnectionType == connectionType &&
+          savedMac == macAddressController.text &&
+          savedDeviceName == deviceNameController.text &&
+          isConfigSaved;
+    } catch (e) {
+      return false;
     }
   }
 
@@ -665,10 +829,24 @@ class ConfigurationController extends GetxController {
   }
 
   // Get current network status info
+  // String getNetworkStatusInfo() {
+  //   if (connectionType == 'LAN') {
+  //     return 'الشبكة المحلية: ${currentNetworkName ?? "غير معروف"}\n'
+  //         'IP الحالي: ${currentNetworkIP ?? "غير متصل"}\n'
+  //         'الشبكة الفرعية: ${currentSubnet ?? "غير محددة"}';
+  //   } else {
+  //     return 'الشبكة الواسعة (WAN)\n'
+  //         'يتطلب IP مباشر للطابعة\n'
+  //         'IP الطابعة: ${ipAddressController.text.isEmpty ? "غير محدد" : ipAddressController.text}';
+  //   }
+  // }
+
+  // في NetworkInfoCard - تحديث دالة getNetworkStatusInfo في الكونترولر
   String getNetworkStatusInfo() {
     if (connectionType == 'LAN') {
-      return 'الشبكة المحلية: ${currentNetworkName ?? "غير معروف"}\n'
+      return 'اسم الشبكة: ${currentNetworkName ?? "غير معروف"}\n'
           'IP الحالي: ${currentNetworkIP ?? "غير متصل"}\n'
+          'البوابة: ${currentGateway ?? "غير محددة"}\n'
           'الشبكة الفرعية: ${currentSubnet ?? "غير محددة"}';
     } else {
       return 'الشبكة الواسعة (WAN)\n'
@@ -677,275 +855,3 @@ class ConfigurationController extends GetxController {
     }
   }
 }
-
-// Network Device Model
-class NetworkDevice {
-  final String ip;
-  final String name;
-  final String macAddress;
-  final int port;
-  final bool isOnline;
-
-  NetworkDevice({
-    required this.ip,
-    required this.name,
-    required this.macAddress,
-    required this.port,
-    required this.isOnline,
-  });
-
-  Map<String, dynamic> toJson() => {
-        'ip': ip,
-        'name': name,
-        'macAddress': macAddress,
-        'port': port,
-        'isOnline': isOnline,
-      };
-
-  factory NetworkDevice.fromJson(Map<String, dynamic> json) => NetworkDevice(
-        ip: json['ip'] ?? '',
-        name: json['name'] ?? '',
-        macAddress: json['macAddress'] ?? '',
-        port: json['port'] ?? 9100,
-        isOnline: json['isOnline'] ?? false,
-      );
-}
-
-
-
-
-// // lib/pages/configuration/configuration_controller.dart
-
-// import 'dart:io';
-// import 'package:auth_app/routes/app_routes.dart';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import 'package:auth_app/classes/shared_preference.dart';
-// import 'package:flutter_easyloading/flutter_easyloading.dart';
-
-// class ConfigurationController extends GetxController {
-//   // Text Controllers
-//   final TextEditingController macAddressController = TextEditingController();
-//   final TextEditingController deviceNameController = TextEditingController();
-
-//   // Configuration Variables
-//   String connectionType = 'LAN';
-//   String connectionStatus = '';
-//   bool isConnected = false;
-//   bool isLoading = false;
-
-//   @override
-//   void onInit() {
-//     super.onInit();
-//     loadSavedConfiguration();
-//   }
-
-//   @override
-//   void onClose() {
-//     macAddressController.dispose();
-//     deviceNameController.dispose();
-//     super.onClose();
-//   }
-
-//   // Set Connection Type
-//   void setConnectionType(String? type) {
-//     if (type != null) {
-//       connectionType = type;
-//       update();
-//     }
-//   }
-
-//   // MAC Address Change Handler
-//   void onMacAddressChanged(String value) {
-//     // Format MAC address automatically
-//     String formatted = formatMacAddress(value);
-//     if (formatted != value) {
-//       macAddressController.value = TextEditingValue(
-//         text: formatted,
-//         selection: TextSelection.collapsed(offset: formatted.length),
-//       );
-//     }
-
-//     // Auto-fill device name based on MAC
-//     if (formatted.length == 17) {
-//       autoFillDeviceName(formatted);
-//     }
-//   }
-
-//   // Format MAC Address (XX:XX:XX:XX:XX:XX)
-//   String formatMacAddress(String input) {
-//     // Remove all non-hex characters
-//     String cleaned = input.replaceAll(RegExp(r'[^0-9A-Fa-f]'), '');
-
-//     // Limit to 12 characters
-//     if (cleaned.length > 12) {
-//       cleaned = cleaned.substring(0, 12);
-//     }
-
-//     // Add colons every 2 characters
-//     String formatted = '';
-//     for (int i = 0; i < cleaned.length; i += 2) {
-//       if (i > 0) formatted += ':';
-//       formatted += cleaned.substring(i, i + 2 > cleaned.length ? cleaned.length : i + 2);
-//     }
-
-//     return formatted.toUpperCase();
-//   }
-
-//   // Auto-fill device name based on MAC address
-//   void autoFillDeviceName(String macAddress) {
-//     // Simple logic to generate device name from MAC
-//     String deviceName = 'Printer_${macAddress.replaceAll(':', '').substring(6)}';
-//     deviceNameController.text = deviceName;
-//     update();
-//   }
-
-//   // Auto-detect printer on network
-//   Future<void> autoDetectPrinter() async {
-//     isLoading = true;
-//     update();
-
-//     EasyLoading.show(status: 'جاري البحث عن الطابعات...');
-
-//     try {
-//       // Simulate network scanning
-//       await Future.delayed(const Duration(seconds: 3));
-
-//       // Mock discovered printers
-//       List<Map<String, String>> discoveredPrinters = [
-//         {'mac': '00:11:22:33:44:55', 'name': 'HP_Printer_001'},
-//         {'mac': 'AA:BB:CC:DD:EE:FF', 'name': 'Canon_Printer_002'},
-//       ];
-
-//       if (discoveredPrinters.isNotEmpty) {
-//         // For demo, select the first one
-//         macAddressController.text = discoveredPrinters[0]['mac']!;
-//         deviceNameController.text = discoveredPrinters[0]['name']!;
-
-//         connectionStatus = 'تم العثور على ${discoveredPrinters.length} طابعة';
-//         isConnected = true;
-
-//         EasyLoading.showSuccess('تم العثور على الطابعات بنجاح!');
-//       } else {
-//         connectionStatus = 'لم يتم العثور على أي طابعة';
-//         isConnected = false;
-//         EasyLoading.showError('لم يتم العثور على أي طابعة');
-//       }
-//     } catch (e) {
-//       connectionStatus = 'خطأ في البحث: ${e.toString()}';
-//       isConnected = false;
-//       EasyLoading.showError('حدث خطأ أثناء البحث');
-//     } finally {
-//       isLoading = false;
-//       update();
-//     }
-//   }
-
-//   // Test connection to printer
-//   Future<void> testConnection() async {
-//     if (macAddressController.text.isEmpty) {
-//       EasyLoading.showError('يرجى إدخال عنوان MAC للطابعة');
-//       return;
-//     }
-
-//     EasyLoading.show(status: 'جاري اختبار الاتصال...');
-
-//     try {
-//       // Simulate connection test
-//       await Future.delayed(const Duration(seconds: 2));
-
-//       // Mock connection test result
-//       bool testResult = await _performConnectionTest();
-
-//       if (testResult) {
-//         connectionStatus = 'تم الاتصال بالطابعة بنجاح';
-//         isConnected = true;
-//         EasyLoading.showSuccess('تم الاتصال بنجاح!');
-//       } else {
-//         connectionStatus = 'فشل في الاتصال بالطابعة';
-//         isConnected = false;
-//         EasyLoading.showError('فشل في الاتصال');
-//       }
-//     } catch (e) {
-//       connectionStatus = 'خطأ في الاختبار: ${e.toString()}';
-//       isConnected = false;
-//       EasyLoading.showError('حدث خطأ أثناء الاختبار');
-//     }
-
-//     update();
-//   }
-
-//   // Perform actual connection test (mock implementation)
-//   Future<bool> _performConnectionTest() async {
-//     // Here you would implement actual network testing
-//     // For now, we'll simulate success/failure
-//     return macAddressController.text.isNotEmpty && deviceNameController.text.isNotEmpty;
-//   }
-
-//   // Save configuration to SharedPreferences
-//   Future<void> saveConfiguration() async {
-//     if (macAddressController.text.isEmpty || deviceNameController.text.isEmpty) {
-//       EasyLoading.showError('يرجى ملء جميع الحقول المطلوبة');
-//       return;
-//     }
-
-//     if (!_isValidMacAddress(macAddressController.text)) {
-//       EasyLoading.showError('عنوان MAC غير صحيح');
-//       return;
-//     }
-
-//     EasyLoading.show(status: 'جاري حفظ الإعدادات...');
-
-//     try {
-//       // Save to SharedPreferences
-//       await Preferences.setString('connection_type', connectionType);
-//       await Preferences.setString('printer_mac_address', macAddressController.text);
-//       await Preferences.setString('device_name', deviceNameController.text);
-//       await Preferences.setBoolean('configuration_saved', true);
-
-//       EasyLoading.showSuccess('تم حفظ الإعدادات بنجاح!');
-
-//       // Navigate back or to home
-//       await Future.delayed(const Duration(milliseconds: 1500));
-
-//       Get.offAllNamed(AppRoutes.login);
-
-//       // Get.back();
-//     } catch (e) {
-//       EasyLoading.showError('حدث خطأ أثناء الحفظ');
-//     }
-//   }
-
-//   // Load saved configuration
-//   void loadSavedConfiguration() {
-//     connectionType = Preferences.getString('connection_type');
-//     if (connectionType.isEmpty) connectionType = 'LAN';
-
-//     macAddressController.text = Preferences.getString('printer_mac_address');
-//     deviceNameController.text = Preferences.getString('device_name');
-
-//     update();
-//   }
-
-//   // Validate MAC address format
-//   bool _isValidMacAddress(String mac) {
-//     RegExp macRegex = RegExp(
-//         r'^[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}$');
-//     return macRegex.hasMatch(mac);
-//   }
-
-//   // Get network interface information (for advanced users)
-//   Future<void> getNetworkInfo() async {
-//     try {
-//       List<NetworkInterface> interfaces = await NetworkInterface.list();
-//       for (NetworkInterface interface in interfaces) {
-//         print('Interface: ${interface.name}');
-//         for (InternetAddress address in interface.addresses) {
-//           print('Address: ${address.address}');
-//         }
-//       }
-//     } catch (e) {
-//       print('Error getting network info: $e');
-//     }
-//   }
-// }
