@@ -175,7 +175,7 @@ class ConfigurationController extends GetxController {
       EasyLoading.showError('حدث خطأ أثناء البحث');
       print('Auto detect error: $e');
     } finally {
-      timeoutTimer?.cancel();
+      timeoutTimer.cancel();
       _stopScanning();
     }
   }
