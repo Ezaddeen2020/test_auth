@@ -62,6 +62,11 @@ class LoginPage extends StatelessWidget {
                       letterSpacing: -0.5,
                     ),
                   ),
+                  ElevatedButton(
+                      onPressed: () {
+                        Get.toNamed('/configuration');
+                      },
+                      child: const Text('go to configration')),
 
                   const SizedBox(height: 12),
 

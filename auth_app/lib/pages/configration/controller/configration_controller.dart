@@ -40,8 +40,11 @@ class ConfigurationController extends GetxController {
   @override
   void onInit() {
     super.onInit();
+    resetScanningState(); // إضافة هذه السطر
+
     loadSavedConfiguration();
     _initializeNetworkInfo();
+
     // getNetworkStatusInfo();
   }
 
@@ -129,10 +132,18 @@ class ConfigurationController extends GetxController {
     }
   }
 
-  // استبدال المحتوى من السطر 90 إلى 120
   Future<void> autoDetectPrinter() async {
     if (!await _requestPermissions()) {
       return;
+    }
+
+    // التحقق من حالة الشبكة أولاً
+    if (connectionType == 'LAN') {
+      await _initializeNetworkInfo();
+      if (currentNetworkIP == null || currentNetworkIP!.isEmpty) {
+        EasyLoading.showError('غير متصل بالشبكة المحلية. تحقق من اتصال WiFi');
+        return;
+      }
     }
 
     isLoading = true;
@@ -142,14 +153,10 @@ class ConfigurationController extends GetxController {
 
     EasyLoading.show(status: 'بدء البحث عن الطابعات...');
 
-    // إضافة timeout للعملية كاملة
-    Timer timeoutTimer = Timer(const Duration(minutes: 2), () {
+    Timer? timeoutTimer = Timer(const Duration(minutes: 2), () {
       if (isScanning) {
-        isScanning = false;
-        isLoading = false;
-        EasyLoading.dismiss();
+        _stopScanning();
         EasyLoading.showInfo('انتهت مهلة البحث. جرب مرة أخرى.');
-        update();
       }
     });
 
@@ -166,63 +173,95 @@ class ConfigurationController extends GetxController {
       connectionStatus = 'خطأ في البحث: ${e.toString()}';
       isConnected = false;
       EasyLoading.showError('حدث خطأ أثناء البحث');
+      print('Auto detect error: $e');
     } finally {
-      timeoutTimer.cancel(); // إلغاء المؤقت
-      isLoading = false;
-      isScanning = false;
-      EasyLoading.dismiss();
-      update();
+      timeoutTimer?.cancel();
+      _stopScanning();
     }
   }
 
-  // استبدال المحتوى الكامل للدالة:
-  // استبدال دالة _scanLocalNetwork بالكامل
+  void _stopScanning() {
+    isLoading = false;
+    isScanning = false;
+    EasyLoading.dismiss();
+    update();
+  }
+
   Future<void> _scanLocalNetwork() async {
-    EasyLoading.show(status: 'جاري البحث في الشبكة المحلية...');
-
-    await _initializeNetworkInfo();
-
-    if (currentNetworkIP == null) {
-      throw Exception('غير متصل بالشبكة المحلية');
-    }
-
-    String subnet = customSubnetController.text.isNotEmpty
-        ? customSubnetController.text
-        : _getSubnet(currentNetworkIP!);
-
     try {
+      EasyLoading.show(status: 'جاري البحث في الشبكة المحلية...');
+
+      String subnet = customSubnetController.text.isNotEmpty
+          ? customSubnetController.text.trim()
+          : _getSubnet(currentNetworkIP!);
+
+      // التحقق من صحة الشبكة الفرعية
+      if (!_isValidSubnet(subnet)) {
+        throw Exception('الشبكة الفرعية غير صحيحة: $subnet');
+      }
+
       List<NetworkDevice> foundDevices = [];
 
-      // البحث المتقدم من NetworkService
-      EasyLoading.show(status: 'البحث المتقدم...');
-      List<NetworkDevice> advancedDevices = await NetworkService.discoverPrintersAdvanced();
-      foundDevices.addAll(advancedDevices);
+      // البحث المتقدم مع معالجة الأخطاء
+      try {
+        EasyLoading.show(status: 'البحث المتقدم...');
+        List<NetworkDevice> advancedDevices =
+            await NetworkService.discoverPrintersAdvanced().timeout(const Duration(seconds: 30));
+        if (advancedDevices.isNotEmpty) {
+          foundDevices.addAll(advancedDevices);
+        }
+      } catch (e) {
+        print('Advanced search failed: $e');
+      }
 
       // البحث التقليدي مع تحسينات
       List<int> printerPorts = [9100, 631, 515];
 
       for (int port in printerPorts) {
-        EasyLoading.show(status: 'فحص المنفذ $port...');
+        if (!isScanning) break; // إيقاف البحث إذا تم الإلغاء
 
-        List<NetworkDevice> portDevices = await _scanPortWithEnhancement(subnet, port);
-        foundDevices.addAll(portDevices);
+        try {
+          EasyLoading.show(status: 'فحص المنفذ $port...');
+          List<NetworkDevice> portDevices =
+              await _scanPortWithEnhancement(subnet, port).timeout(const Duration(seconds: 20));
+          foundDevices.addAll(portDevices);
+        } catch (e) {
+          print('Port $port scan failed: $e');
+          continue;
+        }
       }
 
       // فحص IPs محددة شائعة للطابعات
-      List<String> commonPrinterIPs = [
-        '$subnet.100',
-        '$subnet.101',
-        '$subnet.200',
-        '$subnet.201',
-        '$subnet.10',
-        '$subnet.20',
-        '$subnet.30',
-        '$subnet.50'
-      ];
+      await _scanCommonPrinterIPs(subnet, foundDevices);
 
-      EasyLoading.show(status: 'فحص عناوين IP الشائعة...');
+      discoveredDevices = foundDevices;
+      _processDiscoveredDevices();
+    } catch (e) {
+      print('Error in enhanced scan: $e');
+      // العودة للطريقة التقليدية عند الفشل
+      String subnet = _getSubnet(currentNetworkIP ?? '192.168.1.1');
+      await _fallbackScan(subnet);
+    }
+  }
 
-      for (String ip in commonPrinterIPs) {
+  Future<void> _scanCommonPrinterIPs(String subnet, List<NetworkDevice> foundDevices) async {
+    List<String> commonPrinterIPs = [
+      '$subnet.100',
+      '$subnet.101',
+      '$subnet.200',
+      '$subnet.201',
+      '$subnet.10',
+      '$subnet.20',
+      '$subnet.30',
+      '$subnet.50'
+    ];
+
+    EasyLoading.show(status: 'فحص عناوين IP الشائعة...');
+
+    for (String ip in commonPrinterIPs) {
+      if (!isScanning) break;
+
+      try {
         if (await _testSpecificIP(ip)) {
           NetworkDevice device = NetworkDevice(
             ip: ip,
@@ -233,15 +272,23 @@ class ConfigurationController extends GetxController {
           );
           foundDevices.add(device);
         }
+      } catch (e) {
+        print('Failed to test IP $ip: $e');
+        continue;
       }
-
-      discoveredDevices = foundDevices;
-      _processDiscoveredDevices();
-    } catch (e) {
-      print('Error in enhanced scan: $e');
-      // العودة للطريقة التقليدية عند الفشل
-      await _fallbackScan(subnet);
     }
+  }
+
+  bool _isValidSubnet(String subnet) {
+    RegExp subnetRegex = RegExp(r'^\d{1,3}\.\d{1,3}\.\d{1,3}$');
+    if (!subnetRegex.hasMatch(subnet)) return false;
+
+    List<String> parts = subnet.split('.');
+    for (String part in parts) {
+      int? num = int.tryParse(part);
+      if (num == null || num < 0 || num > 255) return false;
+    }
+    return true;
   }
 
   // فحص محسن للمنفذ
@@ -249,7 +296,7 @@ class ConfigurationController extends GetxController {
     List<NetworkDevice> devices = [];
 
     try {
-      final stream = NetworkAnalyzer.discover2(subnet, port, timeout: Duration(seconds: 4));
+      final stream = NetworkAnalyzer.discover2(subnet, port, timeout: const Duration(seconds: 4));
 
       await for (NetworkAddress addr in stream) {
         if (addr.exists) {
@@ -277,16 +324,17 @@ class ConfigurationController extends GetxController {
     return devices;
   }
 
-  // اختبار IP محدد
   Future<bool> _testSpecificIP(String ip) async {
     try {
-      // اختبار عدة منافذ
+      // التحقق من صحة IP أولاً
+      if (!_isValidIP(ip)) return false;
+
       List<int> testPorts = [9100, 631, 515, 80];
 
       for (int port in testPorts) {
         try {
-          Socket socket = await Socket.connect(ip, port, timeout: Duration(seconds: 2));
-          socket.close();
+          Socket socket = await Socket.connect(ip, port, timeout: const Duration(seconds: 2));
+          await socket.close();
           return true;
         } catch (e) {
           continue;
@@ -296,8 +344,21 @@ class ConfigurationController extends GetxController {
       // إذا فشل Socket، جرب ping
       return await _pingDevice(ip);
     } catch (e) {
+      print('Error testing IP $ip: $e');
       return false;
     }
+  }
+
+  bool _isValidIP(String ip) {
+    RegExp ipRegex = RegExp(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$');
+    if (!ipRegex.hasMatch(ip)) return false;
+
+    List<String> parts = ip.split('.');
+    for (String part in parts) {
+      int? num = int.tryParse(part);
+      if (num == null || num < 0 || num > 255) return false;
+    }
+    return true;
   }
 
   // البحث الاحتياطي
@@ -698,18 +759,21 @@ class ConfigurationController extends GetxController {
     update();
   }
 
-  // Ping device to test connectivity
   Future<bool> _pingDevice(String ip) async {
     try {
-      final result = await Process.run('ping', ['-c', '1', '-W', '3', ip]);
+      if (!_isValidIP(ip)) return false;
+
+      final result =
+          await Process.run('ping', ['-c', '1', '-W', '3', ip]).timeout(const Duration(seconds: 5));
+
       return result.exitCode == 0;
     } catch (e) {
       print('Error pinging $ip: $e');
 
       // Fallback: try socket connection
       try {
-        Socket socket = await Socket.connect(ip, 9100, timeout: const Duration(seconds: 3));
-        socket.close();
+        Socket socket = await Socket.connect(ip, 9100, timeout: const Duration(seconds: 2));
+        await socket.close();
         return true;
       } catch (e) {
         return false;
@@ -785,6 +849,16 @@ class ConfigurationController extends GetxController {
     }
   }
 
+  void resetScanningState() {
+    isScanning = false;
+    isLoading = false;
+    discoveredDevices.clear();
+    connectionStatus = connectionType == 'LAN'
+        ? 'سيتم البحث في الشبكة المحلية'
+        : 'سيتم البحث عبر الإنترنت (يتطلب IP محدد)';
+    update();
+  }
+
   // Load saved configuration
   void loadSavedConfiguration() {
     connectionType = Preferences.getString('connection_type');
@@ -827,19 +901,6 @@ class ConfigurationController extends GetxController {
     discoveredDevices.clear();
     update();
   }
-
-  // Get current network status info
-  // String getNetworkStatusInfo() {
-  //   if (connectionType == 'LAN') {
-  //     return 'الشبكة المحلية: ${currentNetworkName ?? "غير معروف"}\n'
-  //         'IP الحالي: ${currentNetworkIP ?? "غير متصل"}\n'
-  //         'الشبكة الفرعية: ${currentSubnet ?? "غير محددة"}';
-  //   } else {
-  //     return 'الشبكة الواسعة (WAN)\n'
-  //         'يتطلب IP مباشر للطابعة\n'
-  //         'IP الطابعة: ${ipAddressController.text.isEmpty ? "غير محدد" : ipAddressController.text}';
-  //   }
-  // }
 
   // في NetworkInfoCard - تحديث دالة getNetworkStatusInfo في الكونترولر
   String getNetworkStatusInfo() {

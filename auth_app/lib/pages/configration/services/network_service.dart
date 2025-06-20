@@ -94,65 +94,75 @@ class NetworkService {
       if (!await requestPermissions()) {
         throw Exception('لم يتم منح الأذونات المطلوبة');
       }
-      ;
 
       final networkInfo = await getNetworkInfo();
       final subnet = _getSubnet(networkInfo['wifiIP']);
 
-      if (subnet != null) {
-        // منافذ الطابعات الشائعة
-        List<int> printerPorts = [9100, 631, 515, 721, 80, 443];
+      if (subnet == null || subnet.isEmpty) {
+        throw Exception('لا يمكن تحديد الشبكة الفرعية');
+      }
 
-        for (int port in printerPorts) {
-          try {
-            final stream = NetworkAnalyzer.discover2(subnet, port, timeout: Duration(seconds: 3));
+      // منافذ الطابعات الشائعة
+      List<int> printerPorts = [9100, 631, 515, 721];
 
-            await for (NetworkAddress addr in stream) {
-              if (addr.exists) {
-                // التحقق من أن الجهاز طابعة فعلاً
-                bool isPrinter = await _verifyPrinterDevice(addr.ip, port);
+      for (int port in printerPorts) {
+        try {
+          final stream = NetworkAnalyzer.discover2(subnet, port, timeout: Duration(seconds: 3));
 
-                if (isPrinter) {
-                  String? deviceName = await _getDeviceName(addr.ip);
-                  String? macAddress = await _getMacAddress(addr.ip);
+          await for (NetworkAddress addr in stream) {
+            if (addr.exists) {
+              // التحقق من أن الجهاز طابعة فعلاً
+              bool isPrinter = await _verifyPrinterDevice(addr.ip, port);
 
+              if (isPrinter) {
+                String deviceName = 'Printer_${addr.ip.split('.').last}';
+                String macAddress = _generateMacAddress(addr.ip);
+
+                // تجنب الأجهزة المكررة
+                bool alreadyExists = devices.any((device) => device.ip == addr.ip);
+                if (!alreadyExists) {
                   devices.add(NetworkDevice(
                     ip: addr.ip,
-                    name: deviceName ?? 'Printer_${addr.ip.split('.').last}',
-                    macAddress: macAddress ?? _generateMacAddress(addr.ip),
+                    name: deviceName,
+                    macAddress: macAddress,
                     isOnline: true,
                     port: port,
                   ));
                 }
               }
             }
-          } catch (e) {
-            print('Error scanning port $port: $e');
-            continue;
           }
+        } catch (e) {
+          print('Error scanning port $port: $e');
+          continue;
         }
       }
     } catch (e) {
       print('Error in advanced discovery: $e');
+      rethrow;
     }
 
     return devices;
   }
 
-  // التحقق من أن الجهاز طابعة
   static Future<bool> _verifyPrinterDevice(String ip, int port) async {
     try {
       final socket = await Socket.connect(ip, port, timeout: Duration(seconds: 2));
 
       // إرسال أمر بسيط للتحقق من استجابة الطابعة
       if (port == 9100) {
-        socket.write('\x1B@'); // ESC @ - Reset command
-        await Future.delayed(Duration(milliseconds: 500));
+        try {
+          socket.write('\x1B@'); // ESC @ - Reset command
+          await Future.delayed(Duration(milliseconds: 300));
+        } catch (e) {
+          print('Error sending printer command: $e');
+        }
       }
 
-      socket.close();
+      await socket.close();
       return true;
     } catch (e) {
+      print('Error verifying printer device $ip:$port: $e');
       return false;
     }
   }
