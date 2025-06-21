@@ -6,6 +6,7 @@ class AuthMiddleware extends GetMiddleware {
   @override
   RouteSettings? redirect(String? route) {
     final isLogin = Preferences.getBoolean(Preferences.isLogin);
-    return isLogin ? null : const RouteSettings(name: '/login');
+    // return isLogin ? null : const RouteSettings(name: '/login');
+    return isLogin ? null : const RouteSettings(name: '/configuration');
   }
 }

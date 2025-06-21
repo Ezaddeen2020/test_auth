@@ -17,6 +17,5 @@ class AppRoutes {
     GetPage(name: signup, page: () => SignUpPage()),
     GetPage(name: home, page: () => HomePage()),
     GetPage(name: configuration, page: () => const ConfigurationPage()),
-    // GetPage(name: configuration, page: () =>  NetworkIPPage()),
   ];
 }
