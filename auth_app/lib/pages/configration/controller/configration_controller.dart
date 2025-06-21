@@ -1,3 +1,1035 @@
+import 'dart:async';
+import 'dart:io';
+import 'package:auth_app/models/network_device.dart';
+import 'package:auth_app/pages/configration/services/network_service.dart';
+import 'package:auth_app/routes/app_routes.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:flutter_easyloading/flutter_easyloading.dart';
+
+class ConfigurationController extends GetxController {
+  // Controllers
+  final macAddressController = TextEditingController();
+  final deviceNameController = TextEditingController();
+  final ipAddressController = TextEditingController();
+  final customSubnetController = TextEditingController();
+
+  // State
+  String connectionType = 'LAN';
+  String connectionStatus = '';
+  bool isConnected = false;
+  bool isLoading = false;
+  bool isScanning = false;
+
+  // Network Info
+  String? currentNetworkIP, currentNetworkName, currentSubnet, currentGateway;
+  List<NetworkDevice> discoveredDevices = [];
+
+  // Control
+  Timer? _operationTimer;
+  bool _isOperationActive = false;
+
+  @override
+  void onInit() {
+    super.onInit();
+    print('🚀 ConfigurationController initialized');
+    _initialize();
+  }
+
+  @override
+  void onClose() {
+    print('🛑 ConfigurationController disposing...');
+    _cleanup();
+    super.onClose();
+  }
+
+  /// التهيئة الآمنة
+  Future<void> _initialize() async {
+    try {
+      await _safeCancel();
+      _resetState();
+      _loadConfig();
+      await _initNetwork();
+      print('✅ ConfigurationController initialized successfully');
+    } catch (e) {
+      print('❌ Error during initialization: $e');
+      _setDefaultState();
+    }
+  }
+
+  /// التنظيف الآمن
+  Future<void> _cleanup() async {
+    try {
+      await _safeCancel();
+      macAddressController.dispose();
+      deviceNameController.dispose();
+      ipAddressController.dispose();
+      customSubnetController.dispose();
+      print('✅ ConfigurationController cleaned up successfully');
+    } catch (e) {
+      print('⚠️ Error during cleanup: $e');
+    }
+  }
+
+  /// إلغاء العمليات بطريقة آمنة
+  Future<void> _safeCancel() async {
+    if (_isOperationActive) {
+      print('🛑 Cancelling active operations...');
+      _isOperationActive = false;
+
+      // إلغاء Timer
+      _operationTimer?.cancel();
+      _operationTimer = null;
+
+      // إلغاء عمليات الشبكة
+      try {
+        await NetworkService.cancelOperations();
+      } catch (e) {
+        print('⚠️ Error cancelling network operations: $e');
+      }
+
+      // انتظار قصير للتأكد من اكتمال الإلغاء
+      await Future.delayed(const Duration(milliseconds: 200));
+    }
+  }
+
+  /// إعادة تعيين الحالة
+  void _resetState() {
+    isScanning = isLoading = isConnected = false;
+    discoveredDevices.clear();
+    connectionStatus = _getStatusMessage();
+    update();
+  }
+
+  /// تعيين حالة افتراضية
+  void _setDefaultState() {
+    currentNetworkIP = 'Not Connected';
+    currentNetworkName = 'Unknown Network';
+    currentGateway = 'Unknown';
+    currentSubnet = '192.168.1';
+    customSubnetController.text = currentSubnet!;
+    _resetState();
+  }
+
+  /// رسالة الحالة
+  String _getStatusMessage() => connectionType == 'LAN'
+      ? 'سيتم البحث في الشبكة المحلية'
+      : 'سيتم البحث عبر الإنترنت (يتطلب IP محدد)';
+
+  /// تهيئة الشبكة
+  Future<void> _initNetwork() async {
+    try {
+      print('🌐 Initializing network info...');
+      final info = await NetworkService.getNetworkInfo();
+
+      currentNetworkIP = info['wifiIP'];
+      currentNetworkName = info['wifiName'];
+      currentGateway = info['wifiGatewayIP'];
+      currentSubnet = _getSubnet(currentNetworkIP ?? '');
+      customSubnetController.text = currentSubnet ?? '192.168.1';
+
+      print('✅ Network initialized: IP=${currentNetworkIP}, Subnet=${currentSubnet}');
+      update();
+    } catch (e) {
+      print('⚠️ Error initializing network: $e');
+      _setDefaultState();
+    }
+  }
+
+  /// تغيير نوع الاتصال
+  void setConnectionType(String? type) {
+    if (type != null && type != connectionType) {
+      print('🔄 Changing connection type to: $type');
+
+      // إلغاء العمليات الحالية
+      _safeCancel();
+
+      connectionType = type;
+      discoveredDevices.clear();
+      connectionStatus = _getStatusMessage();
+      _updateUI();
+      _showInfo(type);
+      update();
+    }
+  }
+
+  /// تحديث الواجهة
+  void _updateUI() {
+    customSubnetController.text = connectionType == 'LAN' ? (currentSubnet ?? '192.168.1') : '';
+  }
+
+  /// عرض المعلومات
+  void _showInfo(String type) {
+    final message = type == 'LAN'
+        ? 'تم اختيار الشبكة المحلية\nسيتم البحث عن الطابعات في نفس الشبكة'
+        : 'تم اختيار الشبكة الواسعة\nيجب إدخال IP الطابعة يدوياً';
+
+    Get.snackbar('نوع الاتصال', message,
+        snackPosition: SnackPosition.TOP,
+        backgroundColor: Colors.blue.withOpacity(0.8),
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3));
+  }
+
+  /// البحث التلقائي المحسن
+  Future<void> autoDetectPrinter() async {
+    // التحقق من حالة العملية
+    if (_isOperationActive) {
+      print('⚠️ Operation already active, cancelling first...');
+      await _safeCancel();
+    }
+
+    print('🔍 Starting auto detect printer...');
+
+    // التحقق من الأذونات
+    if (!await _requestPermissions()) {
+      print('❌ Permissions not granted');
+      return;
+    }
+
+    _startOperation();
+
+    try {
+      if (connectionType == 'LAN') {
+        await _scanLANSafely();
+      } else {
+        await _handleWANSafely();
+      }
+    } catch (e) {
+      print('❌ Auto detect error: $e');
+      _handleError(e);
+    } finally {
+      _stopOperation();
+    }
+  }
+
+  /// بدء العملية
+  void _startOperation() {
+    _isOperationActive = true;
+    isLoading = isScanning = true;
+    discoveredDevices.clear();
+    update();
+
+    EasyLoading.show(status: 'بدء البحث عن الطابعات...');
+
+    // إعداد timeout آمن
+    _operationTimer = Timer(const Duration(seconds: 60), () {
+      if (_isOperationActive) {
+        print('⏰ Operation timeout reached');
+        _stopOperation();
+        EasyLoading.showInfo('انتهت مهلة البحث');
+      }
+    });
+  }
+
+  /// إيقاف العملية
+  void _stopOperation() {
+    _isOperationActive = false;
+    isLoading = isScanning = false;
+    _operationTimer?.cancel();
+    _operationTimer = null;
+    EasyLoading.dismiss();
+    update();
+    print('✅ Operation stopped');
+  }
+
+  /// معالجة الأخطاء
+  void _handleError(dynamic error) {
+    connectionStatus = 'خطأ في البحث';
+    isConnected = false;
+
+    // عرض رسالة خطأ مناسبة
+    if (error.toString().contains('SocketException')) {
+      EasyLoading.showError('مشكلة في الاتصال بالشبكة');
+    } else if (error.toString().contains('TimeoutException')) {
+      EasyLoading.showError('انتهت مهلة البحث');
+    } else {
+      EasyLoading.showError('حدث خطأ أثناء البحث');
+    }
+
+    print('❌ Error handled: $error');
+    update();
+  }
+
+  /// البحث الآمن في الشبكة المحلية
+  Future<void> _scanLANSafely() async {
+    if (!_isOperationActive) return;
+
+    print('🏠 Starting LAN scan...');
+
+    // التأكد من معلومات الشبكة
+    await _initNetwork();
+    if (currentNetworkIP == null || currentNetworkIP == 'Not Connected') {
+      throw Exception('غير متصل بالشبكة المحلية');
+    }
+
+    EasyLoading.show(status: 'البحث في الشبكة المحلية...');
+
+    try {
+      // البحث المتقدم مع timeout محدود
+      if (_isOperationActive) {
+        print('🔍 Starting advanced discovery...');
+        final devices =
+            await NetworkService.discoverPrintersAdvanced().timeout(const Duration(seconds: 30));
+
+        if (_isOperationActive) {
+          discoveredDevices.addAll(devices);
+          print('📱 Found ${devices.length} devices from advanced discovery');
+        }
+      }
+
+      // إذا لم نجد أي أجهزة، نجرب البحث اليدوي
+      if (_isOperationActive && discoveredDevices.isEmpty) {
+        print('🔎 No devices found, trying manual scan...');
+        EasyLoading.show(status: 'البحث اليدوي...');
+        await _manualScan();
+      }
+
+      if (_isOperationActive) {
+        _processResults();
+      }
+    } catch (e) {
+      print('⚠️ LAN scan error: $e');
+      if (_isOperationActive) {
+        // في حالة الخطأ، نجرب البحث اليدوي كبديل
+        try {
+          EasyLoading.show(status: 'البحث البديل...');
+          await _manualScan();
+          if (_isOperationActive) _processResults();
+        } catch (e2) {
+          print('❌ Fallback scan also failed: $e2');
+          rethrow;
+        }
+      }
+    }
+  }
+
+  /// البحث اليدوي الآمن
+  Future<void> _manualScan() async {
+    if (!_isOperationActive) return;
+
+    final subnet = customSubnetController.text.isNotEmpty
+        ? customSubnetController.text.trim()
+        : _getSubnet(currentNetworkIP!);
+
+    // فحص IPs شائعة فقط لتجنب الأخطاء
+    final commonIPs = ['$subnet.100', '$subnet.101', '$subnet.200', '$subnet.10'];
+
+    print('🎯 Manual scan for ${commonIPs.length} common IPs...');
+
+    for (int i = 0; i < commonIPs.length && _isOperationActive; i++) {
+      final ip = commonIPs[i];
+
+      try {
+        if (await NetworkService.pingDevice(ip)) {
+          print('✅ Manual scan found device at: $ip');
+          discoveredDevices.add(NetworkDevice(
+            ip: ip,
+            name: 'Printer_${ip.split('.').last}',
+            macAddress: _generateMac(ip),
+            port: 9100,
+            isOnline: true,
+          ));
+
+          // إذا وجدنا جهازين، نتوقف
+          if (discoveredDevices.length >= 2) break;
+        }
+      } catch (e) {
+        print('⚠️ Manual scan error for IP $ip: $e');
+        continue;
+      }
+
+      // انتظار قصير لتجنب إرهاق الشبكة
+      if (_isOperationActive && i < commonIPs.length - 1) {
+        await Future.delayed(const Duration(milliseconds: 200));
+      }
+    }
+  }
+
+  /// معالجة WAN الآمنة
+  Future<void> _handleWANSafely() async {
+    if (!_isOperationActive) return;
+
+    print('🌍 Starting WAN connection...');
+    EasyLoading.show(status: 'إعداد الاتصال عبر الإنترنت...');
+
+    if (ipAddressController.text.isEmpty) {
+      EasyLoading.dismiss();
+      await _showIPDialog();
+      if (ipAddressController.text.isEmpty) {
+        connectionStatus = 'يجب إدخال IP للطابعة';
+        EasyLoading.showError(connectionStatus);
+        return;
+      }
+    }
+
+    if (!_isOperationActive) return;
+
+    final testIP = ipAddressController.text.trim();
+    print('🧪 Testing WAN connection to: $testIP');
+    EasyLoading.show(status: 'اختبار الاتصال مع: $testIP');
+
+    try {
+      final isReachable =
+          await NetworkService.pingDevice(testIP).timeout(const Duration(seconds: 10));
+
+      if (_isOperationActive) {
+        if (isReachable) {
+          final device = NetworkDevice(
+            ip: testIP,
+            name: deviceNameController.text.isNotEmpty
+                ? deviceNameController.text
+                : 'WAN_Printer_${testIP.split('.').last}',
+            macAddress: macAddressController.text.isNotEmpty
+                ? macAddressController.text
+                : _generateMac(testIP),
+            port: 9100,
+            isOnline: true,
+          );
+
+          discoveredDevices.add(device);
+          _fillFields(device);
+
+          connectionStatus = 'تم العثور على طابعة WAN';
+          isConnected = true;
+          EasyLoading.showSuccess('تم الاتصال بالطابعة!');
+          print('✅ WAN connection successful');
+        } else {
+          connectionStatus = 'فشل الاتصال بالطابعة';
+          isConnected = false;
+          EasyLoading.showError('فشل الاتصال');
+          print('❌ WAN connection failed');
+        }
+      }
+    } catch (e) {
+      print('❌ WAN connection error: $e');
+      if (_isOperationActive) {
+        connectionStatus = 'خطأ في اختبار WAN';
+        isConnected = false;
+        EasyLoading.showError('فشل في الاتصال');
+      }
+    }
+  }
+
+  /// حوار إدخال IP
+  Future<void> _showIPDialog() async {
+    final controller = TextEditingController(text: ipAddressController.text);
+
+    await Get.dialog(
+      AlertDialog(
+        title: const Text('إدخال IP الطابعة'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('يرجى إدخال عنوان IP للطابعة'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                labelText: 'عنوان IP',
+                hintText: '192.168.1.100',
+                border: OutlineInputBorder(),
+              ),
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('إلغاء')),
+          ElevatedButton(
+            onPressed: () {
+              ipAddressController.text = controller.text.trim();
+              Get.back();
+            },
+            child: const Text('تأكيد'),
+          ),
+        ],
+      ),
+      barrierDismissible: false,
+    );
+  }
+
+  /// معالجة النتائج
+  void _processResults() {
+    if (!_isOperationActive) return;
+
+    if (discoveredDevices.isNotEmpty) {
+      _fillFields(discoveredDevices.first);
+      connectionStatus = 'تم العثور على ${discoveredDevices.length} طابعة';
+      isConnected = true;
+      EasyLoading.showSuccess('تم العثور على ${discoveredDevices.length} طابعة!');
+      print('🎉 Found ${discoveredDevices.length} printers');
+    } else {
+      connectionStatus = 'لم يتم العثور على طابعات';
+      isConnected = false;
+      EasyLoading.showInfo('لم يتم العثور على طابعات');
+      print('😔 No printers found');
+    }
+    update();
+  }
+
+  /// ملء الحقول
+  void _fillFields(NetworkDevice device) {
+    macAddressController.text = device.macAddress;
+    deviceNameController.text = device.name;
+    ipAddressController.text = device.ip;
+    update();
+  }
+
+  /// طلب الأذونات
+  Future<bool> _requestPermissions() async {
+    try {
+      final granted = await NetworkService.requestPermissions();
+      if (!granted) {
+        EasyLoading.showError('يرجى منح الأذونات المطلوبة');
+        print('❌ Permissions denied');
+      }
+      return granted;
+    } catch (e) {
+      print('❌ Permission error: $e');
+      EasyLoading.showError('خطأ في طلب الأذونات');
+      return false;
+    }
+  }
+
+  /// معالج تغيير MAC
+  void onMacAddressChanged(String value) {
+    final formatted = _formatMac(value);
+    if (formatted != value) {
+      macAddressController.value = TextEditingValue(
+        text: formatted,
+        selection: TextSelection.collapsed(offset: formatted.length),
+      );
+    }
+    if (formatted.length == 17) _autoFillName(formatted);
+  }
+
+  /// تنسيق MAC
+  String _formatMac(String input) {
+    final cleaned = input.replaceAll(RegExp(r'[^0-9A-Fa-f]'), '');
+    final limited = cleaned.length > 12 ? cleaned.substring(0, 12) : cleaned;
+
+    String formatted = '';
+    for (int i = 0; i < limited.length; i += 2) {
+      if (i > 0) formatted += ':';
+      formatted += limited.substring(i, (i + 2 > limited.length) ? limited.length : i + 2);
+    }
+    return formatted.toUpperCase();
+  }
+
+  /// ملء الاسم تلقائياً
+  void _autoFillName(String mac) {
+    final prefix = connectionType == 'LAN' ? 'LAN_Printer' : 'WAN_Printer';
+    deviceNameController.text = '${prefix}_${mac.replaceAll(':', '').substring(6)}';
+    update();
+  }
+
+  /// اختبار الاتصال المحسن
+  Future<void> testConnection() async {
+    if (macAddressController.text.isEmpty) {
+      EasyLoading.showError('يرجى إدخال عنوان MAC');
+      return;
+    }
+
+    // التحقق من عدم وجود عملية نشطة
+    if (_isOperationActive) {
+      EasyLoading.showInfo('يرجى انتظار انتهاء العملية الحالية');
+      return;
+    }
+
+    final testType = connectionType == 'LAN' ? 'الشبكة المحلية' : 'الشبكة الواسعة';
+    print('🧪 Testing connection via $testType...');
+
+    EasyLoading.show(status: 'اختبار الاتصال عبر $testType...');
+
+    try {
+      bool result = false;
+
+      if (ipAddressController.text.isNotEmpty) {
+        result = await NetworkService.pingDevice(ipAddressController.text.trim())
+            .timeout(const Duration(seconds: 10));
+      } else {
+        final device = discoveredDevices.firstWhereOrNull(
+            (d) => d.macAddress.toLowerCase() == macAddressController.text.toLowerCase());
+        if (device != null) {
+          result = await NetworkService.pingDevice(device.ip).timeout(const Duration(seconds: 10));
+          ipAddressController.text = device.ip;
+        }
+      }
+
+      connectionStatus = result
+          ? 'تم الاتصال بالطابعة بنجاح عبر $testType'
+          : 'فشل في الاتصال بالطابعة عبر $testType';
+      isConnected = result;
+
+      EasyLoading.showSuccess(result ? 'تم الاتصال بنجاح!' : 'فشل في الاتصال');
+      print(result ? '✅ Connection test successful' : '❌ Connection test failed');
+    } catch (e) {
+      print('❌ Connection test error: $e');
+      connectionStatus = 'خطأ في الاختبار';
+      isConnected = false;
+
+      if (e.toString().contains('TimeoutException')) {
+        EasyLoading.showError('انتهت مهلة الاختبار');
+      } else {
+        EasyLoading.showError('حدث خطأ أثناء الاختبار');
+      }
+    }
+
+    update();
+  }
+
+  /// حفظ الإعدادات
+  Future<void> saveConfiguration() async {
+    if (!_validate()) return;
+
+    print('💾 Saving configuration...');
+    EasyLoading.show(status: 'حفظ إعدادات $connectionType...');
+
+    try {
+      await NetworkService.saveNetworkConfiguration(
+        connectionType: connectionType,
+        printerMac: macAddressController.text.trim(),
+        deviceName: deviceNameController.text.trim(),
+        printerIP: ipAddressController.text.trim(),
+        networkName: currentNetworkName,
+        networkIP: currentNetworkIP,
+        gateway: currentGateway,
+        subnet: currentSubnet,
+      );
+
+      if (await _verifyConfig()) {
+        EasyLoading.showSuccess('تم حفظ إعدادات $connectionType بنجاح!');
+        print('✅ Configuration saved successfully');
+        await Future.delayed(const Duration(milliseconds: 1500));
+        Get.offAllNamed(AppRoutes.login);
+      } else {
+        EasyLoading.showError('فشل في التحقق من حفظ البيانات');
+        print('❌ Configuration verification failed');
+      }
+    } catch (e) {
+      print('❌ Save configuration error: $e');
+      EasyLoading.showError('حدث خطأ أثناء الحفظ');
+    }
+  }
+
+  /// التحقق من البيانات
+  bool _validate() {
+    if (macAddressController.text.trim().isEmpty || deviceNameController.text.trim().isEmpty) {
+      EasyLoading.showError('يرجى ملء جميع الحقول المطلوبة');
+      return false;
+    }
+    if (!_isValidMac(macAddressController.text.trim())) {
+      EasyLoading.showError('عنوان MAC غير صحيح');
+      return false;
+    }
+    if (connectionType == 'WAN' && ipAddressController.text.trim().isEmpty) {
+      EasyLoading.showError('يرجى إدخال IP الطابعة لاتصال WAN');
+      return false;
+    }
+    return true;
+  }
+
+  /// التحقق من الحفظ
+  Future<bool> _verifyConfig() async {
+    try {
+      final config = NetworkService.getNetworkConfiguration();
+      return config.connectionType == connectionType &&
+          config.printerMac == macAddressController.text.trim() &&
+          config.deviceName == deviceNameController.text.trim() &&
+          config.isConfigured;
+    } catch (e) {
+      print('⚠️ Verification error: $e');
+      return false;
+    }
+  }
+
+  /// تحميل الإعدادات
+  void _loadConfig() {
+    try {
+      final config = NetworkService.getNetworkConfiguration();
+      connectionType = config.connectionType.isNotEmpty ? config.connectionType : 'LAN';
+      macAddressController.text = config.printerMac;
+      deviceNameController.text = config.deviceName;
+      ipAddressController.text = config.printerIP;
+      customSubnetController.text = config.subnet.isNotEmpty ? config.subnet : '192.168.1';
+      _updateUI();
+      update();
+      print('✅ Configuration loaded successfully');
+    } catch (e) {
+      print('⚠️ Error loading config: $e');
+    }
+  }
+
+  /// إعادة تعيين حالة البحث
+  void resetScanningState() {
+    print('🔄 Resetting scanning state...');
+    _safeCancel();
+    _resetState();
+  }
+
+  /// اختيار جهاز مكتشف
+  void selectDiscoveredDevice(NetworkDevice device) {
+    print('📱 Selected device: ${device.name} (${device.ip})');
+    _fillFields(device);
+  }
+
+  /// مسح الإعدادات
+  void clearConfiguration() {
+    print('🧹 Clearing configuration...');
+    _safeCancel();
+    macAddressController.clear();
+    deviceNameController.clear();
+    ipAddressController.clear();
+    customSubnetController.clear();
+    connectionStatus = '';
+    isConnected = false;
+    discoveredDevices.clear();
+    update();
+  }
+
+  /// معلومات حالة الشبكة
+  String getNetworkStatusInfo() {
+    if (connectionType == 'LAN') {
+      return 'اسم الشبكة: ${currentNetworkName ?? "غير معروف"}\n'
+          'IP الحالي: ${currentNetworkIP ?? "غير متصل"}\n'
+          'البوابة: ${currentGateway ?? "غير محددة"}\n'
+          'الشبكة الفرعية: ${currentSubnet ?? "غير محددة"}';
+    } else {
+      return 'الشبكة الواسعة (WAN)\n'
+          'يتطلب IP مباشر للطابعة\n'
+          'IP الطابعة: ${ipAddressController.text.isEmpty ? "غير محدد" : ipAddressController.text}';
+    }
+  }
+
+  // =============== Helper Methods ===============
+
+  /// استخراج الشبكة الفرعية
+  String _getSubnet(String ip) {
+    final parts = ip.split('.');
+    return parts.length == 4 ? '${parts[0]}.${parts[1]}.${parts[2]}' : '192.168.1';
+  }
+
+  /// التحقق من صحة MAC
+  bool _isValidMac(String mac) {
+    return RegExp(
+            r'^[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}')
+        .hasMatch(mac);
+  }
+
+  /// توليد MAC وهمي
+  String _generateMac(String ip) {
+    final random = DateTime.now().millisecondsSinceEpoch;
+    return '00:1A:2B:${(random % 256).toRadixString(16).padLeft(2, '0').toUpperCase()}:'
+        '${((random ~/ 256) % 256).toRadixString(16).padLeft(2, '0').toUpperCase()}:'
+        '${((random ~/ 65536) % 256).toRadixString(16).padLeft(2, '0').toUpperCase()}';
+  }
+
+  // استيراد أداة التشخيص في أعلى الملف
+  // import 'package:auth_app/utils/network_diagnostic.dart';
+
+  /// تشخيص شامل للشبكة
+  Future<void> runNetworkDiagnostic() async {
+    if (_isOperationActive) {
+      EasyLoading.showInfo('يرجى انتظار انتهاء العملية الحالية');
+      return;
+    }
+
+    print('🔍 Starting network diagnostic...');
+    EasyLoading.show(status: 'تشخيص الشبكة...');
+
+    try {
+      // تشغيل التشخيص الشامل
+      // final diagnostic = await NetworkDiagnostic.runFullDiagnostic();
+
+      // البحث عن طابعات باستخدام التشخيص
+      // final printerIPs = await NetworkDiagnostic.findPrintersFromDiagnostic();
+
+      // للآن، سنستخدم تشخيص مبسط
+      await _simpleDiagnostic();
+
+      EasyLoading.showSuccess('تم التشخيص بنجاح! راجع الـ Console للتفاصيل');
+    } catch (e) {
+      print('❌ Diagnostic error: $e');
+      EasyLoading.showError('حدث خطأ أثناء التشخيص');
+    }
+  }
+
+  /// تشخيص مبسط
+  Future<void> _simpleDiagnostic() async {
+    print('\n' + '=' * 50);
+    print('🔍 SIMPLE NETWORK DIAGNOSTIC');
+    print('=' * 50);
+
+    // 1. معلومات الشبكة الحالية
+    final networkInfo = await NetworkService.getNetworkInfo();
+    print('🌐 Current Network Info:');
+    networkInfo.forEach((key, value) {
+      print('   $key: $value');
+    });
+
+    // تحليل نوع الشبكة
+    final networkName = networkInfo['wifiName'] ?? '';
+    final isHotspot = _detectHotspot(networkName);
+    final isMobileNetwork = _detectMobileNetwork(networkName);
+
+    print('\n📱 Network Analysis:');
+    print(
+        '   Network Type: ${isHotspot ? "Mobile Hotspot" : isMobileNetwork ? "Mobile Network" : "WiFi Router"}');
+    print('   Is Hotspot: $isHotspot');
+    print('   Printer Discovery: ${isHotspot ? "⚠️ LIMITED" : "✅ OPTIMAL"}');
+
+    // 2. اختبار Gateway
+    final gateway = networkInfo['wifiGatewayIP'];
+    if (gateway != null && gateway != 'Unknown') {
+      print('\n🚪 Testing Gateway: $gateway');
+      final gatewayReachable = await NetworkService.pingDevice(gateway);
+      print('   Gateway reachable: $gatewayReachable');
+
+      if (!gatewayReachable && isHotspot) {
+        print('   ⚠️ Gateway unreachable - This is common with Mobile Hotspots');
+      }
+    }
+
+    // 3. اختبار DNS
+    print('\n🔍 Testing DNS...');
+    try {
+      final result = await InternetAddress.lookup('google.com');
+      print('   DNS working: ${result.isNotEmpty}');
+    } catch (e) {
+      print('   DNS error: $e');
+    }
+
+    // 4. البحث عن أجهزة في الشبكة
+    final myIP = networkInfo['wifiIP'];
+    if (myIP != null && myIP != 'Not Connected') {
+      final subnet = _getSubnet(myIP);
+      print('\n🔎 Scanning common printer IPs in $subnet:');
+
+      if (isHotspot) {
+        print('   ⚠️ WARNING: Mobile Hotspot detected!');
+        print('   🔒 Many hotspots block device-to-device communication');
+        print('   💡 Recommendation: Use traditional WiFi network');
+      }
+
+      final testIPs = [
+        '$subnet.1',
+        '$subnet.100',
+        '$subnet.101',
+        '$subnet.110',
+        '$subnet.200',
+        '$subnet.254'
+      ];
+
+      for (String ip in testIPs) {
+        final reachable = await NetworkService.pingDevice(ip);
+        if (reachable) {
+          print('   ✅ Found device at: $ip');
+        } else {
+          print('   ❌ No response from: $ip');
+        }
+
+        // انتظار قصير بين الاختبارات
+        await Future.delayed(const Duration(milliseconds: 200));
+      }
+
+      // اقتراحات مخصصة
+      print('\n💡 RECOMMENDATIONS:');
+      if (isHotspot) {
+        print('   1. Connect to a traditional WiFi network (router-based)');
+        print('   2. Connect printer to the same WiFi network');
+        print('   3. Alternatively, connect printer to this hotspot if supported');
+        print('   4. Check if hotspot allows device discovery in settings');
+      } else {
+        print('   1. Ensure printer is connected to network: $networkName');
+        print('   2. Check printer network settings');
+        print('   3. Try printing network config from printer');
+        print('   4. Verify printer supports network printing');
+      }
+    }
+
+    print('=' * 50 + '\n');
+  }
+
+  /// كشف إذا كانت الشبكة hotspot
+  bool _detectHotspot(String networkName) {
+    final hotspotIndicators = [
+      'galaxy',
+      'iphone',
+      'android',
+      'samsung',
+      'huawei',
+      'xiaomi',
+      'hotspot',
+      'mobile',
+      'phone',
+      'nokia',
+      'lg',
+      'sony',
+      'oneplus'
+    ];
+
+    final lowerName = networkName.toLowerCase();
+    return hotspotIndicators.any((indicator) => lowerName.contains(indicator));
+  }
+
+  /// كشف إذا كانت شبكة موبايل
+  bool _detectMobileNetwork(String networkName) {
+    final mobileIndicators = ['4g', '5g', 'lte', 'edge', 'gprs', '3g'];
+
+    final lowerName = networkName.toLowerCase();
+    return mobileIndicators.any((indicator) => lowerName.contains(indicator));
+  }
+
+  /// اختبار طابعة محددة
+  Future<void> testSpecificPrinter() async {
+    // إظهار حوار لإدخال IP الطابعة للاختبار
+    final controller = TextEditingController();
+
+    await Get.dialog(
+      AlertDialog(
+        title: const Text('اختبار طابعة محددة'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text('أدخل IP الطابعة للاختبار المفصل:'),
+            const SizedBox(height: 16),
+            TextField(
+              controller: controller,
+              decoration: const InputDecoration(
+                labelText: 'IP الطابعة',
+                hintText: '192.168.1.100',
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text('إلغاء')),
+          ElevatedButton(
+            onPressed: () async {
+              Get.back();
+              if (controller.text.isNotEmpty) {
+                await _testPrinterDetailed(controller.text.trim());
+              }
+            },
+            child: const Text('اختبار'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// اختبار مفصل لطابعة
+  Future<void> _testPrinterDetailed(String ip) async {
+    EasyLoading.show(status: 'اختبار الطابعة $ip...');
+
+    print('\n' + '=' * 50);
+    print('🖨️ DETAILED PRINTER TEST: $ip');
+    print('=' * 50);
+
+    try {
+      // 1. اختبار ping
+      print('🏓 Testing ping...');
+      final pingResult = await NetworkService.pingDevice(ip);
+      print('   Ping result: $pingResult');
+
+      // 2. اختبار منافذ الطابعة
+      print('\n🔌 Testing printer ports...');
+      final printerPorts = [9100, 631, 515, 9101, 9102, 80, 443, 161];
+      List<int> openPorts = [];
+
+      for (int port in printerPorts) {
+        try {
+          final socket = await Socket.connect(ip, port, timeout: const Duration(seconds: 2));
+          openPorts.add(port);
+          await socket.close();
+          print('   ✅ Port $port: OPEN');
+        } catch (e) {
+          print('   ❌ Port $port: CLOSED');
+        }
+      }
+
+      // 3. محاولة الحصول على MAC
+      print('\n🔍 Getting MAC address...');
+      try {
+        if (Platform.isWindows) {
+          final result = await Process.run('arp', ['-a', ip]);
+          if (result.exitCode == 0) {
+            final output = result.stdout.toString();
+            print('   ARP result: $output');
+          }
+        }
+      } catch (e) {
+        print('   ARP error: $e');
+      }
+
+      // 4. تحديد نوع الطابعة
+      String printerType = 'Unknown';
+      if (openPorts.contains(9100))
+        printerType = 'RAW Printer (9100)';
+      else if (openPorts.contains(631))
+        printerType = 'IPP Printer (631)';
+      else if (openPorts.contains(515)) printerType = 'LPD Printer (515)';
+
+      print('\n📊 Results:');
+      print('   Reachable: $pingResult');
+      print('   Open ports: ${openPorts.join(', ')}');
+      print('   Printer type: $printerType');
+
+      // إضافة إلى قائمة الأجهزة إذا تم العثور عليها
+      if (openPorts.isNotEmpty) {
+        final device = NetworkDevice(
+          ip: ip,
+          name: '${printerType.split(' ')[0]}_${ip.split('.').last}',
+          macAddress: _generateMac(ip),
+          isOnline: true,
+          port: openPorts.first,
+        );
+
+        // إضافة للقائمة إذا لم تكن موجودة
+        if (!discoveredDevices.any((d) => d.ip == ip)) {
+          discoveredDevices.add(device);
+          update();
+        }
+
+        EasyLoading.showSuccess('تم العثور على الطابعة!\nالنوع: $printerType');
+      } else {
+        EasyLoading.showError('لم يتم العثور على منافذ طابعة مفتوحة');
+      }
+    } catch (e) {
+      print('❌ Detailed test error: $e');
+      EasyLoading.showError('حدث خطأ أثناء اختبار الطابعة');
+    }
+
+    print('=' * 50 + '\n');
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // // lib/pages/configuration/configuration_controller.dart
 
 // import 'dart:io';
@@ -1037,1024 +2069,15 @@
 //   }
 // }
 
-// lib/pages/configuration/configuration_controller.dart
 
-// lib/pages/configuration/configuration_controller.dart
 
-// lib/pages/configuration/configuration_controller.dart
 
-// lib/pages/configuration/configuration_controller.dart
 
-// lib/pages/configuration/configuration_controller.dart
 
-// lib/pages/configuration/configuration_controller.dart
 
-import 'dart:async';
-import 'dart:io';
-import 'package:auth_app/models/network_device.dart';
-import 'package:auth_app/pages/configration/services/network_service.dart';
-import 'package:auth_app/routes/app_routes.dart';
-import 'package:flutter/material.dart';
-import 'package:get/get.dart';
-import 'package:flutter_easyloading/flutter_easyloading.dart';
 
-class ConfigurationController extends GetxController {
-  // Controllers
-  final macAddressController = TextEditingController();
-  final deviceNameController = TextEditingController();
-  final ipAddressController = TextEditingController();
-  final customSubnetController = TextEditingController();
 
-  // State
-  String connectionType = 'LAN';
-  String connectionStatus = '';
-  bool isConnected = false;
-  bool isLoading = false;
-  bool isScanning = false;
 
-  // Network Info
-  String? currentNetworkIP, currentNetworkName, currentSubnet, currentGateway;
-  List<NetworkDevice> discoveredDevices = [];
-
-  // Control
-  Timer? _operationTimer;
-  bool _isOperationActive = false;
-
-  @override
-  void onInit() {
-    super.onInit();
-    print('🚀 ConfigurationController initialized');
-    _initialize();
-  }
-
-  @override
-  void onClose() {
-    print('🛑 ConfigurationController disposing...');
-    _cleanup();
-    super.onClose();
-  }
-
-  /// التهيئة الآمنة
-  Future<void> _initialize() async {
-    try {
-      await _safeCancel();
-      _resetState();
-      _loadConfig();
-      await _initNetwork();
-      print('✅ ConfigurationController initialized successfully');
-    } catch (e) {
-      print('❌ Error during initialization: $e');
-      _setDefaultState();
-    }
-  }
-
-  /// التنظيف الآمن
-  Future<void> _cleanup() async {
-    try {
-      await _safeCancel();
-      macAddressController.dispose();
-      deviceNameController.dispose();
-      ipAddressController.dispose();
-      customSubnetController.dispose();
-      print('✅ ConfigurationController cleaned up successfully');
-    } catch (e) {
-      print('⚠️ Error during cleanup: $e');
-    }
-  }
-
-  /// إلغاء العمليات بطريقة آمنة
-  Future<void> _safeCancel() async {
-    if (_isOperationActive) {
-      print('🛑 Cancelling active operations...');
-      _isOperationActive = false;
-
-      // إلغاء Timer
-      _operationTimer?.cancel();
-      _operationTimer = null;
-
-      // إلغاء عمليات الشبكة
-      try {
-        await NetworkService.cancelOperations();
-      } catch (e) {
-        print('⚠️ Error cancelling network operations: $e');
-      }
-
-      // انتظار قصير للتأكد من اكتمال الإلغاء
-      await Future.delayed(Duration(milliseconds: 200));
-    }
-  }
-
-  /// إعادة تعيين الحالة
-  void _resetState() {
-    isScanning = isLoading = isConnected = false;
-    discoveredDevices.clear();
-    connectionStatus = _getStatusMessage();
-    update();
-  }
-
-  /// تعيين حالة افتراضية
-  void _setDefaultState() {
-    currentNetworkIP = 'Not Connected';
-    currentNetworkName = 'Unknown Network';
-    currentGateway = 'Unknown';
-    currentSubnet = '192.168.1';
-    customSubnetController.text = currentSubnet!;
-    _resetState();
-  }
-
-  /// رسالة الحالة
-  String _getStatusMessage() => connectionType == 'LAN'
-      ? 'سيتم البحث في الشبكة المحلية'
-      : 'سيتم البحث عبر الإنترنت (يتطلب IP محدد)';
-
-  /// تهيئة الشبكة
-  Future<void> _initNetwork() async {
-    try {
-      print('🌐 Initializing network info...');
-      final info = await NetworkService.getNetworkInfo();
-
-      currentNetworkIP = info['wifiIP'];
-      currentNetworkName = info['wifiName'];
-      currentGateway = info['wifiGatewayIP'];
-      currentSubnet = _getSubnet(currentNetworkIP ?? '');
-      customSubnetController.text = currentSubnet ?? '192.168.1';
-
-      print('✅ Network initialized: IP=${currentNetworkIP}, Subnet=${currentSubnet}');
-      update();
-    } catch (e) {
-      print('⚠️ Error initializing network: $e');
-      _setDefaultState();
-    }
-  }
-
-  /// تغيير نوع الاتصال
-  void setConnectionType(String? type) {
-    if (type != null && type != connectionType) {
-      print('🔄 Changing connection type to: $type');
-
-      // إلغاء العمليات الحالية
-      _safeCancel();
-
-      connectionType = type;
-      discoveredDevices.clear();
-      connectionStatus = _getStatusMessage();
-      _updateUI();
-      _showInfo(type);
-      update();
-    }
-  }
-
-  /// تحديث الواجهة
-  void _updateUI() {
-    customSubnetController.text = connectionType == 'LAN' ? (currentSubnet ?? '192.168.1') : '';
-  }
-
-  /// عرض المعلومات
-  void _showInfo(String type) {
-    final message = type == 'LAN'
-        ? 'تم اختيار الشبكة المحلية\nسيتم البحث عن الطابعات في نفس الشبكة'
-        : 'تم اختيار الشبكة الواسعة\nيجب إدخال IP الطابعة يدوياً';
-
-    Get.snackbar('نوع الاتصال', message,
-        snackPosition: SnackPosition.TOP,
-        backgroundColor: Colors.blue.withOpacity(0.8),
-        colorText: Colors.white,
-        duration: const Duration(seconds: 3));
-  }
-
-  /// البحث التلقائي المحسن
-  Future<void> autoDetectPrinter() async {
-    // التحقق من حالة العملية
-    if (_isOperationActive) {
-      print('⚠️ Operation already active, cancelling first...');
-      await _safeCancel();
-    }
-
-    print('🔍 Starting auto detect printer...');
-
-    // التحقق من الأذونات
-    if (!await _requestPermissions()) {
-      print('❌ Permissions not granted');
-      return;
-    }
-
-    _startOperation();
-
-    try {
-      if (connectionType == 'LAN') {
-        await _scanLANSafely();
-      } else {
-        await _handleWANSafely();
-      }
-    } catch (e) {
-      print('❌ Auto detect error: $e');
-      _handleError(e);
-    } finally {
-      _stopOperation();
-    }
-  }
-
-  /// بدء العملية
-  void _startOperation() {
-    _isOperationActive = true;
-    isLoading = isScanning = true;
-    discoveredDevices.clear();
-    update();
-
-    EasyLoading.show(status: 'بدء البحث عن الطابعات...');
-
-    // إعداد timeout آمن
-    _operationTimer = Timer(const Duration(seconds: 60), () {
-      if (_isOperationActive) {
-        print('⏰ Operation timeout reached');
-        _stopOperation();
-        EasyLoading.showInfo('انتهت مهلة البحث');
-      }
-    });
-  }
-
-  /// إيقاف العملية
-  void _stopOperation() {
-    _isOperationActive = false;
-    isLoading = isScanning = false;
-    _operationTimer?.cancel();
-    _operationTimer = null;
-    EasyLoading.dismiss();
-    update();
-    print('✅ Operation stopped');
-  }
-
-  /// معالجة الأخطاء
-  void _handleError(dynamic error) {
-    connectionStatus = 'خطأ في البحث';
-    isConnected = false;
-
-    // عرض رسالة خطأ مناسبة
-    if (error.toString().contains('SocketException')) {
-      EasyLoading.showError('مشكلة في الاتصال بالشبكة');
-    } else if (error.toString().contains('TimeoutException')) {
-      EasyLoading.showError('انتهت مهلة البحث');
-    } else {
-      EasyLoading.showError('حدث خطأ أثناء البحث');
-    }
-
-    print('❌ Error handled: $error');
-    update();
-  }
-
-  /// البحث الآمن في الشبكة المحلية
-  Future<void> _scanLANSafely() async {
-    if (!_isOperationActive) return;
-
-    print('🏠 Starting LAN scan...');
-
-    // التأكد من معلومات الشبكة
-    await _initNetwork();
-    if (currentNetworkIP == null || currentNetworkIP == 'Not Connected') {
-      throw Exception('غير متصل بالشبكة المحلية');
-    }
-
-    EasyLoading.show(status: 'البحث في الشبكة المحلية...');
-
-    try {
-      // البحث المتقدم مع timeout محدود
-      if (_isOperationActive) {
-        print('🔍 Starting advanced discovery...');
-        final devices =
-            await NetworkService.discoverPrintersAdvanced().timeout(Duration(seconds: 30));
-
-        if (_isOperationActive) {
-          discoveredDevices.addAll(devices);
-          print('📱 Found ${devices.length} devices from advanced discovery');
-        }
-      }
-
-      // إذا لم نجد أي أجهزة، نجرب البحث اليدوي
-      if (_isOperationActive && discoveredDevices.isEmpty) {
-        print('🔎 No devices found, trying manual scan...');
-        EasyLoading.show(status: 'البحث اليدوي...');
-        await _manualScan();
-      }
-
-      if (_isOperationActive) {
-        _processResults();
-      }
-    } catch (e) {
-      print('⚠️ LAN scan error: $e');
-      if (_isOperationActive) {
-        // في حالة الخطأ، نجرب البحث اليدوي كبديل
-        try {
-          EasyLoading.show(status: 'البحث البديل...');
-          await _manualScan();
-          if (_isOperationActive) _processResults();
-        } catch (e2) {
-          print('❌ Fallback scan also failed: $e2');
-          rethrow;
-        }
-      }
-    }
-  }
-
-  /// البحث اليدوي الآمن
-  Future<void> _manualScan() async {
-    if (!_isOperationActive) return;
-
-    final subnet = customSubnetController.text.isNotEmpty
-        ? customSubnetController.text.trim()
-        : _getSubnet(currentNetworkIP!);
-
-    // فحص IPs شائعة فقط لتجنب الأخطاء
-    final commonIPs = ['$subnet.100', '$subnet.101', '$subnet.200', '$subnet.10'];
-
-    print('🎯 Manual scan for ${commonIPs.length} common IPs...');
-
-    for (int i = 0; i < commonIPs.length && _isOperationActive; i++) {
-      final ip = commonIPs[i];
-
-      try {
-        if (await NetworkService.pingDevice(ip)) {
-          print('✅ Manual scan found device at: $ip');
-          discoveredDevices.add(NetworkDevice(
-            ip: ip,
-            name: 'Printer_${ip.split('.').last}',
-            macAddress: _generateMac(ip),
-            port: 9100,
-            isOnline: true,
-          ));
-
-          // إذا وجدنا جهازين، نتوقف
-          if (discoveredDevices.length >= 2) break;
-        }
-      } catch (e) {
-        print('⚠️ Manual scan error for IP $ip: $e');
-        continue;
-      }
-
-      // انتظار قصير لتجنب إرهاق الشبكة
-      if (_isOperationActive && i < commonIPs.length - 1) {
-        await Future.delayed(Duration(milliseconds: 200));
-      }
-    }
-  }
-
-  /// معالجة WAN الآمنة
-  Future<void> _handleWANSafely() async {
-    if (!_isOperationActive) return;
-
-    print('🌍 Starting WAN connection...');
-    EasyLoading.show(status: 'إعداد الاتصال عبر الإنترنت...');
-
-    if (ipAddressController.text.isEmpty) {
-      EasyLoading.dismiss();
-      await _showIPDialog();
-      if (ipAddressController.text.isEmpty) {
-        connectionStatus = 'يجب إدخال IP للطابعة';
-        EasyLoading.showError(connectionStatus);
-        return;
-      }
-    }
-
-    if (!_isOperationActive) return;
-
-    final testIP = ipAddressController.text.trim();
-    print('🧪 Testing WAN connection to: $testIP');
-    EasyLoading.show(status: 'اختبار الاتصال مع: $testIP');
-
-    try {
-      final isReachable = await NetworkService.pingDevice(testIP).timeout(Duration(seconds: 10));
-
-      if (_isOperationActive) {
-        if (isReachable) {
-          final device = NetworkDevice(
-            ip: testIP,
-            name: deviceNameController.text.isNotEmpty
-                ? deviceNameController.text
-                : 'WAN_Printer_${testIP.split('.').last}',
-            macAddress: macAddressController.text.isNotEmpty
-                ? macAddressController.text
-                : _generateMac(testIP),
-            port: 9100,
-            isOnline: true,
-          );
-
-          discoveredDevices.add(device);
-          _fillFields(device);
-
-          connectionStatus = 'تم العثور على طابعة WAN';
-          isConnected = true;
-          EasyLoading.showSuccess('تم الاتصال بالطابعة!');
-          print('✅ WAN connection successful');
-        } else {
-          connectionStatus = 'فشل الاتصال بالطابعة';
-          isConnected = false;
-          EasyLoading.showError('فشل الاتصال');
-          print('❌ WAN connection failed');
-        }
-      }
-    } catch (e) {
-      print('❌ WAN connection error: $e');
-      if (_isOperationActive) {
-        connectionStatus = 'خطأ في اختبار WAN';
-        isConnected = false;
-        EasyLoading.showError('فشل في الاتصال');
-      }
-    }
-  }
-
-  /// حوار إدخال IP
-  Future<void> _showIPDialog() async {
-    final controller = TextEditingController(text: ipAddressController.text);
-
-    await Get.dialog(
-      AlertDialog(
-        title: const Text('إدخال IP الطابعة'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('يرجى إدخال عنوان IP للطابعة'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                labelText: 'عنوان IP',
-                hintText: '192.168.1.100',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('إلغاء')),
-          ElevatedButton(
-            onPressed: () {
-              ipAddressController.text = controller.text.trim();
-              Get.back();
-            },
-            child: const Text('تأكيد'),
-          ),
-        ],
-      ),
-      barrierDismissible: false,
-    );
-  }
-
-  /// معالجة النتائج
-  void _processResults() {
-    if (!_isOperationActive) return;
-
-    if (discoveredDevices.isNotEmpty) {
-      _fillFields(discoveredDevices.first);
-      connectionStatus = 'تم العثور على ${discoveredDevices.length} طابعة';
-      isConnected = true;
-      EasyLoading.showSuccess('تم العثور على ${discoveredDevices.length} طابعة!');
-      print('🎉 Found ${discoveredDevices.length} printers');
-    } else {
-      connectionStatus = 'لم يتم العثور على طابعات';
-      isConnected = false;
-      EasyLoading.showInfo('لم يتم العثور على طابعات');
-      print('😔 No printers found');
-    }
-    update();
-  }
-
-  /// ملء الحقول
-  void _fillFields(NetworkDevice device) {
-    macAddressController.text = device.macAddress;
-    deviceNameController.text = device.name;
-    ipAddressController.text = device.ip;
-    update();
-  }
-
-  /// طلب الأذونات
-  Future<bool> _requestPermissions() async {
-    try {
-      final granted = await NetworkService.requestPermissions();
-      if (!granted) {
-        EasyLoading.showError('يرجى منح الأذونات المطلوبة');
-        print('❌ Permissions denied');
-      }
-      return granted;
-    } catch (e) {
-      print('❌ Permission error: $e');
-      EasyLoading.showError('خطأ في طلب الأذونات');
-      return false;
-    }
-  }
-
-  /// معالج تغيير MAC
-  void onMacAddressChanged(String value) {
-    final formatted = _formatMac(value);
-    if (formatted != value) {
-      macAddressController.value = TextEditingValue(
-        text: formatted,
-        selection: TextSelection.collapsed(offset: formatted.length),
-      );
-    }
-    if (formatted.length == 17) _autoFillName(formatted);
-  }
-
-  /// تنسيق MAC
-  String _formatMac(String input) {
-    final cleaned = input.replaceAll(RegExp(r'[^0-9A-Fa-f]'), '');
-    final limited = cleaned.length > 12 ? cleaned.substring(0, 12) : cleaned;
-
-    String formatted = '';
-    for (int i = 0; i < limited.length; i += 2) {
-      if (i > 0) formatted += ':';
-      formatted += limited.substring(i, (i + 2 > limited.length) ? limited.length : i + 2);
-    }
-    return formatted.toUpperCase();
-  }
-
-  /// ملء الاسم تلقائياً
-  void _autoFillName(String mac) {
-    final prefix = connectionType == 'LAN' ? 'LAN_Printer' : 'WAN_Printer';
-    deviceNameController.text = '${prefix}_${mac.replaceAll(':', '').substring(6)}';
-    update();
-  }
-
-  /// اختبار الاتصال المحسن
-  Future<void> testConnection() async {
-    if (macAddressController.text.isEmpty) {
-      EasyLoading.showError('يرجى إدخال عنوان MAC');
-      return;
-    }
-
-    // التحقق من عدم وجود عملية نشطة
-    if (_isOperationActive) {
-      EasyLoading.showInfo('يرجى انتظار انتهاء العملية الحالية');
-      return;
-    }
-
-    final testType = connectionType == 'LAN' ? 'الشبكة المحلية' : 'الشبكة الواسعة';
-    print('🧪 Testing connection via $testType...');
-
-    EasyLoading.show(status: 'اختبار الاتصال عبر $testType...');
-
-    try {
-      bool result = false;
-
-      if (ipAddressController.text.isNotEmpty) {
-        result = await NetworkService.pingDevice(ipAddressController.text.trim())
-            .timeout(Duration(seconds: 10));
-      } else {
-        final device = discoveredDevices.firstWhereOrNull(
-            (d) => d.macAddress.toLowerCase() == macAddressController.text.toLowerCase());
-        if (device != null) {
-          result = await NetworkService.pingDevice(device.ip).timeout(Duration(seconds: 10));
-          ipAddressController.text = device.ip;
-        }
-      }
-
-      connectionStatus = result
-          ? 'تم الاتصال بالطابعة بنجاح عبر $testType'
-          : 'فشل في الاتصال بالطابعة عبر $testType';
-      isConnected = result;
-
-      EasyLoading.showSuccess(result ? 'تم الاتصال بنجاح!' : 'فشل في الاتصال');
-      print(result ? '✅ Connection test successful' : '❌ Connection test failed');
-    } catch (e) {
-      print('❌ Connection test error: $e');
-      connectionStatus = 'خطأ في الاختبار';
-      isConnected = false;
-
-      if (e.toString().contains('TimeoutException')) {
-        EasyLoading.showError('انتهت مهلة الاختبار');
-      } else {
-        EasyLoading.showError('حدث خطأ أثناء الاختبار');
-      }
-    }
-
-    update();
-  }
-
-  /// حفظ الإعدادات
-  Future<void> saveConfiguration() async {
-    if (!_validate()) return;
-
-    print('💾 Saving configuration...');
-    EasyLoading.show(status: 'حفظ إعدادات $connectionType...');
-
-    try {
-      await NetworkService.saveNetworkConfiguration(
-        connectionType: connectionType,
-        printerMac: macAddressController.text.trim(),
-        deviceName: deviceNameController.text.trim(),
-        printerIP: ipAddressController.text.trim(),
-        networkName: currentNetworkName,
-        networkIP: currentNetworkIP,
-        gateway: currentGateway,
-        subnet: currentSubnet,
-      );
-
-      if (await _verifyConfig()) {
-        EasyLoading.showSuccess('تم حفظ إعدادات $connectionType بنجاح!');
-        print('✅ Configuration saved successfully');
-        await Future.delayed(const Duration(milliseconds: 1500));
-        Get.offAllNamed(AppRoutes.login);
-      } else {
-        EasyLoading.showError('فشل في التحقق من حفظ البيانات');
-        print('❌ Configuration verification failed');
-      }
-    } catch (e) {
-      print('❌ Save configuration error: $e');
-      EasyLoading.showError('حدث خطأ أثناء الحفظ');
-    }
-  }
-
-  /// التحقق من البيانات
-  bool _validate() {
-    if (macAddressController.text.trim().isEmpty || deviceNameController.text.trim().isEmpty) {
-      EasyLoading.showError('يرجى ملء جميع الحقول المطلوبة');
-      return false;
-    }
-    if (!_isValidMac(macAddressController.text.trim())) {
-      EasyLoading.showError('عنوان MAC غير صحيح');
-      return false;
-    }
-    if (connectionType == 'WAN' && ipAddressController.text.trim().isEmpty) {
-      EasyLoading.showError('يرجى إدخال IP الطابعة لاتصال WAN');
-      return false;
-    }
-    return true;
-  }
-
-  /// التحقق من الحفظ
-  Future<bool> _verifyConfig() async {
-    try {
-      final config = NetworkService.getNetworkConfiguration();
-      return config.connectionType == connectionType &&
-          config.printerMac == macAddressController.text.trim() &&
-          config.deviceName == deviceNameController.text.trim() &&
-          config.isConfigured;
-    } catch (e) {
-      print('⚠️ Verification error: $e');
-      return false;
-    }
-  }
-
-  /// تحميل الإعدادات
-  void _loadConfig() {
-    try {
-      final config = NetworkService.getNetworkConfiguration();
-      connectionType = config.connectionType.isNotEmpty ? config.connectionType : 'LAN';
-      macAddressController.text = config.printerMac;
-      deviceNameController.text = config.deviceName;
-      ipAddressController.text = config.printerIP;
-      customSubnetController.text = config.subnet.isNotEmpty ? config.subnet : '192.168.1';
-      _updateUI();
-      update();
-      print('✅ Configuration loaded successfully');
-    } catch (e) {
-      print('⚠️ Error loading config: $e');
-    }
-  }
-
-  /// إعادة تعيين حالة البحث
-  void resetScanningState() {
-    print('🔄 Resetting scanning state...');
-    _safeCancel();
-    _resetState();
-  }
-
-  /// اختيار جهاز مكتشف
-  void selectDiscoveredDevice(NetworkDevice device) {
-    print('📱 Selected device: ${device.name} (${device.ip})');
-    _fillFields(device);
-  }
-
-  /// مسح الإعدادات
-  void clearConfiguration() {
-    print('🧹 Clearing configuration...');
-    _safeCancel();
-    macAddressController.clear();
-    deviceNameController.clear();
-    ipAddressController.clear();
-    customSubnetController.clear();
-    connectionStatus = '';
-    isConnected = false;
-    discoveredDevices.clear();
-    update();
-  }
-
-  /// معلومات حالة الشبكة
-  String getNetworkStatusInfo() {
-    if (connectionType == 'LAN') {
-      return 'اسم الشبكة: ${currentNetworkName ?? "غير معروف"}\n'
-          'IP الحالي: ${currentNetworkIP ?? "غير متصل"}\n'
-          'البوابة: ${currentGateway ?? "غير محددة"}\n'
-          'الشبكة الفرعية: ${currentSubnet ?? "غير محددة"}';
-    } else {
-      return 'الشبكة الواسعة (WAN)\n'
-          'يتطلب IP مباشر للطابعة\n'
-          'IP الطابعة: ${ipAddressController.text.isEmpty ? "غير محدد" : ipAddressController.text}';
-    }
-  }
-
-  // =============== Helper Methods ===============
-
-  /// استخراج الشبكة الفرعية
-  String _getSubnet(String ip) {
-    final parts = ip.split('.');
-    return parts.length == 4 ? '${parts[0]}.${parts[1]}.${parts[2]}' : '192.168.1';
-  }
-
-  /// التحقق من صحة MAC
-  bool _isValidMac(String mac) {
-    return RegExp(
-            r'^[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}:[0-9A-Fa-f]{2}')
-        .hasMatch(mac);
-  }
-
-  /// توليد MAC وهمي
-  String _generateMac(String ip) {
-    final random = DateTime.now().millisecondsSinceEpoch;
-    return '00:1A:2B:${(random % 256).toRadixString(16).padLeft(2, '0').toUpperCase()}:'
-        '${((random ~/ 256) % 256).toRadixString(16).padLeft(2, '0').toUpperCase()}:'
-        '${((random ~/ 65536) % 256).toRadixString(16).padLeft(2, '0').toUpperCase()}';
-  }
-
-  // استيراد أداة التشخيص في أعلى الملف
-  // import 'package:auth_app/utils/network_diagnostic.dart';
-
-  /// تشخيص شامل للشبكة
-  Future<void> runNetworkDiagnostic() async {
-    if (_isOperationActive) {
-      EasyLoading.showInfo('يرجى انتظار انتهاء العملية الحالية');
-      return;
-    }
-
-    print('🔍 Starting network diagnostic...');
-    EasyLoading.show(status: 'تشخيص الشبكة...');
-
-    try {
-      // تشغيل التشخيص الشامل
-      // final diagnostic = await NetworkDiagnostic.runFullDiagnostic();
-
-      // البحث عن طابعات باستخدام التشخيص
-      // final printerIPs = await NetworkDiagnostic.findPrintersFromDiagnostic();
-
-      // للآن، سنستخدم تشخيص مبسط
-      await _simpleDiagnostic();
-
-      EasyLoading.showSuccess('تم التشخيص بنجاح! راجع الـ Console للتفاصيل');
-    } catch (e) {
-      print('❌ Diagnostic error: $e');
-      EasyLoading.showError('حدث خطأ أثناء التشخيص');
-    }
-  }
-
-  /// تشخيص مبسط
-  Future<void> _simpleDiagnostic() async {
-    print('\n' + '=' * 50);
-    print('🔍 SIMPLE NETWORK DIAGNOSTIC');
-    print('=' * 50);
-
-    // 1. معلومات الشبكة الحالية
-    final networkInfo = await NetworkService.getNetworkInfo();
-    print('🌐 Current Network Info:');
-    networkInfo.forEach((key, value) {
-      print('   $key: $value');
-    });
-
-    // تحليل نوع الشبكة
-    final networkName = networkInfo['wifiName'] ?? '';
-    final isHotspot = _detectHotspot(networkName);
-    final isMobileNetwork = _detectMobileNetwork(networkName);
-
-    print('\n📱 Network Analysis:');
-    print(
-        '   Network Type: ${isHotspot ? "Mobile Hotspot" : isMobileNetwork ? "Mobile Network" : "WiFi Router"}');
-    print('   Is Hotspot: $isHotspot');
-    print('   Printer Discovery: ${isHotspot ? "⚠️ LIMITED" : "✅ OPTIMAL"}');
-
-    // 2. اختبار Gateway
-    final gateway = networkInfo['wifiGatewayIP'];
-    if (gateway != null && gateway != 'Unknown') {
-      print('\n🚪 Testing Gateway: $gateway');
-      final gatewayReachable = await NetworkService.pingDevice(gateway);
-      print('   Gateway reachable: $gatewayReachable');
-
-      if (!gatewayReachable && isHotspot) {
-        print('   ⚠️ Gateway unreachable - This is common with Mobile Hotspots');
-      }
-    }
-
-    // 3. اختبار DNS
-    print('\n🔍 Testing DNS...');
-    try {
-      final result = await InternetAddress.lookup('google.com');
-      print('   DNS working: ${result.isNotEmpty}');
-    } catch (e) {
-      print('   DNS error: $e');
-    }
-
-    // 4. البحث عن أجهزة في الشبكة
-    final myIP = networkInfo['wifiIP'];
-    if (myIP != null && myIP != 'Not Connected') {
-      final subnet = _getSubnet(myIP);
-      print('\n🔎 Scanning common printer IPs in $subnet:');
-
-      if (isHotspot) {
-        print('   ⚠️ WARNING: Mobile Hotspot detected!');
-        print('   🔒 Many hotspots block device-to-device communication');
-        print('   💡 Recommendation: Use traditional WiFi network');
-      }
-
-      final testIPs = [
-        '$subnet.1',
-        '$subnet.100',
-        '$subnet.101',
-        '$subnet.110',
-        '$subnet.200',
-        '$subnet.254'
-      ];
-
-      for (String ip in testIPs) {
-        final reachable = await NetworkService.pingDevice(ip);
-        if (reachable) {
-          print('   ✅ Found device at: $ip');
-        } else {
-          print('   ❌ No response from: $ip');
-        }
-
-        // انتظار قصير بين الاختبارات
-        await Future.delayed(Duration(milliseconds: 200));
-      }
-
-      // اقتراحات مخصصة
-      print('\n💡 RECOMMENDATIONS:');
-      if (isHotspot) {
-        print('   1. Connect to a traditional WiFi network (router-based)');
-        print('   2. Connect printer to the same WiFi network');
-        print('   3. Alternatively, connect printer to this hotspot if supported');
-        print('   4. Check if hotspot allows device discovery in settings');
-      } else {
-        print('   1. Ensure printer is connected to network: $networkName');
-        print('   2. Check printer network settings');
-        print('   3. Try printing network config from printer');
-        print('   4. Verify printer supports network printing');
-      }
-    }
-
-    print('=' * 50 + '\n');
-  }
-
-  /// كشف إذا كانت الشبكة hotspot
-  bool _detectHotspot(String networkName) {
-    final hotspotIndicators = [
-      'galaxy',
-      'iphone',
-      'android',
-      'samsung',
-      'huawei',
-      'xiaomi',
-      'hotspot',
-      'mobile',
-      'phone',
-      'nokia',
-      'lg',
-      'sony',
-      'oneplus'
-    ];
-
-    final lowerName = networkName.toLowerCase();
-    return hotspotIndicators.any((indicator) => lowerName.contains(indicator));
-  }
-
-  /// كشف إذا كانت شبكة موبايل
-  bool _detectMobileNetwork(String networkName) {
-    final mobileIndicators = ['4g', '5g', 'lte', 'edge', 'gprs', '3g'];
-
-    final lowerName = networkName.toLowerCase();
-    return mobileIndicators.any((indicator) => lowerName.contains(indicator));
-  }
-
-  /// اختبار طابعة محددة
-  Future<void> testSpecificPrinter() async {
-    // إظهار حوار لإدخال IP الطابعة للاختبار
-    final controller = TextEditingController();
-
-    await Get.dialog(
-      AlertDialog(
-        title: const Text('اختبار طابعة محددة'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('أدخل IP الطابعة للاختبار المفصل:'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: controller,
-              decoration: const InputDecoration(
-                labelText: 'IP الطابعة',
-                hintText: '192.168.1.100',
-                border: OutlineInputBorder(),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(onPressed: () => Get.back(), child: const Text('إلغاء')),
-          ElevatedButton(
-            onPressed: () async {
-              Get.back();
-              if (controller.text.isNotEmpty) {
-                await _testPrinterDetailed(controller.text.trim());
-              }
-            },
-            child: const Text('اختبار'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// اختبار مفصل لطابعة
-  Future<void> _testPrinterDetailed(String ip) async {
-    EasyLoading.show(status: 'اختبار الطابعة $ip...');
-
-    print('\n' + '=' * 50);
-    print('🖨️ DETAILED PRINTER TEST: $ip');
-    print('=' * 50);
-
-    try {
-      // 1. اختبار ping
-      print('🏓 Testing ping...');
-      final pingResult = await NetworkService.pingDevice(ip);
-      print('   Ping result: $pingResult');
-
-      // 2. اختبار منافذ الطابعة
-      print('\n🔌 Testing printer ports...');
-      final printerPorts = [9100, 631, 515, 9101, 9102, 80, 443, 161];
-      List<int> openPorts = [];
-
-      for (int port in printerPorts) {
-        try {
-          final socket = await Socket.connect(ip, port, timeout: Duration(seconds: 2));
-          openPorts.add(port);
-          await socket.close();
-          print('   ✅ Port $port: OPEN');
-        } catch (e) {
-          print('   ❌ Port $port: CLOSED');
-        }
-      }
-
-      // 3. محاولة الحصول على MAC
-      print('\n🔍 Getting MAC address...');
-      try {
-        if (Platform.isWindows) {
-          final result = await Process.run('arp', ['-a', ip]);
-          if (result.exitCode == 0) {
-            final output = result.stdout.toString();
-            print('   ARP result: $output');
-          }
-        }
-      } catch (e) {
-        print('   ARP error: $e');
-      }
-
-      // 4. تحديد نوع الطابعة
-      String printerType = 'Unknown';
-      if (openPorts.contains(9100))
-        printerType = 'RAW Printer (9100)';
-      else if (openPorts.contains(631))
-        printerType = 'IPP Printer (631)';
-      else if (openPorts.contains(515)) printerType = 'LPD Printer (515)';
-
-      print('\n📊 Results:');
-      print('   Reachable: $pingResult');
-      print('   Open ports: ${openPorts.join(', ')}');
-      print('   Printer type: $printerType');
-
-      // إضافة إلى قائمة الأجهزة إذا تم العثور عليها
-      if (openPorts.isNotEmpty) {
-        final device = NetworkDevice(
-          ip: ip,
-          name: '${printerType.split(' ')[0]}_${ip.split('.').last}',
-          macAddress: _generateMac(ip),
-          isOnline: true,
-          port: openPorts.first,
-        );
-
-        // إضافة للقائمة إذا لم تكن موجودة
-        if (!discoveredDevices.any((d) => d.ip == ip)) {
-          discoveredDevices.add(device);
-          update();
-        }
-
-        EasyLoading.showSuccess('تم العثور على الطابعة!\nالنوع: $printerType');
-      } else {
-        EasyLoading.showError('لم يتم العثور على منافذ طابعة مفتوحة');
-      }
-    } catch (e) {
-      print('❌ Detailed test error: $e');
-      EasyLoading.showError('حدث خطأ أثناء اختبار الطابعة');
-    }
-
-    print('=' * 50 + '\n');
-  }
-}
 
 
 
