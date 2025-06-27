@@ -7,9 +7,8 @@ void logMessage(String tag, String message) {
   log('$tag: $message');
 }
 
-// دالة مساعدة للتعامل مع Either
 Future<Map<String, dynamic>> handleEitherResult(
-  Future<Either<StatusRequest, Map<String, dynamic>>> future,
+  Future<Either<StatusRequest, dynamic>> future,
   String successTag,
   String failureMessage,
 ) async {
@@ -22,7 +21,10 @@ Future<Map<String, dynamic>> handleEitherResult(
       },
       (data) {
         logMessage(successTag, data.toString());
-        return data;
+        return {
+          'status': 'success',
+          'data': data,
+        };
       },
     );
   } catch (e) {

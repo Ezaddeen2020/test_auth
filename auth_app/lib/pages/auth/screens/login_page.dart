@@ -13,6 +13,15 @@ class LoginPage extends StatelessWidget {
     return Directionality(
       textDirection: TextDirection.rtl, // Proper RTL support for Arabic
       child: Scaffold(
+        appBar: AppBar(
+          actions: [
+            IconButton(
+                onPressed: () {
+                  Get.toNamed('/configuration');
+                },
+                icon: const Icon(Icons.settings))
+          ],
+        ),
         backgroundColor: const Color(0xFFF8FAFC),
         body: SafeArea(
           child: SingleChildScrollView(
@@ -62,11 +71,6 @@ class LoginPage extends StatelessWidget {
                       letterSpacing: -0.5,
                     ),
                   ),
-                  ElevatedButton(
-                      onPressed: () {
-                        Get.toNamed('/configuration');
-                      },
-                      child: const Text('go to configration')),
 
                   const SizedBox(height: 12),
 

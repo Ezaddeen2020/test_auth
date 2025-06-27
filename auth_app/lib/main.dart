@@ -34,16 +34,6 @@ class MyApp extends StatelessWidget {
   }
 
   String _getInitialRoute() {
-    // // التحقق من حالة التكوين أولاً
-    // bool isConfigured = Preferences.getBoolean('configuration_saved');
-    // String printerMac = Preferences.getString('printer_mac_address');
-    // String deviceName = Preferences.getString('device_name');
-
-    // // إذا لم يتم التكوين بعد، انتقل إلى صفحة التكوين
-    // if (!isConfigured || printerMac.isEmpty || deviceName.isEmpty) {
-    //   return AppRoutes.configuration;
-    // }
-
     // إذا تم التكوين، تحقق من حالة تسجيل الدخول
     bool isLoggedIn = Preferences.getBoolean(Preferences.isLogin);
     String savedToken = Preferences.getString('auth_token');
@@ -56,6 +46,18 @@ class MyApp extends StatelessWidget {
     return AppRoutes.login;
   }
 }
+
+
+
+   // // التحقق من حالة التكوين أولاً
+    // bool isConfigured = Preferences.getBoolean('configuration_saved');
+    // String printerMac = Preferences.getString('printer_mac_address');
+    // String deviceName = Preferences.getString('device_name');
+
+    // // إذا لم يتم التكوين بعد، انتقل إلى صفحة التكوين
+    // if (!isConfigured || printerMac.isEmpty || deviceName.isEmpty) {
+    //   return AppRoutes.configuration;
+    // }
 
 // // lib/main.dart
 

@@ -96,6 +96,81 @@ class AuthController extends GetxController {
     }
   }
 
+  // Future<void> login() async {
+  //   if (loginFormKey.currentState!.validate()) {
+  //     isLoading.value = true;
+  //     statusRequest = StatusRequest.loading;
+
+  //     UserModel userModel = UserModel(
+  //       name: usernameController.text.trim(),
+  //       password: passwordController.text,
+  //     );
+
+  //     EasyLoading.show(status: 'جاري تسجيل الدخول...');
+
+  //     try {
+  //       final res = await authApi.postlogin(userModel);
+  //       statusRequest = handleResult(res);
+
+  //       log('Login response: $res');
+
+  //       // if (statusRequest == StatusRequest.success && res['token'] != null) {
+  //       if (statusRequest == StatusRequest.success &&
+  //           res['data'] != null &&
+  //           res['data']['token'] != null) {
+  //         authToken = res['data']['token'];
+
+  //         authToken = res['token'];
+
+  //         await Preferences.setBoolean(Preferences.isLogin, true);
+  //         await Preferences.setString('auth_token', authToken!);
+
+  //         UserModel loggedUser = UserModel(
+  //           name: usernameController.text.trim(),
+  //           token: authToken,
+  //         );
+
+  //         await Preferences.setDataUser(loggedUser);
+
+  //         EasyLoading.dismiss();
+  //         await testApiWithToken();
+
+  //         Get.offAllNamed('/stock');
+
+  //         Get.showSnackbar(const GetSnackBar(
+  //           title: 'نجح',
+  //           message: 'تم تسجيل الدخول بنجاح',
+  //           snackPosition: SnackPosition.TOP,
+  //           backgroundColor: Colors.green,
+  //           duration: Duration(seconds: 2),
+  //         ));
+
+  //         log("تم تسجيل الدخول بنجاح مع Token: $authToken");
+  //       } else {
+  //         throw Exception(res['message'] ?? 'فشل في تسجيل الدخول');
+  //       }
+  //     } catch (e) {
+  //       log('Login Error: $e');
+  //       EasyLoading.dismiss();
+
+  //       String errorMessage = 'اسم المستخدم أو كلمة المرور غير صحيحة';
+  //       if (e.toString().contains('connection')) {
+  //         errorMessage = 'خطأ في الاتصال بالخادم';
+  //       }
+
+  //       Get.showSnackbar(GetSnackBar(
+  //         title: 'خطأ',
+  //         message: errorMessage,
+  //         snackPosition: SnackPosition.BOTTOM,
+  //         backgroundColor: Colors.red,
+  //         duration: const Duration(seconds: 3),
+  //       ));
+  //     }
+
+  //     isLoading.value = false;
+  //   }
+  // }
+
   Future<void> login() async {
     if (loginFormKey.currentState!.validate()) {
       isLoading.value = true;
@@ -114,8 +189,10 @@ class AuthController extends GetxController {
 
         log('Login response: $res');
 
-        if (statusRequest == StatusRequest.success && res['token'] != null) {
-          authToken = res['token'];
+        if (statusRequest == StatusRequest.success &&
+            res['data'] != null &&
+            res['data']['token'] != null) {
+          authToken = res['data']['token'];
 
           await Preferences.setBoolean(Preferences.isLogin, true);
           await Preferences.setString('auth_token', authToken!);
@@ -130,7 +207,7 @@ class AuthController extends GetxController {
           EasyLoading.dismiss();
           await testApiWithToken();
 
-          Get.offAllNamed('/home');
+          Get.offAllNamed('/stock');
 
           Get.showSnackbar(const GetSnackBar(
             title: 'نجح',
