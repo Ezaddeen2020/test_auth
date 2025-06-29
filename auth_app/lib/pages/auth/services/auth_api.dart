@@ -1,5 +1,5 @@
 import 'package:auth_app/functions/handling_data.dart';
-import 'package:auth_app/models/user_model.dart';
+import 'package:auth_app/pages/auth/models/user_model.dart';
 import 'package:auth_app/services/api/post_get_api.dart';
 import 'package:auth_app/services/api_service.dart';
 

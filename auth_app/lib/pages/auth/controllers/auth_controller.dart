@@ -2,12 +2,12 @@ import 'dart:developer';
 import 'package:auth_app/classes/shared_preference.dart';
 import 'package:auth_app/functions/handling_data.dart';
 import 'package:auth_app/functions/status_request.dart';
-import 'package:auth_app/services/auh/auth_api.dart';
+import 'package:auth_app/pages/auth/services/auth_api.dart';
 import 'package:auth_app/services/api_service.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
-import '../../../models/user_model.dart';
+import '../models/user_model.dart';
 import '../../../services/api/post_get_api.dart';
 
 class AuthController extends GetxController {

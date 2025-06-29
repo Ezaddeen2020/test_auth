@@ -1,6 +1,6 @@
 // controllers/printer_controller.dart
 import 'dart:async';
-import 'package:auth_app/models/printer_model.dart';
+import 'package:auth_app/pages/configration/models/printer_model.dart';
 import 'package:auth_app/pages/configration/servicers/printer_service.dart';
 import 'package:get/get.dart';
 

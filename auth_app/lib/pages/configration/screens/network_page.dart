@@ -1,5 +1,4 @@
 import 'package:auth_app/pages/configration/controllers/network_controller.dart';
-import 'package:auth_app/widgets/connection_type_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 

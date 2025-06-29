@@ -1,6 +1,6 @@
 import 'dart:ui';
 
-import 'package:auth_app/models/network_info_model.dart';
+import 'package:auth_app/pages/configration/models/network_info_model.dart';
 import 'package:auth_app/pages/configration/servicers/network_service.dart';
 import 'package:get/get.dart';
 

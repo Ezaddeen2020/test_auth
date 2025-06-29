@@ -1,4 +1,4 @@
-import 'package:auth_app/models/network_info_model.dart';
+import 'package:auth_app/pages/configration/models/network_info_model.dart';
 import 'package:auth_app/pages/configration/controllers/network_controller.dart';
 import 'package:flutter/material.dart';
 

@@ -1,4 +1,4 @@
-import 'package:auth_app/models/printer_model.dart';
+import 'package:auth_app/pages/configration/models/printer_model.dart';
 import 'package:auth_app/pages/configration/controllers/network_controller.dart';
 import 'package:auth_app/pages/configration/controllers/printer_controller.dart';
 import 'package:auth_app/pages/configration/screens/printer_setting.dart';

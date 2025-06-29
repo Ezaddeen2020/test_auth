@@ -2,7 +2,7 @@
 
 import 'dart:convert';
 
-import 'package:auth_app/models/user_model.dart';
+import 'package:auth_app/pages/auth/models/user_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class Preferences {

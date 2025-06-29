@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'dart:async';
 import 'dart:convert';
-import 'package:auth_app/models/printer_model.dart';
+import 'package:auth_app/pages/configration/models/printer_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PrinterService {
