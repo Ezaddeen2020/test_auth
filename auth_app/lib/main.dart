@@ -39,7 +39,7 @@ class MyApp extends StatelessWidget {
     String savedToken = Preferences.getString('auth_token');
 
     if (isLoggedIn && savedToken.isNotEmpty) {
-      return AppRoutes.home;
+      return AppRoutes.stock;
     }
 
     // إذا تم التكوين ولكن لم يتم تسجيل الدخول، انتقل إلى صفحة تسجيل الدخول

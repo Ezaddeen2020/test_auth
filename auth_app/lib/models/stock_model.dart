@@ -93,7 +93,7 @@ class StockModel {
       case StockStatus.deficit:
         return 'عجز';
       case StockStatus.empty:
-        return 'فارغ';
+        return 'غير متوفر';
       case StockStatus.low:
         return 'قليل';
       case StockStatus.available:

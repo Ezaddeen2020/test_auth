@@ -1,4 +1,6 @@
+// الحل الأول: إضافة AuthController في بداية StockPage
 import 'package:auth_app/models/stock_model.dart';
+import 'package:auth_app/pages/auth/controllers/auth_controller.dart';
 import 'package:auth_app/pages/stocks/controllers/stock_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -10,6 +12,8 @@ class StockPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final StockController controller = Get.put(StockController());
+    // إضافة AuthController هنا
+    final AuthController authController = Get.find<AuthController>();
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -26,6 +30,13 @@ class StockPage extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            onPressed: () => _showLogoutDialog(context, authController),
+            icon: const Icon(Icons.logout),
+            tooltip: 'تسجيل الخروج',
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -149,7 +160,64 @@ class StockPage extends StatelessWidget {
     );
   }
 
-  // شاشة الترحيب
+  // تعديل دالة _showLogoutDialog لتستقبل authController كمعامل
+  void _showLogoutDialog(BuildContext context, AuthController authController) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(15),
+          ),
+          title: Row(
+            children: [
+              Icon(Icons.logout, color: Colors.red[600]),
+              const SizedBox(width: 8),
+              const Text('تسجيل الخروج'),
+            ],
+          ),
+          content: const Text(
+            'هل تريد تسجيل الخروج من التطبيق؟',
+            style: TextStyle(fontSize: 16),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(
+                'إلغاء',
+                style: TextStyle(
+                  color: Colors.grey[600],
+                  fontSize: 16,
+                ),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                authController.logout();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red[600],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(8),
+                ),
+              ),
+              child: const Text(
+                'تأكيد',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // باقي الدوال تبقى كما هي...
   Widget _buildWelcomeScreen() {
     return Center(
       child: Column(
@@ -182,7 +250,6 @@ class StockPage extends StatelessWidget {
     );
   }
 
-  // شاشة عدم وجود بيانات
   Widget _buildNoDataScreen() {
     return Center(
       child: Column(
@@ -215,29 +282,22 @@ class StockPage extends StatelessWidget {
     );
   }
 
-  // عرض نتائج المخزون
   Widget _buildStockResults(StockController controller) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // معلومات الصنف
           _buildItemInfoCard(controller),
           const SizedBox(height: 16),
-
-          // ملخص المخزون
           _buildStockSummaryCard(controller),
           const SizedBox(height: 16),
-
-          // قائمة المستودعات
           _buildWarehousesList(controller),
         ],
       ),
     );
   }
 
-  // بطاقة معلومات الصنف
   Widget _buildItemInfoCard(StockController controller) {
     if (controller.stockItems.isEmpty) return const SizedBox();
 
@@ -282,7 +342,6 @@ class StockPage extends StatelessWidget {
     );
   }
 
-  // بطاقة ملخص المخزون
   Widget _buildStockSummaryCard(StockController controller) {
     return Card(
       elevation: 4,
@@ -340,7 +399,6 @@ class StockPage extends StatelessWidget {
     );
   }
 
-  // عنصر ملخص
   Widget _buildSummaryItem(String title, String value, Color color, IconData icon) {
     return Container(
       margin: const EdgeInsets.all(4),
@@ -374,7 +432,6 @@ class StockPage extends StatelessWidget {
     );
   }
 
-  // قائمة المستودعات
   Widget _buildWarehousesList(StockController controller) {
     return Card(
       elevation: 4,
@@ -420,7 +477,6 @@ class StockPage extends StatelessWidget {
     );
   }
 
-  // عنصر مستودع
   Widget _buildWarehouseItem(StockModel item) {
     Color stockColor = _getStockColorFromModel(item);
 
@@ -428,7 +484,6 @@ class StockPage extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       child: Row(
         children: [
-          // أيقونة المستودع
           Container(
             padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
@@ -442,8 +497,6 @@ class StockPage extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-
-          // معلومات المستودع
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -503,8 +556,6 @@ class StockPage extends StatelessWidget {
               ],
             ),
           ),
-
-          // مؤشر حالة المخزون
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
@@ -525,7 +576,6 @@ class StockPage extends StatelessWidget {
     );
   }
 
-  // صف معلومات
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
@@ -551,7 +601,6 @@ class StockPage extends StatelessWidget {
     );
   }
 
-  // تنسيق التاريخ
   String _formatDate(String dateString) {
     try {
       DateTime date = DateTime.parse(dateString);
@@ -561,7 +610,6 @@ class StockPage extends StatelessWidget {
     }
   }
 
-  // الحصول على لون المخزون من المودل
   Color _getStockColorFromModel(StockModel stock) {
     switch (stock.stockStatus) {
       case StockStatus.deficit:
@@ -575,7 +623,6 @@ class StockPage extends StatelessWidget {
     }
   }
 
-  // الحصول على لون المخزون (للتوافق مع الكود القديم)
   Color _getStockColor(double stock) {
     if (stock < 0) return Colors.red;
     if (stock == 0) return Colors.orange;
@@ -583,7 +630,6 @@ class StockPage extends StatelessWidget {
     return Colors.green;
   }
 
-  // الحصول على حالة المخزون (للتوافق مع الكود القديم)
   String _getStockStatus(double stock) {
     if (stock < 0) return 'عجز';
     if (stock == 0) return 'فارغ';
@@ -591,7 +637,6 @@ class StockPage extends StatelessWidget {
     return 'متوفر';
   }
 }
-
 
 
 

@@ -6,7 +6,6 @@ import 'package:auth_app/pages/stocks/screens/stock_page.dart';
 import 'package:get/get.dart';
 import 'package:auth_app/pages/auth/screens/login_page.dart';
 import 'package:auth_app/pages/auth/screens/signup_page.dart';
-import 'package:auth_app/pages/home/home_page.dart';
 
 class AppRoutes {
   static const login = '/login';
