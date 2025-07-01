@@ -1,4 +1,5 @@
 import 'package:auth_app/pages/configration/controllers/network_controller.dart';
+import 'package:auth_app/widgets/connection_type_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -269,123 +270,123 @@ class _NetworkPageState extends State<NetworkPage> with TickerProviderStateMixin
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        // gradient: LinearGradient(
-        //   colors: isLocalNetwork
-        //       ? [const Color(0xFF10B981), const Color(0xFF059669)]
-        //       : [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
-        //   begin: Alignment.topLeft,
-        //   end: Alignment.bottomRight,
-        // ),
+        gradient: LinearGradient(
+          colors: isLocalNetwork
+              ? [const Color(0xFF10B981), const Color(0xFF059669)]
+              : [const Color(0xFF6366F1), const Color(0xFF4F46E5)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          // BoxShadow(
-          //   color: (isLocalNetwork ? const Color(0xFF10B981) : const Color(0xFF6366F1))
-          //       .withOpacity(0.3),
-          //   offset: const Offset(0, 8),
-          //   blurRadius: 24,
-          //   spreadRadius: 0,
-          // ),
+          BoxShadow(
+            color: (isLocalNetwork ? const Color(0xFF10B981) : const Color(0xFF6366F1))
+                .withOpacity(0.3),
+            offset: const Offset(0, 8),
+            blurRadius: 24,
+            spreadRadius: 0,
+          ),
         ],
       ),
       child: Column(
         children: [
-          // Row(
-          //   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          //   children: [
-          //     Expanded(child: ConnectionTypeIndicator()),
-          //     Container(
-          //       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          //       decoration: BoxDecoration(
-          //         color: Colors.white.withOpacity(0.2),
-          //         borderRadius: BorderRadius.circular(25),
-          //         border: Border.all(
-          //           color: Colors.white.withOpacity(0.3),
-          //           width: 1,
-          //         ),
-          //       ),
-          //       child: Row(
-          //         mainAxisSize: MainAxisSize.min,
-          //         children: [
-          //           // Icon(
-          //           //   isLocalNetwork ? Icons.home_rounded : Icons.cloud_rounded,
-          //           //   size: 16,
-          //           //   color: Colors.white.withOpacity(0.9),
-          //           // ),
-          //           const SizedBox(width: 6),
-          //           // Text(
-          //           //   isLocalNetwork ? 'شبكة محلية' : 'خادم خارجي',
-          //           //   style: TextStyle(
-          //           //     fontSize: 13,
-          //           //     color: Colors.white.withOpacity(0.9),
-          //           //     fontWeight: FontWeight.w600,
-          //           //   ),
-          //           // ),
-          //         ],
-          //       ),
-          //     ),
-          // ],
-          // ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(child: ConnectionTypeIndicator()),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.2),
+                  borderRadius: BorderRadius.circular(25),
+                  border: Border.all(
+                    color: Colors.white.withOpacity(0.3),
+                    width: 1,
+                  ),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      isLocalNetwork ? Icons.home_rounded : Icons.cloud_rounded,
+                      size: 16,
+                      color: Colors.white.withOpacity(0.9),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      isLocalNetwork ? 'شبكة محلية' : 'خادم خارجي',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: Colors.white.withOpacity(0.9),
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
 
           // Additional Status Info
-          // const SizedBox(height: 16),
-          // Container(
-          //   padding: const EdgeInsets.all(16),
-          //   decoration: BoxDecoration(
-          //     color: Colors.white.withOpacity(0.15),
-          //     borderRadius: BorderRadius.circular(16),
-          //     border: Border.all(
-          //       color: Colors.white.withOpacity(0.2),
-          //       width: 1,
-          //     ),
-          //   ),
-          //   child: Row(
-          //     children: [
-          //       Icon(
-          //         Icons.signal_wifi_4_bar_rounded,
-          //         color: Colors.white.withOpacity(0.9),
-          //         size: 20,
-          //       ),
-          //       const SizedBox(width: 12),
-          //       Expanded(
-          //         child: Column(
-          //           crossAxisAlignment: CrossAxisAlignment.start,
-          //           children: [
-          //             Text(
-          //               'اتصال نشط',
-          //               style: TextStyle(
-          //                 color: Colors.white.withOpacity(0.9),
-          //                 fontSize: 14,
-          //                 fontWeight: FontWeight.w600,
-          //               ),
-          //             ),
-          //             Text(
-          //               info.wifiName ?? 'شبكة غير محددة',
-          //               style: TextStyle(
-          //                 color: Colors.white.withOpacity(0.7),
-          //                 fontSize: 12,
-          //               ),
-          //             ),
-          //           ],
-          //         ),
-          //       ),
-          //       Container(
-          //         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          //         decoration: BoxDecoration(
-          //           color: Colors.white.withOpacity(0.2),
-          //           borderRadius: BorderRadius.circular(20),
-          //         ),
-          //         child: Text(
-          //           info.ipAddress ?? 'غير متاح',
-          //           style: TextStyle(
-          //             color: Colors.white.withOpacity(0.9),
-          //             fontSize: 11,
-          //             fontWeight: FontWeight.w600,
-          //           ),
-          //         ),
-          //       ),
-          //     ],
-          //   ),
-          // ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.signal_wifi_4_bar_rounded,
+                  color: Colors.white.withOpacity(0.9),
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'اتصال نشط',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.9),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      Text(
+                        info.wifiName ?? 'شبكة غير محددة',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    info.ipAddress ?? 'غير متاح',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

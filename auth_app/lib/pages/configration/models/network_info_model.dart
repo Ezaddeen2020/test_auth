@@ -33,9 +33,9 @@ class NetworkInfoModel {
   String get connectionTypeString {
     switch (connectionType) {
       case ConnectionType.lan:
-        return 'LAN (Local Area Network)';
+        return 'LAN';
       case ConnectionType.wan:
-        return 'WAN (Wide Area Network)';
+        return 'WAN';
       case ConnectionType.none:
         return 'غير متصل';
     }

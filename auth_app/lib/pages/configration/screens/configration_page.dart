@@ -391,7 +391,7 @@ class _ConfigrationPageState extends State<ConfigrationPage> with TickerProvider
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(child: ConnectionTypeIndicator()),
+              const Expanded(child: ConnectionTypeIndicator()),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(

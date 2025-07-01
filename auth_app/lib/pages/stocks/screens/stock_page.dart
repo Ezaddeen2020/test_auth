@@ -11,7 +11,8 @@ class StockPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final StockController controller = Get.put(StockController());
+    // final StockController controller = Get.put(StockController());
+    final StockController controller = Get.find<StockController>();
     // إضافة AuthController هنا
     final AuthController authController = Get.find<AuthController>();
 
@@ -217,7 +218,7 @@ class StockPage extends StatelessWidget {
     );
   }
 
-  // باقي الدوال تبقى كما هي...
+///////////////////////////////////////////////////////////
   Widget _buildWelcomeScreen() {
     return Center(
       child: Column(

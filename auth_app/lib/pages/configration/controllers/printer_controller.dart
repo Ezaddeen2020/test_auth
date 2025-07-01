@@ -32,29 +32,101 @@ class PrinterController extends GetxController {
   }
 
 // في PrinterController
+  // Future<void> scanForPrinters(String networkRange) async {
+  //   if (isScanning.value) return;
+
+  //   isScanning.value = true;
+  //   scanProgress.value = 0.0;
+  //   scanStatus.value = 'تحديث ARP table...';
+  //   discoveredPrinters.clear();
+
+  //   try {
+  //     // تحديث تقدم المسح
+  //     Timer.periodic(const Duration(milliseconds: 100), (timer) {
+  //       if (!isScanning.value) {
+  //         timer.cancel();
+  //         return;
+  //       }
+  //       if (scanProgress.value < 0.9) {
+  //         scanProgress.value += 0.01;
+  //       }
+  //     });
+
+  //     List<PrinterModel> printers = await _printerService.scanForPrinters(networkRange);
+
+  //     discoveredPrinters.value = printers;
+  //     scanProgress.value = 1.0;
+
+  //     if (printers.isNotEmpty) {
+  //       scanStatus.value = 'تم العثور على ${printers.length} جهاز';
+  //       await _printerService.savePrinters(printers);
+  //       _updateSavedPrinters();
+  //     } else {
+  //       scanStatus.value = 'لم يتم العثور على أي طابعات';
+  //     }
+  //   } catch (e) {
+  //     scanStatus.value = 'خطأ في البحث: $e';
+  //     _showError('فشل في البحث عن الطابعات: $e');
+  //   } finally {
+  //     isScanning.value = false;
+  //   }
+  // }
+
+// في ملف printer_controller.dart - تحسين دالة scanForPrinters
   Future<void> scanForPrinters(String networkRange) async {
     if (isScanning.value) return;
 
+    // تحديث فوري للحالة
     isScanning.value = true;
     scanProgress.value = 0.0;
-    scanStatus.value = 'تحديث ARP table...';
+    scanStatus.value = 'بدء البحث...';
     discoveredPrinters.clear();
 
+    Timer? progressTimer;
+
     try {
-      // تحديث تقدم المسح
-      Timer.periodic(const Duration(milliseconds: 100), (timer) {
+      // تحديث سريع للواجهة
+      await Future.delayed(const Duration(milliseconds: 10));
+
+      scanStatus.value = 'تحديث ARP table...';
+
+      // تحديث تقدم المسح بتكرار أسرع
+      progressTimer = Timer.periodic(const Duration(milliseconds: 30), (timer) {
         if (!isScanning.value) {
           timer.cancel();
           return;
         }
-        if (scanProgress.value < 0.9) {
-          scanProgress.value += 0.01;
+        if (scanProgress.value < 0.1) {
+          scanProgress.value += 0.03; // تحديث أسرع في البداية
+        } else if (scanProgress.value < 0.9) {
+          scanProgress.value += 0.008; // تحديث متوسط
         }
       });
 
-      List<PrinterModel> printers = await _printerService.scanForPrinters(networkRange);
+      // تحديث سريع للحالة
+      await Future.delayed(const Duration(milliseconds: 100));
+      scanStatus.value = 'البحث عن الأجهزة في الشبكة...';
 
-      discoveredPrinters.value = printers;
+      List<PrinterModel> printers = await _printerService.scanForPrinters(networkRange).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          throw TimeoutException(
+            'انتهت مهلة البحث عن الطابعات',
+            const Duration(seconds: 30),
+          );
+        },
+      );
+
+      // إضافة النتائج تدريجياً ولكن بسرعة أكبر
+      for (int i = 0; i < printers.length; i++) {
+        discoveredPrinters.add(printers[i]);
+        if (i < 5) {
+          await Future.delayed(const Duration(milliseconds: 50)); // أول 5 عناصر سريعة
+        } else {
+          await Future.delayed(const Duration(milliseconds: 20)); // باقي العناصر أسرع
+        }
+      }
+
       scanProgress.value = 1.0;
 
       if (printers.isNotEmpty) {
@@ -62,12 +134,23 @@ class PrinterController extends GetxController {
         await _printerService.savePrinters(printers);
         _updateSavedPrinters();
       } else {
-        scanStatus.value = 'لم يتم العثور على أي طابعات';
+        scanStatus.value = 'لم يتم العثور على أي طابعات في الشبكة';
       }
+
+      // إخفاء شريط التقدم بعد ثانيتين
+      Future.delayed(const Duration(seconds: 2), () {
+        if (!isScanning.value) {
+          scanStatus.value = '';
+        }
+      });
+    } on TimeoutException {
+      scanStatus.value = 'انتهت مهلة البحث - يرجى المحاولة مرة أخرى';
+      _showError('انتهت مهلة البحث عن الطابعات. تأكد من الاتصال بالشبكة وحاول مرة أخرى.');
     } catch (e) {
       scanStatus.value = 'خطأ في البحث: $e';
       _showError('فشل في البحث عن الطابعات: $e');
     } finally {
+      progressTimer?.cancel();
       isScanning.value = false;
     }
   }
