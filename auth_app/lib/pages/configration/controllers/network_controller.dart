@@ -1,11 +1,9 @@
-import 'dart:ui';
 import 'dart:io';
 import 'package:auth_app/pages/configration/models/network_info_model.dart';
 import 'package:auth_app/pages/configration/servicers/network_service.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class NetworkController extends GetxController {
   final NetworkService _networkService = NetworkService();
