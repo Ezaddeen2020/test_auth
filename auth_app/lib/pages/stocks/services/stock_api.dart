@@ -10,7 +10,6 @@ class StockApi {
   StockApi(this.postGetPage);
 
   Future<Map<String, dynamic>> getStockByItemCode(String itemCode) async {
-    // الحصول على التوكن من SharedPreferences
     String token = Preferences.getString('auth_token');
 
     if (token.isEmpty) {
@@ -26,20 +25,20 @@ class StockApi {
     );
   }
 
-  // دالة للحصول على قائمة من المودلز مباشرة
-  Future<List<StockModel>> getStockModelsByItemCode(String itemCode) async {
-    try {
-      var response = await getStockByItemCode(itemCode);
+  // // دالة للحصول على قائمة من المودلز مباشرة
+  // Future<List<StockModel>> getStockModelsByItemCode(String itemCode) async {
+  //   try {
+  //     var response = await getStockByItemCode(itemCode);
 
-      if (response['status'] == 'success' && response['data'] != null) {
-        List<dynamic> data = response['data'];
-        return data.map((item) => StockModel.fromJson(item)).toList();
-      }
+  //     if (response['status'] == 'success' && response['data'] != null) {
+  //       List<dynamic> data = response['data'];
+  //       return data.map((item) => StockModel.fromJson(item)).toList();
+  //     }
 
-      return [];
-    } catch (e) {
-      logMessage('Stock', 'Error getting stock models: $e');
-      return [];
-    }
-  }
+  //     return [];
+  //   } catch (e) {
+  //     logMessage('Stock', 'Error getting stock models: $e');
+  //     return [];
+  //   }
+  // }
 }

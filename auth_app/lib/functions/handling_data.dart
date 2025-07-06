@@ -41,13 +41,3 @@ StatusRequest handleResult(Map<String, dynamic> response) {
     return StatusRequest.success;
   }
 }
-
-// handlingData(response) {
-//   // if the type is from StatusRequest(left) otherwise it return the Map(Right)
-//   if (response is StatusRequest) {
-//     return response;
-//   } else {
-//     return StatusRequest.success;
-//   }
-// }
-
