@@ -11,7 +11,7 @@ class StockPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final StockController controller = Get.find<StockController>();
-    final AuthController authController = Get.find<AuthController>();
+    // final AuthController authController = Get.find<AuthController>();
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
