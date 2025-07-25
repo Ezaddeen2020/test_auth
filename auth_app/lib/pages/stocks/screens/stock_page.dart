@@ -1,5 +1,4 @@
 import 'package:auth_app/pages/stocks/model/stock_model.dart';
-import 'package:auth_app/pages/auth/controllers/auth_controller.dart';
 import 'package:auth_app/pages/stocks/controllers/stock_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
