@@ -1,5 +1,4 @@
 import 'package:auth_app/functions/handling_data.dart';
-import 'package:auth_app/pages/stocks/model/stock_model.dart';
 import 'package:auth_app/services/api/post_get_api.dart';
 import 'package:auth_app/services/api_service.dart';
 import 'package:auth_app/classes/shared_preference.dart';
