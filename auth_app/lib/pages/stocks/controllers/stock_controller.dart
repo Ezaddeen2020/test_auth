@@ -1,8 +1,8 @@
-import 'package:auth_app/pages/stocks/model/stock_model.dart';
-import 'package:auth_app/services/api/post_get_api.dart';
 import 'package:auth_app/pages/stocks/services/stock_api.dart';
-import 'package:flutter/material.dart';
+import 'package:auth_app/pages/stocks/model/stock_model.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:auth_app/services/api/post_get_api.dart';
+import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 class StockController extends GetxController {

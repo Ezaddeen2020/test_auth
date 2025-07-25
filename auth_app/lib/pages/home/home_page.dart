@@ -1,144 +1,53 @@
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-// import '../auth/controllers/auth_controller.dart';
+// lib/pages/home/screens/home_page.dart
 
-// class HomePage extends StatelessWidget {
-//   final AuthController authController = Get.find<AuthController>();
+import 'package:auth_app/pages/home/bottombar/mainpage.dart';
+import 'package:auth_app/pages/home/bottombar/operation_tab.dart';
+import 'package:auth_app/pages/home/bottombar/setting.dart';
+import 'package:auth_app/pages/home/home_controller.dart';
+import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 
-//   HomePage({super.key});
+class HomePage extends StatelessWidget {
+  HomePage({super.key});
 
-//   @override
-//   Widget build(BuildContext context) {
-//     return Scaffold(
-//       appBar: AppBar(
-//         title: const Text('الصفحة الرئيسية'),
-//         actions: [
-//           IconButton(
-//             icon: const Icon(Icons.logout),
-//             onPressed: () => _showLogoutDialog(context),
-//           ),
-//         ],
-//       ),
-//       body: Padding(
-//         padding: const EdgeInsets.all(16.0),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           children: [
-//             Card(
-//               child: Padding(
-//                 padding: const EdgeInsets.all(16.0),
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     Text(
-//                       'مرحباً، ${authController.getCurrentUser()?.name ?? 'المستخدم'}',
-//                       style: const TextStyle(
-//                         fontSize: 24,
-//                         fontWeight: FontWeight.bold,
-//                       ),
-//                     ),
-//                     const SizedBox(height: 8),
-//                     Text(
-//                       'تم تسجيل الدخول بنجاح',
-//                       style: TextStyle(
-//                         fontSize: 16,
-//                         color: Colors.grey[600],
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             ),
+  final HomeController controller = Get.put(HomeController());
 
-//             const SizedBox(height: 20),
+  final List<Widget> items = const [
+    Icon(Icons.home, size: 30, color: Colors.white),
+    Icon(Icons.business_center, size: 30, color: Colors.white),
+    Icon(Icons.settings, size: 30, color: Colors.white),
+  ];
 
-//             Card(
-//               child: Padding(
-//                 padding: const EdgeInsets.all(16.0),
-//                 child: Column(
-//                   crossAxisAlignment: CrossAxisAlignment.start,
-//                   children: [
-//                     const Text(
-//                       'معلومات الـ Token:',
-//                       style: TextStyle(
-//                         fontSize: 18,
-//                         fontWeight: FontWeight.bold,
-//                       ),
-//                     ),
-//                     const SizedBox(height: 8),
-//                     Container(
-//                       padding: const EdgeInsets.all(12),
-//                       decoration: BoxDecoration(
-//                         color: Colors.grey[100],
-//                         borderRadius: BorderRadius.circular(8),
-//                       ),
-//                       child: Text(
-//                         authController.authToken ?? 'لم يتم العثور على Token',
-//                         style: const TextStyle(
-//                           fontSize: 12,
-//                           fontFamily: 'monospace',
-//                         ),
-//                         maxLines: 3,
-//                         overflow: TextOverflow.ellipsis,
-//                       ),
-//                     ),
-//                   ],
-//                 ),
-//               ),
-//             ),
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: Colors.grey[200],
+      body: Obx(() => _getSelectedPage(controller.selectedIndex.value)),
+      bottomNavigationBar: Obx(() {
+        return CurvedNavigationBar(
+          index: controller.selectedIndex.value,
+          items: items,
+          height: 60,
+          backgroundColor: Colors.grey[200]!,
+          color: Colors.blue.shade900,
+          animationDuration: const Duration(milliseconds: 300),
+          onTap: (index) => controller.changeTab(index),
+        );
+      }),
+    );
+  }
 
-//             const SizedBox(height: 20),
-
-//             // زر اختبار الـ API
-//             SizedBox(
-//               width: double.infinity,
-//               child: ElevatedButton(
-//                 onPressed: authController.testApiWithToken,
-//                 child: const Text('اختبار الـ API'),
-//               ),
-//             ),
-
-//             const SizedBox(height: 10),
-
-//             // زر تسجيل الخروج
-//             SizedBox(
-//               width: double.infinity,
-//               child: ElevatedButton(
-//                 onPressed: () => _showLogoutDialog(context),
-//                 style: ElevatedButton.styleFrom(
-//                   backgroundColor: Colors.red,
-//                 ),
-//                 child: const Text('تسجيل الخروج'),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   void _showLogoutDialog(BuildContext context) {
-//     showDialog(
-//       context: context,
-//       builder: (BuildContext context) {
-//         return AlertDialog(
-//           title: const Text('تسجيل الخروج'),
-//           content: const Text('هل تريد تسجيل الخروج؟'),
-//           actions: [
-//             TextButton(
-//               onPressed: () => Navigator.of(context).pop(),
-//               child: const Text('إلغاء'),
-//             ),
-//             TextButton(
-//               onPressed: () {
-//                 Navigator.of(context).pop();
-//                 authController.logout();
-//               },
-//               child: const Text('تأكيد'),
-//             ),
-//           ],
-//         );
-//       },
-//     );
-//   }
-// }
+  Widget _getSelectedPage(int index) {
+    switch (index) {
+      case 0:
+        return MainTab();
+      case 1:
+        return const OperationsTab();
+      case 2:
+        return const SettingsTab();
+      default:
+        return MainTab();
+    }
+  }
+}

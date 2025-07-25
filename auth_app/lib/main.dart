@@ -5,6 +5,7 @@ import 'package:auth_app/classes/shared_preference.dart';
 import 'package:auth_app/routes/app_routes.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:get/get.dart';
 
 void main() async {
@@ -30,6 +31,15 @@ class MyApp extends StatelessWidget {
       initialBinding: InitialBinding(),
       getPages: AppRoutes.routes,
       builder: EasyLoading.init(),
+      supportedLocales: const [
+        Locale('ar', ''), // العربية
+        Locale('en', ''), // الإنجليزية أو أي لغة أخرى تريد دعمها
+      ],
+      localizationsDelegates: const [
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
     );
   }
 
@@ -39,7 +49,7 @@ class MyApp extends StatelessWidget {
     String savedToken = Preferences.getString('auth_token');
 
     if (isLoggedIn && savedToken.isNotEmpty) {
-      return AppRoutes.stock;
+      return AppRoutes.home;
     }
 
     // إذا تم التكوين ولكن لم يتم تسجيل الدخول، انتقل إلى صفحة تسجيل الدخول
