@@ -27,10 +27,14 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         fontFamily: 'Cairo',
       ),
+
       initialRoute: _getInitialRoute(),
       initialBinding: InitialBinding(),
       getPages: AppRoutes.routes,
       builder: EasyLoading.init(),
+
+      locale: const Locale('ar'), // ⬅️ هذا السطر يحدد اللغة العربية كافتراضي
+      fallbackLocale: const Locale('ar'), // ⬅️ هذا للغة الاحتياط
       supportedLocales: const [
         Locale('ar', ''), // العربية
         Locale('en', ''), // الإنجليزية أو أي لغة أخرى تريد دعمها
@@ -56,6 +60,24 @@ class MyApp extends StatelessWidget {
     return AppRoutes.login;
   }
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
