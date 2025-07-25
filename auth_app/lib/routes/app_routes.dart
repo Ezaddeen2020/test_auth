@@ -2,7 +2,7 @@
 
 import 'package:auth_app/pages/configration/screens/configration_page.dart';
 import 'package:auth_app/pages/home/home_page.dart';
-import 'package:auth_app/pages/home/salse/purchase_order.dart';
+import 'package:auth_app/pages/home/salse/main/purchase_order.dart';
 import 'package:auth_app/pages/home/transfare/decoment_transfer.dart';
 import 'package:auth_app/pages/stocks/screens/stock_page.dart';
 
@@ -25,7 +25,7 @@ class AppRoutes {
     GetPage(name: home, page: () => HomePage()),
     GetPage(name: configuration, page: () => const ConfigrationPage()),
     GetPage(name: stock, page: () => const StockPage()),
-    GetPage(name: purchase, page: () => const PurchaseOrderPage()),
+    GetPage(name: purchase, page: () => PurchaseOrderPage()),
     GetPage(name: transfer, page: () => DecomentTransfer()),
   ];
 }

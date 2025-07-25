@@ -132,7 +132,7 @@ class AuthController extends GetxController {
           EasyLoading.dismiss();
           await testApiWithToken();
 
-          Get.offAllNamed('/stock');
+          Get.offAllNamed('/home');
 
           Get.showSnackbar(const GetSnackBar(
             title: 'نجح',
