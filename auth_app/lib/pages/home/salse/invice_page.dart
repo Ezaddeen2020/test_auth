@@ -8,9 +8,9 @@ class InvoicePage extends StatefulWidget {
 }
 
 class _InvoicePageState extends State<InvoicePage> {
-  final TextEditingController _supplierController = TextEditingController();
-  final TextEditingController _itemController = TextEditingController();
-  DateTime _selectedDate = DateTime.now();
+  // final TextEditingController _supplierController = TextEditingController();
+  // final TextEditingController _itemController = TextEditingController();
+  // DateTime _selectedDate = DateTime.now();
 
   @override
   Widget build(BuildContext context) {
