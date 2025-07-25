@@ -27,13 +27,6 @@ class StockPage extends StatelessWidget {
         elevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Colors.white),
-        // actions: [
-        //   IconButton(
-        //     onPressed: () => _showLogoutDialog(authController),
-        //     icon: const Icon(Icons.logout),
-        //     tooltip: 'تسجيل الخروج',
-        //   ),
-        // ],
       ),
       body: Column(
         children: [
@@ -156,24 +149,6 @@ class StockPage extends StatelessWidget {
       ),
     );
   }
-
-/////////////////////////////////////////////////////////////////////////////////////
-  // void _showLogoutDialog(AuthController authController) {
-  //   Get.defaultDialog(
-  //     title: 'تسجيل الخروج',
-  //     titleStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-  //     middleText: 'هل تريد تسجيل الخروج من التطبيق؟',
-  //     textConfirm: 'تأكيد',
-  //     textCancel: 'إلغاء',
-  //     confirmTextColor: Colors.white,
-  //     cancelTextColor: Colors.grey,
-  //     buttonColor: Colors.red[600],
-  //     onConfirm: () {
-  //       Get.back();
-  //       authController.logout();
-  //     },
-  //   );
-  // }
 
 ///////////////////////////////////////////////////////////
   Widget _buildWelcomeScreen() {
