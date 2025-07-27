@@ -23,7 +23,7 @@ class StockApi {
       'فشل في جلب بيانات المخزون',
     );
   }
-
+}
   // // دالة للحصول على قائمة من المودلز مباشرة
   // Future<List<StockModel>> getStockModelsByItemCode(String itemCode) async {
   //   try {
@@ -40,4 +40,4 @@ class StockApi {
   //     return [];
   //   }
   // }
-}
+

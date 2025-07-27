@@ -45,6 +45,16 @@ class ApiServices {
     return "$server/api/TransferApi/SearchTransfers?$queryString";
   }
 
+  //  // دالة جديدة لجلب تفاصيل التحويل
+  // static String getTransferDetails(int transferId) {
+  //   return "$baseUrl/api/TransferApi/transfer-details?id=$transferId";
+  // }
+
+  // أو إذا كنت تستخدم نمط آخر:
+  static String getTransferDetailsEndpoint(int transferId) {
+    return "/api/TransferApi/transfer-details?id=$transferId";
+  }
+
   // Headers مع Bearer Token
   static Map<String, String> headersWithToken(String token) {
     return {

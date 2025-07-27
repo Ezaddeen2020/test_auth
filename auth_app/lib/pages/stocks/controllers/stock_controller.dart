@@ -82,35 +82,6 @@ class StockController extends GetxController {
     }
   }
 
-  // Future<void> searchStock() async {
-  //   String itemCode = itemCodeController.text.trim();
-
-  //   if (itemCode.isEmpty) {
-  //     Get.snackbar('خطأ', 'يرجى إدخال رقم الصنف');
-  //     return;
-  //   }
-
-  //   isLoading.value = true;
-  //   EasyLoading.show(status: 'جاري البحث...');
-
-  //   try {
-  //     var models = await stockApi.getStockModelsByItemCode(itemCode);
-  //     stockItems.value = models;
-  //     hasSearched.value = true;
-
-  //     if (models.isEmpty) {
-  //       Get.snackbar('نتيجة البحث', 'لا توجد بيانات مخزون لهذا الصنف');
-  //     }
-  //   } catch (e) {
-  //     Get.snackbar('خطأ', 'حدث خطأ في الاتصال بالخادم');
-  //     stockItems.clear();
-  //     hasSearched.value = false;
-  //   } finally {
-  //     isLoading.value = false;
-  //     EasyLoading.dismiss();
-  //   }
-  // }
-
   // مسح البحث
   void clearSearch() {
     itemCodeController.clear();
