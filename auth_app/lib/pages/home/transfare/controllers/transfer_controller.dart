@@ -14,6 +14,7 @@
 // }
 
 import 'package:auth_app/pages/home/salse/invice_page.dart';
+import 'package:auth_app/pages/home/salse/items_page.dart';
 import 'package:auth_app/pages/home/salse/models/details_model.dart';
 import 'package:auth_app/pages/home/transfare/models/transfer_stock.dart';
 import 'package:auth_app/pages/home/transfare/services/transfer_api.dart';
@@ -497,13 +498,75 @@ class TransferController extends GetxController {
   var selectedTransferDetails = Rxn<TransferDetailDto>();
   var isLoadingDetails = false.obs;
 
+// دالة للانتقال إلى صفحة إدارة المنتجات
+  void navigateToProductManagement(TransferModel transfer) {
+    Get.to(() => const ProductManagementScreen(), arguments: {
+      'transferId': transfer.id,
+      'transfer': transfer,
+    });
+  }
+
   // الدوال الموجودة...
 
   // دالة جديدة لجلب تفاصيل التحويل الكاملة
+  // Future<TransferDetailDto?> getTransferDetails(int transferId) async {
+  //   try {
+  //     isLoadingDetails.value = true;
+
+  //     var response = await transferApi.getTransferDetails(transferId);
+
+  //     if (response['status'] == 'success') {
+  //       TransferDetailDto transferDetails = TransferDetailDto.fromJson(response['data']);
+  //       selectedTransferDetails.value = transferDetails;
+
+  //       return transferDetails;
+  //     } else {
+  //       Get.snackbar(
+  //         'خطأ',
+  //         response['message'] ?? 'فشل في جلب تفاصيل التحويل',
+  //         backgroundColor: Colors.red,
+  //         colorText: Colors.white,
+  //       );
+  //       return null;
+  //     }
+  //   } catch (e) {
+  //     Get.snackbar(
+  //       'خطأ',
+  //       'حدث خطأ غير متوقع في جلب التفاصيل',
+  //       backgroundColor: Colors.red,
+  //       colorText: Colors.white,
+  //     );
+  //     return null;
+  //   } finally {
+  //     isLoadingDetails.value = false;
+  //   }
+  // }
+
+// تحديث دالة _navigateToInvoice في transfer_screen.dart
+  void _navigateToInvoice(TransferModel transfer, TransferController controller) {
+    // تحديد التحويل المحدد في الـ controller
+    controller.selectTransfer(transfer);
+
+    // استخدام الدالة المحدثة للانتقال مع جلب البيانات ديناميكياً
+    controller.navigateToInvoiceWithDetails(transfer);
+  }
+
+// دالة مساعدة للتحقق من صحة transferId
+  bool isValidTransferId(int? transferId) {
+    return transferId != null && transferId > 0;
+  }
+
+// دالة للحصول على معلومات التحويل المختصرة
+  String getTransferSummary(TransferModel transfer) {
+    return 'التحويل رقم ${transfer.id} - ${transfer.ref ?? "غير محدد"} - من ${transfer.whsNameFrom.trim()} إلى ${transfer.whsNameTo.trim()}';
+  }
+
+  // دالة محدثة لجلب تفاصيل التحويل بشكل ديناميكي
   Future<TransferDetailDto?> getTransferDetails(int transferId) async {
     try {
       isLoadingDetails.value = true;
 
+      // استخدام transferId المرسل بدلاً من القيمة الثابتة
       var response = await transferApi.getTransferDetails(transferId);
 
       if (response['status'] == 'success') {
@@ -514,7 +577,7 @@ class TransferController extends GetxController {
       } else {
         Get.snackbar(
           'خطأ',
-          response['message'] ?? 'فشل في جلب تفاصيل التحويل',
+          response['message'] ?? 'فشل في جلب تفاصيل التحويل رقم $transferId',
           backgroundColor: Colors.red,
           colorText: Colors.white,
         );
@@ -523,7 +586,7 @@ class TransferController extends GetxController {
     } catch (e) {
       Get.snackbar(
         'خطأ',
-        'حدث خطأ غير متوقع في جلب التفاصيل',
+        'حدث خطأ غير متوقع في جلب تفاصيل التحويل رقم $transferId',
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );
@@ -533,7 +596,45 @@ class TransferController extends GetxController {
     }
   }
 
-  // دالة محدثة للانتقال إلى صفحة الفاتورة مع جلب التفاصيل
+  // // دالة محدثة للانتقال إلى صفحة الفاتورة مع جلب التفاصيل
+  // Future<void> navigateToInvoiceWithDetails(TransferModel transfer) async {
+  //   // عرض مؤشر التحميل
+  //   Get.dialog(
+  //     const Center(
+  //       child: CircularProgressIndicator(),
+  //     ),
+  //     barrierDismissible: false,
+  //   );
+
+  //   try {
+  //     // جلب التفاصيل الكاملة من الباك إند
+  //     TransferDetailDto? transferDetails = await getTransferDetails(transfer.id);
+
+  //     // إغلاق مؤشر التحميل
+  //     Get.back();
+
+  //     if (transferDetails != null) {
+  //       // الانتقال إلى صفحة الفاتورة مع التفاصيل الكاملة
+  //       Get.to(() => const InvoicePage(), arguments: {
+  //         'transfer': transfer,
+  //         'transferDetails': transferDetails,
+  //         'transferId': transfer.id,
+  //       });
+  //     }
+  //   } catch (e) {
+  //     // إغلاق مؤشر التحميل
+  //     Get.back();
+
+  //     Get.snackbar(
+  //       'خطأ',
+  //       'فشل في جلب تفاصيل التحويل',
+  //       backgroundColor: Colors.red,
+  //       colorText: Colors.white,
+  //     );
+  //   }
+  // }
+
+// دالة محدثة للانتقال إلى صفحة الفاتورة مع جلب التفاصيل الديناميكية
   Future<void> navigateToInvoiceWithDetails(TransferModel transfer) async {
     // عرض مؤشر التحميل
     Get.dialog(
@@ -544,7 +645,7 @@ class TransferController extends GetxController {
     );
 
     try {
-      // جلب التفاصيل الكاملة من الباك إند
+      // جلب التفاصيل الكاملة من الباك إند باستخدام transferId ديناميكياً
       TransferDetailDto? transferDetails = await getTransferDetails(transfer.id);
 
       // إغلاق مؤشر التحميل
@@ -555,7 +656,7 @@ class TransferController extends GetxController {
         Get.to(() => const InvoicePage(), arguments: {
           'transfer': transfer,
           'transferDetails': transferDetails,
-          'transferId': transfer.id,
+          'transferId': transfer.id, // تمرير transferId بشكل ديناميكي
         });
       }
     } catch (e) {
@@ -564,7 +665,7 @@ class TransferController extends GetxController {
 
       Get.snackbar(
         'خطأ',
-        'فشل في جلب تفاصيل التحويل',
+        'فشل في جلب تفاصيل التحويل رقم ${transfer.id}',
         backgroundColor: Colors.red,
         colorText: Colors.white,
       );

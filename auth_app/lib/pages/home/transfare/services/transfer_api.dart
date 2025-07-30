@@ -245,7 +245,7 @@ class TransferApi {
     );
   }
 
-  // جلب تفاصيل تحويل محدد - محدثة للعمل مع الباك إند
+  // جلب تفاصيل تحويل محدد - محدثة للعمل ديناميكياً مع أي transferId
   Future<Map<String, dynamic>> getTransferDetails(int transferId) async {
     String token = Preferences.getString('auth_token');
 
@@ -257,7 +257,7 @@ class TransferApi {
 
     return handleEitherResult(
       postGetPage.getDataWithToken(
-        ApiServices.getTransferDetails(transferId), // استخدام ApiServices
+        ApiServices.getTransferDetails(transferId), // يتم تمرير transferId ديناميكياً
         token,
       ),
       'Transfer Details Retrieved Successfully',
@@ -276,9 +276,10 @@ class TransferApi {
     logMessage('Transfer', 'Sending transfer with ID: $transferId');
 
     return handleEitherResult(
-      postGetPage.postData(
+      postGetPage.postDataWithToken(
         ApiServices.sendTransfer(),
         {'transferId': transferId},
+        token,
       ),
       'Transfer Sent Successfully',
       'فشل في إرسال التحويل',
@@ -296,9 +297,10 @@ class TransferApi {
     logMessage('Transfer', 'Receiving transfer with ID: $transferId');
 
     return handleEitherResult(
-      postGetPage.postData(
+      postGetPage.postDataWithToken(
         ApiServices.receiveTransfer(),
         {'transferId': transferId},
+        token,
       ),
       'Transfer Received Successfully',
       'فشل في استلام التحويل',
@@ -316,9 +318,10 @@ class TransferApi {
     logMessage('Transfer', 'Posting transfer to SAP with ID: $transferId');
 
     return handleEitherResult(
-      postGetPage.postData(
+      postGetPage.postDataWithToken(
         ApiServices.postTransferToSAP(),
         {'transferId': transferId},
+        token,
       ),
       'Transfer Posted to SAP Successfully',
       'فشل في ترحيل التحويل إلى SAP',
@@ -368,6 +371,66 @@ class TransferApi {
     );
   }
 
+  // إدارة سطر التحويل (إضافة/تعديل)
+  Future<Map<String, dynamic>> upsertTransferLine({
+    required int docEntry,
+    int? lineNum, // إذا كان null أو 0 أو -1 = إضافة جديدة
+    required String itemCode,
+    required String description,
+    required double quantity,
+    required double price,
+    required double lineTotal,
+    required String uomCode,
+    String? uomCode2,
+    double? invQty,
+    int? baseQty1,
+    int? ugpEntry,
+    int? uomEntry,
+  }) async {
+    String token = Preferences.getString('auth_token');
+
+    if (token.isEmpty) {
+      return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
+    }
+
+    // تحضير البيانات للإرسال
+    Map<String, dynamic> lineData = {
+      'docEntry': docEntry,
+      'itemCode': itemCode,
+      'description': description,
+      'quantity': quantity,
+      'price': price,
+      'lineTotal': lineTotal,
+      'uomCode': uomCode,
+      'uomCode2': uomCode2,
+      'invQty': invQty,
+      'baseQty1': baseQty1,
+      'ugpEntry': ugpEntry,
+      'uomEntry': uomEntry,
+    };
+
+    // تحديد نوع العملية بناءً على lineNum
+    if (lineNum != null && lineNum > 0) {
+      // عملية تعديل - إضافة lineNum
+      lineData['lineNum'] = lineNum;
+      logMessage('Transfer', 'Updating existing line with lineNum: $lineNum');
+    } else {
+      // عملية إضافة جديدة - عدم إرسال lineNum أو إرسال -1
+      lineData['lineNum'] = -1;
+      logMessage('Transfer', 'Adding new line (lineNum will be generated)');
+    }
+
+    return handleEitherResult(
+      postGetPage.postDataWithToken(
+        ApiServices.upsertTransferLine(),
+        lineData,
+        token,
+      ),
+      lineNum != null && lineNum > 0 ? 'Line Updated Successfully' : 'Line Added Successfully',
+      lineNum != null && lineNum > 0 ? 'فشل في تعديل السطر' : 'فشل في إضافة السطر',
+    );
+  }
+
   // إنشاء تحويل جديد
   Future<Map<String, dynamic>> createTransfer({
     required String whscodeFrom,
@@ -398,229 +461,13 @@ class TransferApi {
     logMessage('Transfer', 'Creating new transfer: $transferData');
 
     return handleEitherResult(
-      postGetPage.postData(
+      postGetPage.postDataWithToken(
         ApiServices.createTransfer(),
         transferData,
+        token,
       ),
       'Transfer Created Successfully',
       'فشل في إنشاء التحويل',
     );
   }
 }
-
-// ملاحظات مهمة:
-// 1. تم حذف الدالة المكررة getTransferDetails
-// 2. تم تحديث الدالة الأصلية لاستخدام URL الباك إند الصحيح
-// 3. احتفظنا بنظام المصادقة والـ token
-// 4. الدالة الآن تعمل مع endpoint: /api/TransferApi/transfer-details?id=$transferId
-// ملاحظات مهمة:
-// 1. تم حذف الدالة المكررة getTransferDetails
-// 2. تم تحديث الدالة الأصلية لاستخدام URL الباك إند الصحيح
-// 3. احتفظنا بنظام المصادقة والـ token
-// 4. الدالة الآن تعمل مع endpoint: /api/TransferApi/transfer-details?id=$transferId
-// ملاحظات مهمة:
-// 1. تم حذف الدالة المكررة getTransferDetails
-// 2. تم تحديث الدالة الأصلية لاستخدام URL الباك إند الصحيح
-// 3. احتفظنا بنظام المصادقة والـ token
-// 4. الدالة الآن تعمل مع endpoint: /api/TransferApi/transfer-details?id=$transferId
-
-
-// import 'package:auth_app/functions/handling_data.dart';
-// import 'package:auth_app/services/api/post_get_api.dart';
-// import 'package:auth_app/services/api_service.dart';
-// import 'package:auth_app/classes/shared_preference.dart';
-
-// class TransferApi {
-//   final PostGetPage postGetPage;
-
-//   TransferApi(this.postGetPage);
-
-//   /// جلب قائمة التحويلات مع إمكانية التصفية والصفحات
-//   Future<Map<String, dynamic>> getTransfersList({
-//     int page = 1,
-//     int pageSize = 20,
-//     String? fromWarehouse,
-//     String? toWarehouse,
-//     String? status,
-//     String? dateFrom,
-//     String? dateTo,
-//   }) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer API', 'Getting transfers list - Page: $page, PageSize: $pageSize');
-
-//     // بناء URL مع المعاملات
-//     String url = ApiServices.getTransfersList(
-//       page: page,
-//       pageSize: pageSize,
-//       fromWarehouse: fromWarehouse,
-//       toWarehouse: toWarehouse,
-//       status: status,
-//       dateFrom: dateFrom,
-//       dateTo: dateTo,
-//     );
-
-//     return handleEitherResult(
-//       postGetPage.getDataWithToken(url, token),
-//       'Transfers List Retrieved Successfully',
-//       'فشل في جلب قائمة التحويلات',
-//     );
-//   }
-
-//   /// جلب تفاصيل تحويل معين
-//   Future<Map<String, dynamic>> getTransferDetails(int transferId) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer API', 'Getting transfer details for ID: $transferId');
-
-//     return handleEitherResult(
-//       postGetPage.getDataWithToken(ApiServices.getTransferDetails(transferId), token),
-//       'Transfer Details Retrieved Successfully',
-//       'فشل في جلب تفاصيل التحويل',
-//     );
-//   }
-
-//   /// إنشاء تحويل جديد
-//   Future<Map<String, dynamic>> createTransfer(Map<String, dynamic> transferData) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer API', 'Creating new transfer: $transferData');
-
-//     return handleEitherResult(
-//       postGetPage.postDataWithToken(ApiServices.createTransfer, transferData, token),
-//       'Transfer Created Successfully',
-//       'فشل في إنشاء التحويل',
-//     );
-//   }
-
-//   /// تحديث تحويل موجود
-//   Future<Map<String, dynamic>> updateTransfer(int transferId, Map<String, dynamic> transferData) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer API', 'Updating transfer ID: $transferId with data: $transferData');
-
-//     return handleEitherResult(
-//       postGetPage.putDataWithToken(ApiServices.updateTransfer(transferId), transferData, token),
-//       'Transfer Updated Successfully',
-//       'فشل في تحديث التحويل',
-//     );
-//   }
-
-//   /// حذف تحويل
-//   Future<Map<String, dynamic>> deleteTransfer(int transferId) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer API', 'Deleting transfer ID: $transferId');
-
-//     return handleEitherResult(
-//       postGetPage.deleteDataWithToken(ApiServices.deleteTransfer(transferId), token),
-//       'Transfer Deleted Successfully',
-//       'فشل في حذف التحويل',
-//     );
-//   }
-
-//   /// تأكيد الإرسال
-//   Future<Map<String, dynamic>> confirmSend(int transferId, Map<String, dynamic> confirmData) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer API', 'Confirming send for transfer ID: $transferId');
-
-//     return handleEitherResult(
-//       postGetPage.postDataWithToken(ApiServices.confirmTransferSend(transferId), confirmData, token),
-//       'Transfer Send Confirmed Successfully',
-//       'فشل في تأكيد الإرسال',
-//     );
-//   }
-
-//   /// تأكيد الاستلام
-//   Future<Map<String, dynamic>> confirmReceive(int transferId, Map<String, dynamic> confirmData) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer API', 'Confirming receive for transfer ID: $transferId');
-
-//     return handleEitherResult(
-//       postGetPage.postDataWithToken(ApiServices.confirmTransferReceive(transferId), confirmData, token),
-//       'Transfer Receive Confirmed Successfully',
-//       'فشل في تأكيد الاستلام',
-//     );
-//   }
-
-//   /// ترحيل إلى SAP
-//   Future<Map<String, dynamic>> postToSap(int transferId) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer API', 'Posting to SAP for transfer ID: $transferId');
-
-//     return handleEitherResult(
-//       postGetPage.postDataWithToken(ApiServices.postTransferToSap(transferId), {}, token),
-//       'Transfer Posted to SAP Successfully',
-//       'فشل في ترحيل التحويل إلى SAP',
-//     );
-//   }
-
-//   /// جلب قائمة المستودعات
-//   Future<Map<String, dynamic>> getWarehouses() async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer API', 'Getting warehouses list');
-
-//     return handleEitherResult(
-//       postGetPage.getDataWithToken(ApiServices.getWarehouses, token),
-//       'Warehouses List Retrieved Successfully',
-//       'فشل في جلب قائمة المستودعات',
-//     );
-//   }
-
-//   /// البحث في التحويلات
-//   Future<Map<String, dynamic>> searchTransfers(String searchTerm) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer API', 'Searching transfers with term: $searchTerm');
-
-//     return handleEitherResult(
-//       postGetPage.getDataWithToken(ApiServices.searchTransfers(searchTerm), token),
-//       'Transfer Search Completed Successfully',
-//       'فشل في البحث عن التحويلات',
-//     );
-//   }
-// }

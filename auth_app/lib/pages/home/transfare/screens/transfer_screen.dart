@@ -1,177 +1,3 @@
-// import 'package:auth_app/pages/home/transfare/controllers/transfer_controller.dart';
-// import 'package:auth_app/pages/home/transfare/screens/widgets/transfer_filter.dart';
-// import 'package:auth_app/pages/home/transfare/screens/widgets/transfer_status_bar.dart';
-// import 'package:flutter/material.dart';
-// import 'package:get/get.dart';
-
-// import 'package:auth_app/functions/status_request.dart';
-// import 'widgets/transfer_search_bar.dart';
-// // import 'widgets/transfer_card.dart';
-
-// class TransferScreen extends StatelessWidget {
-//   const TransferScreen({super.key});
-
-//   @override
-//   Widget build(BuildContext context) {
-//     final TransferController controller = Get.find<TransferController>();
-
-//     return Scaffold(
-//       backgroundColor: Colors.grey[50],
-//       appBar: AppBar(
-//         title: const Text(
-//           'إدارة التحويلات',
-//           style: TextStyle(
-//             fontSize: 20,
-//             fontWeight: FontWeight.bold,
-//             color: Colors.white,
-//           ),
-//         ),
-//         // backgroundColor: const Color(0xFF2196F3),
-//         backgroundColor: Colors.blue.shade900,
-
-//         elevation: 0,
-//         iconTheme:
-//         const IconThemeData(color: Colors.white),
-
-//         actions: [
-//           IconButton(
-//             icon: const Icon(Icons.refresh, color: Colors.white),
-//             onPressed: () => controller.refreshTransfers(),
-//           ),
-//           IconButton(
-//             icon: const Icon(Icons.filter_list, color: Colors.white),
-//             onPressed: () => TransferFilterDialog.show(context, controller),
-//           ),
-//         ],
-//       ),
-//       body: Column(
-//         children: [
-//           // شريط الإحصائيات
-//           TransferStatsBar(controller: controller),
-
-//           // شريط البحث
-//           TransferSearchBar(controller: controller),
-
-//           // قائمة التحويلات
-//           Expanded(
-//             child: Obx(() {
-//               if (controller.statusRequest.value == StatusRequest.loading &&
-//                   controller.transfers.isEmpty) {
-//                 return const Center(
-//                   child: CircularProgressIndicator(
-//                     color: Color(0xFF2196F3),
-//                   ),
-//                 );
-//               }
-
-//               if (controller.statusRequest.value == StatusRequest.failure) {
-//                 return Center(
-//                   child: Column(
-//                     mainAxisAlignment: MainAxisAlignment.center,
-//                     children: [
-//                       Icon(
-//                         Icons.error_outline,
-//                         size: 80,
-//                         color: Colors.grey[400],
-//                       ),
-//                       const SizedBox(height: 16),
-//                       Text(
-//                         'فشل في تحميل البيانات',
-//                         style: TextStyle(
-//                           fontSize: 18,
-//                           color: Colors.grey[600],
-//                           fontWeight: FontWeight.w500,
-//                         ),
-//                       ),
-//                       const SizedBox(height: 16),
-//                       ElevatedButton(
-//                         onPressed: () => controller.getTransfersList(),
-//                         style: ElevatedButton.styleFrom(
-//                           backgroundColor: const Color(0xFF2196F3),
-//                           foregroundColor: Colors.white,
-//                         ),
-//                         child: const Text('إعادة المحاولة'),
-//                       ),
-//                     ],
-//                   ),
-//                 );
-//               }
-
-//               if (controller.filteredTransfers.isEmpty) {
-//                 return Center(
-//                   child: Column(
-//                     mainAxisAlignment: MainAxisAlignment.center,
-//                     children: [
-//                       Icon(
-//                         Icons.inbox_outlined,
-//                         size: 80,
-//                         color: Colors.grey[400],
-//                       ),
-//                       const SizedBox(height: 16),
-//                       Text(
-//                         'لا توجد تحويلات',
-//                         style: TextStyle(
-//                           fontSize: 18,
-//                           color: Colors.grey[600],
-//                           fontWeight: FontWeight.w500,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 );
-//               }
-
-//               return RefreshIndicator(
-//                 onRefresh: () => controller.refreshTransfers(),
-//                 color: const Color(0xFF2196F3),
-//                 child: ListView.builder(
-//                   controller: controller.scrollController,
-//                   padding: const EdgeInsets.all(16),
-//                   itemCount: controller.filteredTransfers.length +
-//                       (controller.isLoadingMore.value ? 1 : 0),
-//                   itemBuilder: (context, index) {
-//                     if (index == controller.filteredTransfers.length) {
-//                       return Obx(() {
-//                         if (controller.isLoadingMore.value) {
-//                           return const Center(
-//                             child: Padding(
-//                               padding: EdgeInsets.all(16),
-//                               child: CircularProgressIndicator(
-//                                 color: Color(0xFF2196F3),
-//                               ),
-//                             ),
-//                           );
-//                         }
-//                         return const SizedBox.shrink();
-//                       });
-//                     }
-
-//                     return TransferCard(
-//                       transfer: controller.filteredTransfers[index],
-//                       controller: controller,
-//                     );
-//                   },
-//                 ),
-//               );
-//             }),
-//           ),
-//         ],
-//       ),
-//       floatingActionButton: FloatingActionButton.extended(
-//         onPressed: () {
-//           // Get.to(() => CreateTransferScreen());
-//         },
-//         backgroundColor: const Color(0xFF2196F3),
-//         icon: const Icon(Icons.add, color: Colors.white),
-//         label: const Text(
-//           ' اضافة تحويل',
-//           style: TextStyle(color: Colors.white),
-//         ),
-//       ),
-//     );
-//   }
-// }
-
 import 'package:auth_app/pages/home/salse/invice_page.dart';
 import 'package:auth_app/pages/home/transfare/controllers/transfer_controller.dart';
 import 'package:auth_app/pages/home/transfare/models/transfer_stock.dart';
@@ -355,13 +181,14 @@ class TransferScreen extends StatelessWidget {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton(
+      floatingActionButton: FloatingActionButton.extended(
         onPressed: () {
           // الانتقال إلى صفحة إنشاء تحويل جديد
           // Get.to(() => CreateTransferScreen());
         },
         backgroundColor: const Color(0xFF2196F3),
-        child: const Icon(Icons.add, color: Colors.white),
+        icon: const Icon(Icons.add, color: Colors.white),
+        label: const Text('إنشاء تحويل', style: TextStyle(color: Colors.white)),
       ),
     );
   }
@@ -480,7 +307,161 @@ class TransferScreen extends StatelessWidget {
     );
   }
 // في ملف transfer_screen.dart
-// تعديل دالة _buildTransferCard
+// // تعديل دالة _buildTransferCard
+
+//   Widget _buildTransferCard(TransferModel transfer, TransferController controller) {
+//     return Card(
+//       margin: const EdgeInsets.only(bottom: 12),
+//       elevation: 2,
+//       shape: RoundedRectangleBorder(
+//         borderRadius: BorderRadius.circular(12),
+//       ),
+//       child: InkWell(
+//         // تغيير وظيفة الضغط للانتقال إلى InvoicePage
+//         onTap: () => _navigateToInvoice(transfer, controller),
+//         borderRadius: BorderRadius.circular(12),
+//         child: Padding(
+//           padding: const EdgeInsets.all(16),
+//           child: Column(
+//             crossAxisAlignment: CrossAxisAlignment.start,
+//             children: [
+//               // الرأس
+//               Row(
+//                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                 children: [
+//                   Expanded(
+//                     child: Column(
+//                       crossAxisAlignment: CrossAxisAlignment.start,
+//                       children: [
+//                         Text(
+//                           'رقم المرجع: ${transfer.ref ?? 'غير محدد'}',
+//                           style: const TextStyle(
+//                             fontSize: 16,
+//                             fontWeight: FontWeight.bold,
+//                             color: Color(0xFF2196F3),
+//                           ),
+//                         ),
+//                         const SizedBox(height: 4),
+//                         Text(
+//                           'تاريخ الإنشاء: ${transfer.formattedCreateDate}',
+//                           style: TextStyle(
+//                             fontSize: 12,
+//                             color: Colors.grey[600],
+//                           ),
+//                         ),
+//                       ],
+//                     ),
+//                   ),
+//                   _buildStatusChip(transfer),
+//                 ],
+//               ),
+
+//               const Divider(height: 20),
+
+//               // معلومات المستودعات
+//               Row(
+//                 children: [
+//                   Expanded(
+//                     child: Column(
+//                       crossAxisAlignment: CrossAxisAlignment.start,
+//                       children: [
+//                         Text(
+//                           'من:',
+//                           style: TextStyle(
+//                             fontSize: 12,
+//                             color: Colors.grey[600],
+//                           ),
+//                         ),
+//                         Text(
+//                           transfer.whsNameFrom.trim(),
+//                           style: const TextStyle(
+//                             fontSize: 14,
+//                             fontWeight: FontWeight.w500,
+//                           ),
+//                           maxLines: 2,
+//                           overflow: TextOverflow.ellipsis,
+//                         ),
+//                       ],
+//                     ),
+//                   ),
+//                   const Icon(
+//                     Icons.arrow_forward,
+//                     color: Color(0xFF2196F3),
+//                     size: 20,
+//                   ),
+//                   const SizedBox(width: 8),
+//                   Expanded(
+//                     child: Column(
+//                       crossAxisAlignment: CrossAxisAlignment.start,
+//                       children: [
+//                         Text(
+//                           'إلى:',
+//                           style: TextStyle(
+//                             fontSize: 12,
+//                             color: Colors.grey[600],
+//                           ),
+//                         ),
+//                         Text(
+//                           transfer.whsNameTo.trim(),
+//                           style: const TextStyle(
+//                             fontSize: 14,
+//                             fontWeight: FontWeight.w500,
+//                           ),
+//                           maxLines: 2,
+//                           overflow: TextOverflow.ellipsis,
+//                         ),
+//                       ],
+//                     ),
+//                   ),
+//                 ],
+//               ),
+
+//               const SizedBox(height: 12),
+
+//               // معلومات المنشئ
+//               Row(
+//                 children: [
+//                   Icon(
+//                     Icons.person,
+//                     size: 16,
+//                     color: Colors.grey[600],
+//                   ),
+//                   const SizedBox(width: 4),
+//                   Text(
+//                     'المنشئ: ${transfer.creatby.trim()}',
+//                     style: TextStyle(
+//                       fontSize: 12,
+//                       color: Colors.grey[600],
+//                     ),
+//                   ),
+//                   const Spacer(),
+//                   // إضافة أيقونة تشير للانتقال للفاتورة
+//                   Icon(
+//                     Icons.receipt_long,
+//                     size: 20,
+//                     color: Colors.grey[600],
+//                   ),
+//                   const SizedBox(width: 4),
+//                   Text(
+//                     'عرض الفاتورة',
+//                     style: TextStyle(
+//                       fontSize: 12,
+//                       color: Colors.grey[600],
+//                       fontStyle: FontStyle.italic,
+//                     ),
+//                   ),
+//                 ],
+//               ),
+
+//               // يمكن الاحتفاظ بأزرار العمليات إذا كانت مطلوبة
+//               const SizedBox(height: 12),
+//               _buildActionButtons(transfer, controller),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
 
   Widget _buildTransferCard(TransferModel transfer, TransferController controller) {
     return Card(
@@ -490,8 +471,8 @@ class TransferScreen extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
-        // تغيير وظيفة الضغط للانتقال إلى InvoicePage
-        onTap: () => _navigateToInvoice(transfer, controller),
+        // استخدام الدالة المحدثة للانتقال الديناميكي
+        onTap: () => controller.navigateToInvoiceWithDetails(transfer),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -516,6 +497,13 @@ class TransferScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
+                          'رقم التحويل: ${transfer.id}', // عرض transferId الديناميكي
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey[600],
+                          ),
+                        ),
+                        Text(
                           'تاريخ الإنشاء: ${transfer.formattedCreateDate}',
                           style: TextStyle(
                             fontSize: 12,
@@ -525,7 +513,22 @@ class TransferScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  _buildStatusChip(transfer),
+                  Column(
+                    children: [
+                      _buildStatusChip(transfer),
+                      const SizedBox(height: 8),
+                      // إضافة زر للانتقال إلى إدارة المنتجات
+                      TextButton.icon(
+                        onPressed: () => controller.navigateToProductManagement(transfer),
+                        icon: const Icon(Icons.inventory_2, size: 16),
+                        label: const Text('إدارة الأصناف', style: TextStyle(fontSize: 12)),
+                        style: TextButton.styleFrom(
+                          foregroundColor: Colors.blue[700],
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
 
@@ -591,7 +594,7 @@ class TransferScreen extends StatelessWidget {
 
               const SizedBox(height: 12),
 
-              // معلومات المنشئ
+              // معلومات المنشئ والإجراءات
               Row(
                 children: [
                   Icon(
@@ -609,24 +612,28 @@ class TransferScreen extends StatelessWidget {
                   ),
                   const Spacer(),
                   // إضافة أيقونة تشير للانتقال للفاتورة
-                  Icon(
-                    Icons.receipt_long,
-                    size: 20,
-                    color: Colors.grey[600],
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    'عرض الفاتورة',
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                      fontStyle: FontStyle.italic,
-                    ),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.receipt_long,
+                        size: 16,
+                        color: Colors.grey[600],
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'عرض الفاتورة',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                          fontStyle: FontStyle.italic,
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
 
-              // يمكن الاحتفاظ بأزرار العمليات إذا كانت مطلوبة
+              // أزرار العمليات
               const SizedBox(height: 12),
               _buildActionButtons(transfer, controller),
             ],
@@ -642,16 +649,11 @@ class TransferScreen extends StatelessWidget {
     controller.selectTransfer(transfer);
 
     // الانتقال إلى صفحة الفاتورة مع تمرير بيانات التحويل
-    Get.to(() => InvoicePage(), arguments: {
+    Get.to(() => const InvoicePage(), arguments: {
       'transfer': transfer,
       'transferId': transfer.id,
     });
   }
-
-// حذف أو تعديل دالة _showTransferDetails لأنها لم تعد مطلوبة
-// void _showTransferDetails(TransferModel transfer, TransferController controller) {
-//   // تم إلغاء هذه الدالة
-// }
 
   Widget _buildStatusChip(TransferModel transfer) {
     Color backgroundColor;
@@ -978,6 +980,7 @@ class TransferDetailsBottomSheet extends StatelessWidget {
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
                 color: Colors.grey[700],
+                // color: Colors.red,
               ),
             ),
           ),
