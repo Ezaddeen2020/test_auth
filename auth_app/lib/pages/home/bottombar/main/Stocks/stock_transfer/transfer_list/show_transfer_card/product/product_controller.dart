@@ -1,6 +1,5 @@
 // pages/home/product/controllers/product_management_controller.dart
 
-import 'package:auth_app/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:auth_app/functions/status_request.dart';

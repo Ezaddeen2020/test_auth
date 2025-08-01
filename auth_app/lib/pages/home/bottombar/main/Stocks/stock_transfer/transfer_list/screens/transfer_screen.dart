@@ -2,7 +2,6 @@ import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfe
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/models/transfer_stock.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:intl/intl.dart';
 
 import 'package:auth_app/functions/status_request.dart';
 

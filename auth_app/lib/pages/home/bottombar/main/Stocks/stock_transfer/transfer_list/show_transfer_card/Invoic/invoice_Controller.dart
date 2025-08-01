@@ -1,8 +1,7 @@
-// pages/home/salse/controllers/invoice_controller.dart
+// ignore_for_file: file_names
 
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/show_transfer_card/product/product_page.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/services/transfer_api.dart';
-import 'package:auth_app/services/api_service.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:auth_app/functions/status_request.dart';
@@ -120,7 +119,7 @@ class InvoiceController extends GetxController {
   void shareInvoice() {
     if (transferDetails.value != null) {
       // هنا يمكن إضافة منطق المشاركة
-      final headerData = exportHeaderData();
+      // final headerData = exportHeaderData();
 
       Get.snackbar(
         'مشاركة',
