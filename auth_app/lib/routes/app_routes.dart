@@ -97,9 +97,10 @@
 
 import 'package:auth_app/pages/configration/screens/configration_page.dart';
 import 'package:auth_app/pages/home/home_page.dart';
-import 'package:auth_app/pages/home/salse/main/purchase_order.dart';
-import 'package:auth_app/pages/home/transfare/screens/transfer_screen.dart';
-import 'package:auth_app/pages/stocks/screens/stock_page.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/show_transfer_card/Invoic/invice_page.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/show_transfer_card/transfer_navigate/purchase_order.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/screens/transfer_screen.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_check/screens/stock_page.dart';
 
 import 'package:get/get.dart';
 import 'package:auth_app/pages/auth/screens/login_page.dart';
@@ -113,6 +114,8 @@ class AppRoutes {
   static const stock = '/stock';
   static const purchase = '/purchase';
   static const transfer = '/transfer';
+  static const search = '/search';
+  static const invoice = '/invoice';
 
   static final routes = [
     GetPage(name: login, page: () => LoginPage()),
@@ -120,7 +123,9 @@ class AppRoutes {
     GetPage(name: home, page: () => HomePage()),
     GetPage(name: configuration, page: () => const ConfigrationPage()),
     GetPage(name: stock, page: () => const StockPage()),
-    GetPage(name: purchase, page: () => PurchaseOrderPage()),
+    GetPage(name: purchase, page: () => const TransferDetailsNavigationScreen()),
     GetPage(name: transfer, page: () => const TransferScreen()),
+    GetPage(name: search, page: () => const SearchPage()),
+    GetPage(name: invoice, page: () => const InvoicePage()),
   ];
 }

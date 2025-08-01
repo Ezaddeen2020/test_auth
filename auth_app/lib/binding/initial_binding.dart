@@ -1,12 +1,11 @@
 import 'package:auth_app/pages/auth/controllers/auth_controller.dart';
 import 'package:auth_app/pages/configration/controllers/network_controller.dart';
 import 'package:auth_app/pages/configration/controllers/printer_controller.dart';
-import 'package:auth_app/pages/home/home_controller.dart';
-import 'package:auth_app/pages/home/home_page.dart';
-import 'package:auth_app/pages/home/salse/main/purchase_controller.dart';
-import 'package:auth_app/pages/home/salse/main/purchase_order.dart';
-import 'package:auth_app/pages/home/transfare/controllers/transfer_controller.dart';
-import 'package:auth_app/pages/stocks/controllers/stock_controller.dart';
+
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/show_transfer_card/Invoic/invoice_Controller.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/show_transfer_card/transfer_navigate/purchase_controller.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/controllers/transfer_controller.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_check/controllers/stock_controller.dart';
 import 'package:auth_app/services/api/post_get_api.dart';
 import 'package:get/get.dart';
 
@@ -19,7 +18,8 @@ class InitialBinding extends Bindings {
     Get.lazyPut<PrinterController>(() => PrinterController(), fenix: true);
     Get.lazyPut<NetworkController>(() => NetworkController(), fenix: true);
     Get.lazyPut<StockController>(() => StockController(), fenix: true);
-    Get.lazyPut<PurchaseController>(() => PurchaseController(), fenix: true);
+    Get.lazyPut<TransferNavigationController>(() => TransferNavigationController(), fenix: true);
     Get.lazyPut<TransferController>(() => TransferController(), fenix: true);
+    Get.lazyPut<InvoiceController>(() => InvoiceController(), fenix: true);
   }
 }
