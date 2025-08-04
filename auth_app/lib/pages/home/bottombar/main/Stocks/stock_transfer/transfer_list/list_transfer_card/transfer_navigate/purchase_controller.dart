@@ -9,7 +9,7 @@ import 'package:get/get.dart';
 // استيراد الصفحات المطلوبة
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/show_transfer_card/Invoic/invice_page.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/show_transfer_card/product/product_page.dart';
-import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/models/transfer_stock.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/models/transfer_stock_model.dart';
 
 // GetX Controller
 

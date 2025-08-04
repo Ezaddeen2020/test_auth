@@ -226,19 +226,23 @@ class TransferApi {
 
   TransferApi(this.postGetPage);
 
-  // جلب قائمة التحويلات مع Pagination
+  //////// 🟩 ////////جلب قائمة التحويلات مع تقسيم الصفحات
   Future<Map<String, dynamic>> getTransfersList({
     int page = 1,
     int pageSize = 20,
   }) async {
+    // الحصول على التوكن من التخزين المحلي
     String token = Preferences.getString('auth_token');
 
+    // التحقق من أن المستخدم مسجل الدخول
     if (token.isEmpty) {
       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
     }
 
+    // تسجيل رسالة في سجل الأحداث (لأغراض التتبع)
     logMessage('Transfer', 'Getting transfers list - Page: $page, PageSize: $pageSize');
 
+    // تنفيذ الطلب ومعالجة النتيجة
     return handleEitherResult(
       postGetPage.getDataWithToken(
         ApiServices.getTransfersList(page, pageSize),
@@ -249,7 +253,7 @@ class TransferApi {
     );
   }
 
-  // جلب تفاصيل تحويل محدد - محدثة للعمل ديناميكياً مع أي transferId
+  ///////// 🟩 //////////جلب تفاصيل تحويل معين باستخدام transferId
   Future<Map<String, dynamic>> getTransferDetails(int transferId) async {
     String token = Preferences.getString('auth_token');
 
@@ -261,7 +265,7 @@ class TransferApi {
 
     return handleEitherResult(
       postGetPage.getDataWithToken(
-        ApiServices.getTransferDetails(transferId), // يتم تمرير transferId ديناميكياً
+        ApiServices.getTransferDetails(transferId),
         token,
       ),
       'Transfer Details Retrieved Successfully',
@@ -269,7 +273,7 @@ class TransferApi {
     );
   }
 
-  // إرسال التحويل
+  ///// 🟩 ////إرسال تحويل
   Future<Map<String, dynamic>> sendTransfer(int transferId) async {
     String token = Preferences.getString('auth_token');
 
@@ -290,7 +294,7 @@ class TransferApi {
     );
   }
 
-  // استلام التحويل
+  //// 🟩 ///// استلام تحويل
   Future<Map<String, dynamic>> receiveTransfer(int transferId) async {
     String token = Preferences.getString('auth_token');
 
@@ -311,7 +315,7 @@ class TransferApi {
     );
   }
 
-  // ترحيل إلى SAP
+  ////// 🟩 /////ترحيل تحويل إلى SAP
   Future<Map<String, dynamic>> postToSAP(int transferId) async {
     String token = Preferences.getString('auth_token');
 
@@ -332,7 +336,7 @@ class TransferApi {
     );
   }
 
-  // البحث في التحويلات
+  ///// 🟩 //// البحث عن تحويلات بناءً على معايير متعددة
   Future<Map<String, dynamic>> searchTransfers({
     String? ref,
     String? whscodeFrom,
@@ -345,11 +349,11 @@ class TransferApi {
     int pageSize = 20,
   }) async {
     String token = Preferences.getString('auth_token');
-
     if (token.isEmpty) {
       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
     }
 
+    // تجهيز المعايير المطلوبة للبحث
     Map<String, dynamic> searchParams = {
       'page': page,
       'pageSize': pageSize,
@@ -375,10 +379,10 @@ class TransferApi {
     );
   }
 
-  // إدارة سطر التحويل (إضافة/تعديل)
+  /// 🟩 إضافة أو تعديل سطر تحويل
   Future<Map<String, dynamic>> upsertTransferLine({
     required int docEntry,
-    int? lineNum, // إذا كان null أو 0 أو -1 = إضافة جديدة
+    int? lineNum,
     required String itemCode,
     required String description,
     required double quantity,
@@ -392,12 +396,11 @@ class TransferApi {
     int? uomEntry,
   }) async {
     String token = Preferences.getString('auth_token');
-
     if (token.isEmpty) {
       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
     }
 
-    // تحضير البيانات للإرسال
+    // تجهيز بيانات السطر
     Map<String, dynamic> lineData = {
       'docEntry': docEntry,
       'itemCode': itemCode,
@@ -413,13 +416,11 @@ class TransferApi {
       'uomEntry': uomEntry,
     };
 
-    // تحديد نوع العملية بناءً على lineNum
+    // التمييز بين الإضافة والتعديل
     if (lineNum != null && lineNum > 0) {
-      // عملية تعديل - إضافة lineNum
       lineData['lineNum'] = lineNum;
       logMessage('Transfer', 'Updating existing line with lineNum: $lineNum');
     } else {
-      // عملية إضافة جديدة - عدم إرسال lineNum أو إرسال -1
       lineData['lineNum'] = -1;
       logMessage('Transfer', 'Adding new line (lineNum will be generated)');
     }
@@ -435,13 +436,12 @@ class TransferApi {
     );
   }
 
-  // حذف سطر التحويل
+  /// 🟩 حذف سطر تحويل معين
   Future<Map<String, dynamic>> deleteTransferLine({
     required int docEntry,
     required int lineNum,
   }) async {
     String token = Preferences.getString('auth_token');
-
     if (token.isEmpty) {
       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
     }
@@ -464,7 +464,7 @@ class TransferApi {
     );
   }
 
-  // إنشاء تحويل جديد
+  /// 🟩 إنشاء تحويل جديد
   Future<Map<String, dynamic>> createTransfer({
     required String whscodeFrom,
     required String whscodeTo,
@@ -475,7 +475,6 @@ class TransferApi {
     String? note,
   }) async {
     String token = Preferences.getString('auth_token');
-
     if (token.isEmpty) {
       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
     }
@@ -504,7 +503,7 @@ class TransferApi {
     );
   }
 
-  // تحديث معلومات التحويل (الهيدر)
+  /// 🟩 تحديث معلومات الهيدر لتحويل معين
   Future<Map<String, dynamic>> updateTransferHeader({
     required int transferId,
     String? driverName,
@@ -514,7 +513,6 @@ class TransferApi {
     String? note,
   }) async {
     String token = Preferences.getString('auth_token');
-
     if (token.isEmpty) {
       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
     }
@@ -542,10 +540,9 @@ class TransferApi {
     );
   }
 
-  // الحصول على الوحدات المتاحة لصنف معين
+  /// 🟩 جلب الوحدات المتوفرة لصنف معين
   Future<Map<String, dynamic>> getItemUnits(String itemCode) async {
     String token = Preferences.getString('auth_token');
-
     if (token.isEmpty) {
       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
     }
@@ -562,7 +559,7 @@ class TransferApi {
     );
   }
 
-  // البحث عن الأصناف
+  /// 🟩 البحث عن الأصناف حسب الكود أو الاسم
   Future<Map<String, dynamic>> searchItems({
     String? itemCode,
     String? itemName,
@@ -570,7 +567,6 @@ class TransferApi {
     int pageSize = 20,
   }) async {
     String token = Preferences.getString('auth_token');
-
     if (token.isEmpty) {
       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
     }
@@ -595,10 +591,9 @@ class TransferApi {
     );
   }
 
-  // الحصول على معلومات صنف معين
+  /// 🟩 جلب تفاصيل صنف معين
   Future<Map<String, dynamic>> getItemDetails(String itemCode) async {
     String token = Preferences.getString('auth_token');
-
     if (token.isEmpty) {
       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
     }
@@ -615,13 +610,12 @@ class TransferApi {
     );
   }
 
-  // التحقق من كمية المخزون المتاحة
+  /// 🟩 التحقق من كمية المخزون المتاحة لصنف في مستودع محدد
   Future<Map<String, dynamic>> checkStockQuantity({
     required String itemCode,
     required String warehouseCode,
   }) async {
     String token = Preferences.getString('auth_token');
-
     if (token.isEmpty) {
       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
     }
@@ -638,10 +632,9 @@ class TransferApi {
     );
   }
 
-  // إلغاء التحويل
+  /// 🟩 إلغاء تحويل محدد
   Future<Map<String, dynamic>> cancelTransfer(int transferId) async {
     String token = Preferences.getString('auth_token');
-
     if (token.isEmpty) {
       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
     }
@@ -660,10 +653,11 @@ class TransferApi {
   }
 }
 
+
 // import 'package:auth_app/functions/handling_data.dart';
 // import 'package:auth_app/services/api/post_get_api.dart';
-// import 'package:auth_app/services/api_service.dart';
 // import 'package:auth_app/classes/shared_preference.dart';
+// import 'package:auth_app/services/api_service.dart';
 
 // class TransferApi {
 //   final PostGetPage postGetPage;
@@ -879,6 +873,35 @@ class TransferApi {
 //     );
 //   }
 
+//   // حذف سطر التحويل
+//   Future<Map<String, dynamic>> deleteTransferLine({
+//     required int docEntry,
+//     required int lineNum,
+//   }) async {
+//     String token = Preferences.getString('auth_token');
+
+//     if (token.isEmpty) {
+//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
+//     }
+
+//     Map<String, dynamic> deleteData = {
+//       'docEntry': docEntry,
+//       'lineNum': lineNum,
+//     };
+
+//     logMessage('Transfer', 'Deleting line with docEntry: $docEntry, lineNum: $lineNum');
+
+//     return handleEitherResult(
+//       postGetPage.postDataWithToken(
+//         ApiServices.deleteTransferLine(),
+//         deleteData,
+//         token,
+//       ),
+//       'Line Deleted Successfully',
+//       'فشل في حذف السطر',
+//     );
+//   }
+
 //   // إنشاء تحويل جديد
 //   Future<Map<String, dynamic>> createTransfer({
 //     required String whscodeFrom,
@@ -918,4 +941,160 @@ class TransferApi {
 //       'فشل في إنشاء التحويل',
 //     );
 //   }
+
+//   // تحديث معلومات التحويل (الهيدر)
+//   Future<Map<String, dynamic>> updateTransferHeader({
+//     required int transferId,
+//     String? driverName,
+//     String? driverCode,
+//     String? driverMobil,
+//     String? careNum,
+//     String? note,
+//   }) async {
+//     String token = Preferences.getString('auth_token');
+
+//     if (token.isEmpty) {
+//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
+//     }
+
+//     Map<String, dynamic> updateData = {
+//       'transferId': transferId,
+//     };
+
+//     if (driverName != null) updateData['driverName'] = driverName;
+//     if (driverCode != null) updateData['driverCode'] = driverCode;
+//     if (driverMobil != null) updateData['driverMobil'] = driverMobil;
+//     if (careNum != null) updateData['careNum'] = careNum;
+//     if (note != null) updateData['note'] = note;
+
+//     logMessage('Transfer', 'Updating transfer header for ID: $transferId');
+
+//     return handleEitherResult(
+//       postGetPage.postDataWithToken(
+//         ApiServices.updateTransferHeader(),
+//         updateData,
+//         token,
+//       ),
+//       'Transfer Header Updated Successfully',
+//       'فشل في تحديث معلومات التحويل',
+//     );
+//   }
+
+//   // الحصول على الوحدات المتاحة لصنف معين
+//   Future<Map<String, dynamic>> getItemUnits(String itemCode) async {
+//     String token = Preferences.getString('auth_token');
+
+//     if (token.isEmpty) {
+//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
+//     }
+
+//     logMessage('Transfer', 'Getting units for item: $itemCode');
+
+//     return handleEitherResult(
+//       postGetPage.getDataWithToken(
+//         ApiServices.getItemUnits(itemCode),
+//         token,
+//       ),
+//       'Item Units Retrieved Successfully',
+//       'فشل في جلب وحدات الصنف',
+//     );
+//   }
+
+//   // البحث عن الأصناف
+//   Future<Map<String, dynamic>> searchItems({
+//     String? itemCode,
+//     String? itemName,
+//     int page = 1,
+//     int pageSize = 20,
+//   }) async {
+//     String token = Preferences.getString('auth_token');
+
+//     if (token.isEmpty) {
+//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
+//     }
+
+//     Map<String, dynamic> searchParams = {
+//       'page': page,
+//       'pageSize': pageSize,
+//     };
+
+//     if (itemCode != null && itemCode.isNotEmpty) searchParams['itemCode'] = itemCode;
+//     if (itemName != null && itemName.isNotEmpty) searchParams['itemName'] = itemName;
+
+//     logMessage('Transfer', 'Searching items with params: $searchParams');
+
+//     return handleEitherResult(
+//       postGetPage.getDataWithToken(
+//         ApiServices.searchItems(searchParams),
+//         token,
+//       ),
+//       'Items Search Results Retrieved Successfully',
+//       'فشل في البحث عن الأصناف',
+//     );
+//   }
+
+//   // الحصول على معلومات صنف معين
+//   Future<Map<String, dynamic>> getItemDetails(String itemCode) async {
+//     String token = Preferences.getString('auth_token');
+
+//     if (token.isEmpty) {
+//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
+//     }
+
+//     logMessage('Transfer', 'Getting item details for: $itemCode');
+
+//     return handleEitherResult(
+//       postGetPage.getDataWithToken(
+//         ApiServices.getItemDetails(itemCode),
+//         token,
+//       ),
+//       'Item Details Retrieved Successfully',
+//       'فشل في جلب تفاصيل الصنف',
+//     );
+//   }
+
+//   // التحقق من كمية المخزون المتاحة
+//   Future<Map<String, dynamic>> checkStockQuantity({
+//     required String itemCode,
+//     required String warehouseCode,
+//   }) async {
+//     String token = Preferences.getString('auth_token');
+
+//     if (token.isEmpty) {
+//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
+//     }
+
+//     logMessage('Transfer', 'Checking stock for item: $itemCode in warehouse: $warehouseCode');
+
+//     return handleEitherResult(
+//       postGetPage.getDataWithToken(
+//         ApiServices.checkStockQuantity(itemCode, warehouseCode),
+//         token,
+//       ),
+//       'Stock Quantity Retrieved Successfully',
+//       'فشل في جلب كمية المخزون',
+//     );
+//   }
+
+//   // إلغاء التحويل
+//   Future<Map<String, dynamic>> cancelTransfer(int transferId) async {
+//     String token = Preferences.getString('auth_token');
+
+//     if (token.isEmpty) {
+//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
+//     }
+
+//     logMessage('Transfer', 'Cancelling transfer with ID: $transferId');
+
+//     return handleEitherResult(
+//       postGetPage.postDataWithToken(
+//         ApiServices.cancelTransfer(),
+//         {'transferId': transferId},
+//         token,
+//       ),
+//       'Transfer Cancelled Successfully',
+//       'فشل في إلغاء التحويل',
+//     );
+//   }
 // }
+

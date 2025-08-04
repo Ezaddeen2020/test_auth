@@ -16,7 +16,7 @@
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/show_transfer_card/product/product_page.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/show_transfer_card/models/details_model.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/show_transfer_card/transfer_navigate/purchase_order.dart';
-import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/models/transfer_stock.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/models/transfer_stock_model.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/services/transfer_api.dart';
 import 'package:get/get.dart';
 import 'package:flutter/material.dart';
@@ -75,21 +75,21 @@ class TransferController extends GetxController {
   }
 
   // Scroll listener for pagination
-  void _onScroll() {
-    if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 200 &&
-        hasMoreData.value &&
-        !isLoadingMore.value) {
-      loadMoreTransfers();
-    }
-  }
+  // void _onScroll() {
+  //   if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 200 &&
+  //       hasMoreData.value &&
+  //       !isLoadingMore.value) {
+  //     loadMoreTransfers();
+  //   }
+  // }
 
-  // جلب قائمة التحويلات
+  ////////////////////      جلب قائمة التحويلات        /////////////////////////////////////////
   Future<void> getTransfersList({bool isRefresh = false}) async {
     try {
       if (isRefresh) {
-        isRefreshing.value = true;
-        currentPage.value = 1;
-        hasMoreData.value = true;
+        isRefreshing.value = true; //يخبر النظام أنك الآن في وضع تحديث البيانات
+        currentPage.value = 1; //يبدأ التحميل من الصفحة الأولى
+        hasMoreData.value = true; //يوضح أن هناك صفحات أخرى يمكن تحميلها لاحقاً.
       } else {
         isLoading.value = true;
       }
@@ -122,7 +122,7 @@ class TransferController extends GetxController {
           'تم جلب البيانات بنجاح',
           backgroundColor: Colors.green,
           colorText: Colors.white,
-          duration: Duration(seconds: 2),
+          duration: const Duration(seconds: 2),
         );
       } else {
         statusRequest.value = StatusRequest.failure;
@@ -131,7 +131,7 @@ class TransferController extends GetxController {
           response['message'] ?? 'فشل في جلب البيانات',
           backgroundColor: Colors.red,
           colorText: Colors.white,
-          duration: Duration(seconds: 3),
+          duration: const Duration(seconds: 3),
         );
       }
     } catch (e) {
@@ -141,7 +141,7 @@ class TransferController extends GetxController {
         'حدث خطأ غير متوقع',
         backgroundColor: Colors.red,
         colorText: Colors.white,
-        duration: Duration(seconds: 3),
+        duration: const Duration(seconds: 3),
       );
     } finally {
       isLoading.value = false;
@@ -150,11 +150,50 @@ class TransferController extends GetxController {
   }
 
   // تحميل المزيد من البيانات
+  // Future<void> loadMoreTransfers() async {
+  //   if (!hasMoreData.value || isLoadingMore.value) return;
+
+  //   try {
+  //     isLoadingMore.value = true;
+  //     currentPage.value++;
+
+  //     var response = await transferApi.getTransfersList(
+  //       page: currentPage.value,
+  //       pageSize: 20,
+  //     );
+
+  //     if (response['status'] == 'success') {
+  //       TransferResponse transferResponse = TransferResponse.fromJson(response['data']);
+
+  //       transfers.addAll(transferResponse.data);
+  //       hasMoreData.value = currentPage.value < totalPages.value;
+  //       applyFilters();
+  //     }
+  //   } catch (e) {
+  //     currentPage.value--; // إرجاع رقم الصفحة في حالة الخطأ
+  //     Get.snackbar(
+  //       'خطأ',
+  //       'فشل في تحميل المزيد من البيانات',
+  //       backgroundColor: Colors.red,
+  //       colorText: Colors.white,
+  //     );
+  //   } finally {
+  //     isLoadingMore.value = false;
+  //   }
+  // }
+
+  // تحميل المزيد من البيانات - النسخة المحسنة
   Future<void> loadMoreTransfers() async {
-    if (!hasMoreData.value || isLoadingMore.value) return;
+    // التحقق من الشروط قبل البدء
+    if (!hasMoreData.value || isLoadingMore.value || isLoading.value) {
+      return;
+    }
 
     try {
       isLoadingMore.value = true;
+
+      // حفظ الصفحة الحالية قبل زيادتها
+      final previousPage = currentPage.value;
       currentPage.value++;
 
       var response = await transferApi.getTransfersList(
@@ -165,20 +204,68 @@ class TransferController extends GetxController {
       if (response['status'] == 'success') {
         TransferResponse transferResponse = TransferResponse.fromJson(response['data']);
 
-        transfers.addAll(transferResponse.data);
-        hasMoreData.value = currentPage.value < totalPages.value;
-        applyFilters();
+        // التحقق من وجود بيانات جديدة
+        if (transferResponse.data.isNotEmpty) {
+          transfers.addAll(transferResponse.data);
+
+          // تحديث معلومات الصفحات
+          totalPages.value = transferResponse.totalPages;
+          hasMoreData.value = currentPage.value < totalPages.value;
+
+          // تطبيق الفلاتر على البيانات الجديدة
+          applyFilters();
+        } else {
+          // لا توجد بيانات جديدة
+          hasMoreData.value = false;
+          currentPage.value = previousPage; // إرجاع رقم الصفحة
+        }
+      } else {
+        // في حالة فشل الاستجابة
+        currentPage.value = previousPage; // إرجاع رقم الصفحة
+
+        Get.snackbar(
+          'خطأ',
+          response['message'] ?? 'فشل في تحميل المزيد من البيانات',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 3),
+        );
       }
     } catch (e) {
-      currentPage.value--; // إرجاع رقم الصفحة في حالة الخطأ
+      // في حالة حدوث خطأ غير متوقع
+      currentPage.value--; // إنقاص رقم الصفحة
+
       Get.snackbar(
         'خطأ',
-        'فشل في تحميل المزيد من البيانات',
+        'فشل في تحميل المزيد من البيانات: ${e.toString()}',
         backgroundColor: Colors.red,
         colorText: Colors.white,
+        duration: const Duration(seconds: 3),
       );
+
+      // في حالة الخطأ، يمكننا التحقق مرة أخرى من حالة hasMoreData
+      if (currentPage.value >= totalPages.value) {
+        hasMoreData.value = false;
+      }
     } finally {
+      // التأكد من إعادة تعيين حالة التحميل
       isLoadingMore.value = false;
+    }
+  }
+
+// دالة مساعدة للتحقق من إمكانية تحميل المزيد
+  bool canLoadMore() {
+    return hasMoreData.value &&
+        !isLoadingMore.value &&
+        !isLoading.value &&
+        currentPage.value < totalPages.value;
+  }
+
+// تحسين دالة _onScroll أيضاً
+  void _onScroll() {
+    if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 200 &&
+        canLoadMore()) {
+      loadMoreTransfers();
     }
   }
 
