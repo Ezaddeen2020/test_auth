@@ -1,6 +1,541 @@
+// // pages/home/product/product_management_screen.dart
+
+// import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/product/product_controller.dart';
+// import 'package:flutter/material.dart';
+// import 'package:get/get.dart';
+// import 'package:auth_app/functions/status_request.dart';
+
+// class ProductManagementScreen extends StatelessWidget {
+//   const ProductManagementScreen({super.key});
+
+//   @override
+//   Widget build(BuildContext context) {
+//     final ProductManagementController controller = Get.put(ProductManagementController());
+
+//     // الحصول على transferId من arguments
+//     final int? transferId = Get.arguments?['transferId'];
+
+//     // إذا تم تمرير transferId، قم بتحميل البيانات
+//     if (transferId != null) {
+//       controller.loadTransferLines(transferId);
+//     }
+
+//     return Scaffold(
+//       backgroundColor: Colors.grey[100],
+//       body: Obx(() {
+//         if (controller.statusRequest.value == StatusRequest.loading &&
+//             controller.transferLines.isEmpty) {
+//           return const Center(
+//             child: CircularProgressIndicator(
+//               color: Colors.grey,
+//             ),
+//           );
+//         }
+
+//         if (controller.statusRequest.value == StatusRequest.failure) {
+//           return Center(
+//             child: Column(
+//               mainAxisAlignment: MainAxisAlignment.center,
+//               children: [
+//                 Icon(
+//                   Icons.error_outline,
+//                   size: 80,
+//                   color: Colors.grey[400],
+//                 ),
+//                 const SizedBox(height: 16),
+//                 Text(
+//                   'فشل في تحميل البيانات',
+//                   style: TextStyle(
+//                     fontSize: 18,
+//                     color: Colors.grey[600],
+//                     fontWeight: FontWeight.w500,
+//                   ),
+//                 ),
+//                 const SizedBox(height: 16),
+//                 ElevatedButton(
+//                   onPressed: () {
+//                     if (controller.transferId.value != null) {
+//                       controller.loadTransferLines(controller.transferId.value!);
+//                     }
+//                   },
+//                   style: ElevatedButton.styleFrom(
+//                     backgroundColor: Colors.grey[800],
+//                     foregroundColor: Colors.white,
+//                   ),
+//                   child: const Text('إعادة المحاولة'),
+//                 ),
+//               ],
+//             ),
+//           );
+//         }
+
+//         if (controller.filteredLines.isEmpty) {
+//           return Center(
+//             child: Column(
+//               mainAxisAlignment: MainAxisAlignment.center,
+//               children: [
+//                 Icon(
+//                   Icons.inventory_2_outlined,
+//                   size: 80,
+//                   color: Colors.grey[400],
+//                 ),
+//                 const SizedBox(height: 16),
+//                 Text(
+//                   'لا توجد أصناف في هذا التحويل',
+//                   style: TextStyle(
+//                     fontSize: 18,
+//                     color: Colors.grey[600],
+//                     fontWeight: FontWeight.w500,
+//                   ),
+//                 ),
+//               ],
+//             ),
+//           );
+//         }
+
+//         return Column(
+//           children: [
+//             // قائمة البطاقات
+//             Expanded(
+//               child: _buildProductCardsList(controller),
+//             ),
+//           ],
+//         );
+//       }),
+//     );
+//   }
+
+//   Widget _buildProductCardsList(ProductManagementController controller) {
+//     return ListView.builder(
+//       padding: const EdgeInsets.all(16),
+//       itemCount: controller.filteredLines.length,
+//       itemBuilder: (context, index) {
+//         final line = controller.filteredLines[index];
+//         return _buildProductCard(line, index + 1, controller);
+//       },
+//     );
+//   }
+
+//   Widget _buildProductCard(dynamic line, int rowNumber, ProductManagementController controller) {
+//     return Container(
+//       margin: const EdgeInsets.only(bottom: 16),
+//       decoration: BoxDecoration(
+//         color: Colors.white,
+//         borderRadius: BorderRadius.circular(12),
+//         boxShadow: [
+//           BoxShadow(
+//             color: Colors.grey.withOpacity(0.1),
+//             spreadRadius: 1,
+//             blurRadius: 4,
+//             offset: const Offset(0, 2),
+//           ),
+//         ],
+//         border: Border.all(
+//           color: Colors.grey[200]!,
+//           width: 1,
+//         ),
+//       ),
+//       child: Container(
+//         padding: const EdgeInsets.all(16),
+//         child: Column(
+//           crossAxisAlignment: CrossAxisAlignment.start,
+//           children: [
+//             // رأس البطاقة - رقم الصنف واسم الصنف
+//             Row(
+//               children: [
+//                 Container(
+//                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+//                   decoration: BoxDecoration(
+//                     color: Colors.grey[800],
+//                     borderRadius: BorderRadius.circular(20),
+//                   ),
+//                   child: Text(
+//                     '$rowNumber',
+//                     style: const TextStyle(
+//                       color: Colors.white,
+//                       fontWeight: FontWeight.bold,
+//                       fontSize: 12,
+//                     ),
+//                   ),
+//                 ),
+//                 const SizedBox(width: 12),
+//                 Expanded(
+//                   child: Column(
+//                     crossAxisAlignment: CrossAxisAlignment.start,
+//                     children: [
+//                       Text(
+//                         line.itemCode ?? '',
+//                         style: const TextStyle(
+//                           fontSize: 16,
+//                           fontWeight: FontWeight.bold,
+//                           color: Colors.black87,
+//                         ),
+//                       ),
+//                       const SizedBox(height: 4),
+//                       Text(
+//                         line.description ?? '',
+//                         style: TextStyle(
+//                           fontSize: 14,
+//                           color: Colors.grey[600],
+//                         ),
+//                         maxLines: 2,
+//                         overflow: TextOverflow.ellipsis,
+//                       ),
+//                     ],
+//                   ),
+//                 ),
+//               ],
+//             ),
+
+//             const SizedBox(height: 16),
+
+//             // خط فاصل مع لون مميز
+//             Container(
+//               height: 1,
+//               color: Colors.grey[300],
+//               margin: const EdgeInsets.symmetric(horizontal: 4),
+//             ),
+
+//             const SizedBox(height: 16),
+
+//             // معلومات الكمية والوحدة
+//             Row(
+//               children: [
+//                 // الكمية
+//                 Expanded(
+//                   child: Column(
+//                     crossAxisAlignment: CrossAxisAlignment.start,
+//                     children: [
+//                       Text(
+//                         'الكمية',
+//                         style: TextStyle(
+//                           fontSize: 13,
+//                           color: Colors.grey[700],
+//                           fontWeight: FontWeight.w600,
+//                         ),
+//                       ),
+//                       const SizedBox(height: 8),
+//                       _buildEditableQuantityField(line, controller),
+//                     ],
+//                   ),
+//                 ),
+
+//                 const SizedBox(width: 16),
+
+//                 // الوحدة
+//                 Expanded(
+//                   child: Column(
+//                     crossAxisAlignment: CrossAxisAlignment.start,
+//                     children: [
+//                       Text(
+//                         'الوحدة',
+//                         style: TextStyle(
+//                           fontSize: 13,
+//                           color: Colors.grey[700],
+//                           fontWeight: FontWeight.w600,
+//                         ),
+//                       ),
+//                       const SizedBox(height: 8),
+//                       _buildUnitSelectionField(line, controller),
+//                     ],
+//                   ),
+//                 ),
+//               ],
+//             ),
+
+//             const SizedBox(height: 16),
+
+//             // معلومات إضافية
+//             Container(
+//               padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+//               decoration: BoxDecoration(
+//                 color: Colors.blue[50],
+//                 borderRadius: BorderRadius.circular(10),
+//                 border: Border.all(color: Colors.blue[100]!, width: 1),
+//               ),
+//               child: Row(
+//                 children: [
+//                   Expanded(
+//                     child: _buildInfoColumn(
+//                       'الكمية الأساسية',
+//                       line.baseQty1?.toString() ?? '0',
+//                       Colors.blue[700]!,
+//                     ),
+//                   ),
+//                   Container(
+//                     width: 2,
+//                     height: 35,
+//                     decoration: BoxDecoration(
+//                       color: Colors.blue[200],
+//                       borderRadius: BorderRadius.circular(1),
+//                     ),
+//                   ),
+//                   Expanded(
+//                     child: _buildInfoColumn(
+//                       'UomEntry',
+//                       line.uomEntry?.toString() ?? '0',
+//                       Colors.blue[700]!,
+//                     ),
+//                   ),
+//                 ],
+//               ),
+//             ),
+//           ],
+//         ),
+//       ),
+//     );
+//   }
+
+//   Widget _buildInfoColumn(String label, String value, Color textColor) {
+//     return Column(
+//       children: [
+//         Text(
+//           label,
+//           style: TextStyle(
+//             fontSize: 12,
+//             color: textColor.withOpacity(0.7),
+//             fontWeight: FontWeight.w600,
+//           ),
+//         ),
+//         const SizedBox(height: 6),
+//         Text(
+//           value,
+//           style: TextStyle(
+//             fontSize: 16,
+//             fontWeight: FontWeight.bold,
+//             color: textColor,
+//           ),
+//         ),
+//       ],
+//     );
+//   }
+
+//   Widget _buildEditableQuantityField(dynamic line, ProductManagementController controller) {
+//     return Container(
+//       height: 48,
+//       child: TextField(
+//         controller: TextEditingController(
+//           text: line.quantity?.toStringAsFixed(0) ?? '0',
+//         ),
+//         keyboardType: TextInputType.number,
+//         textAlign: TextAlign.center,
+//         style: const TextStyle(
+//           fontSize: 16,
+//           fontWeight: FontWeight.w600,
+//           color: Colors.black87,
+//         ),
+//         decoration: InputDecoration(
+//           filled: true,
+//           fillColor: Colors.grey[50],
+//           border: OutlineInputBorder(
+//             borderRadius: BorderRadius.circular(10),
+//             borderSide: BorderSide(color: Colors.grey[300]!, width: 1.5),
+//           ),
+//           enabledBorder: OutlineInputBorder(
+//             borderRadius: BorderRadius.circular(10),
+//             borderSide: BorderSide(color: Colors.grey[300]!, width: 1.5),
+//           ),
+//           focusedBorder: OutlineInputBorder(
+//             borderRadius: BorderRadius.circular(10),
+//             borderSide: BorderSide(color: Colors.blue[600]!, width: 2),
+//           ),
+//           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+//           isDense: false,
+//         ),
+//         onChanged: (value) {
+//           // تحديث الكمية
+//           double? newQuantity = double.tryParse(value);
+//           if (newQuantity != null) {
+//             controller.updateProductQuantity(line, newQuantity);
+//           }
+//         },
+//       ),
+//     );
+//   }
+
+//   Widget _buildUnitSelectionField(dynamic line, ProductManagementController controller) {
+//     return Container(
+//       height: 48,
+//       child: InkWell(
+//         onTap: () => _showUnitSelectionDialog(line, controller),
+//         child: Container(
+//           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+//           decoration: BoxDecoration(
+//             color: Colors.grey[50],
+//             border: Border.all(color: Colors.grey[300]!, width: 1.5),
+//             borderRadius: BorderRadius.circular(10),
+//           ),
+//           child: Row(
+//             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//             children: [
+//               Text(
+//                 line.uomCode ?? 'كرتون',
+//                 style: const TextStyle(
+//                   fontSize: 16,
+//                   fontWeight: FontWeight.w600,
+//                   color: Colors.black87,
+//                 ),
+//               ),
+//               Icon(
+//                 Icons.keyboard_arrow_down_rounded,
+//                 color: Colors.grey[600],
+//                 size: 24,
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+
+//   void _showUnitSelectionDialog(dynamic line, ProductManagementController controller) {
+//     Get.dialog(
+//       Dialog(
+//         shape: RoundedRectangleBorder(
+//           borderRadius: BorderRadius.circular(16),
+//         ),
+//         child: Container(
+//           width: 600,
+//           padding: const EdgeInsets.all(24),
+//           child: Column(
+//             mainAxisSize: MainAxisSize.min,
+//             children: [
+//               // عنوان النافذة
+//               Row(
+//                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+//                 children: [
+//                   const Text(
+//                     'اختيار الوحدة',
+//                     style: TextStyle(
+//                       fontSize: 20,
+//                       fontWeight: FontWeight.bold,
+//                     ),
+//                   ),
+//                   IconButton(
+//                     onPressed: () => Get.back(),
+//                     icon: const Icon(Icons.close),
+//                     style: IconButton.styleFrom(
+//                       backgroundColor: Colors.grey[100],
+//                     ),
+//                   ),
+//                 ],
+//               ),
+
+//               const SizedBox(height: 24),
+
+//               // قائمة الوحدات
+//               Column(
+//                 children: [
+//                   _buildUnitSelectionCard('1', 'حبة', '5', line, controller),
+//                   _buildUnitSelectionCard('10', 'كرتون', '6', line, controller),
+//                   _buildUnitSelectionCard('12', 'شد 12', '25', line, controller),
+//                   _buildUnitSelectionCard('50', 'شد 50', '44', line, controller),
+//                 ],
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+
+//   Widget _buildUnitSelectionCard(String baseQty, String unitName, String uomEntry, dynamic line,
+//       ProductManagementController controller) {
+//     return Card(
+//       margin: const EdgeInsets.only(bottom: 12),
+//       elevation: 2,
+//       shape: RoundedRectangleBorder(
+//         borderRadius: BorderRadius.circular(12),
+//       ),
+//       child: InkWell(
+//         onTap: () async {
+//           try {
+//             // إغلاق النافذة أولاً
+//             Get.back();
+
+//             // ثم تطبيق اختيار الوحدة
+//             await Future.delayed(const Duration(milliseconds: 100));
+//             controller.updateProductUnit(
+//                 line, unitName, int.tryParse(baseQty) ?? 1, int.tryParse(uomEntry) ?? 1);
+//           } catch (e) {
+//             print('خطأ في تحديث الوحدة: $e');
+//             // في حالة حدوث خطأ، تأكد من إغلاق النافذة
+//             if (Get.isDialogOpen ?? false) {
+//               Get.back();
+//             }
+//           }
+//         },
+//         borderRadius: BorderRadius.circular(12),
+//         child: Container(
+//           padding: const EdgeInsets.all(16),
+//           child: Row(
+//             children: [
+//               // أيقونة الاختيار
+//               Container(
+//                 padding: const EdgeInsets.all(8),
+//                 decoration: BoxDecoration(
+//                   color: Colors.green[50],
+//                   borderRadius: BorderRadius.circular(8),
+//                 ),
+//                 child: Icon(
+//                   Icons.check_circle_outline,
+//                   color: Colors.green[600],
+//                   size: 20,
+//                 ),
+//               ),
+
+//               const SizedBox(width: 16),
+
+//               // معلومات الوحدة
+//               Expanded(
+//                 child: Column(
+//                   crossAxisAlignment: CrossAxisAlignment.start,
+//                   children: [
+//                     Text(
+//                       unitName,
+//                       style: const TextStyle(
+//                         fontSize: 16,
+//                         fontWeight: FontWeight.bold,
+//                       ),
+//                     ),
+//                     const SizedBox(height: 2),
+//                     Text(
+//                       'الكمية الأساسية: $baseQty',
+//                       style: TextStyle(
+//                         fontSize: 14,
+//                         color: Colors.grey[600],
+//                       ),
+//                     ),
+//                   ],
+//                 ),
+//               ),
+
+//               // UomEntry
+//               Container(
+//                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+//                 decoration: BoxDecoration(
+//                   color: Colors.grey[100],
+//                   borderRadius: BorderRadius.circular(20),
+//                 ),
+//                 child: Text(
+//                   uomEntry,
+//                   style: const TextStyle(
+//                     fontSize: 12,
+//                     fontWeight: FontWeight.w500,
+//                   ),
+//                 ),
+//               ),
+//             ],
+//           ),
+//         ),
+//       ),
+//     );
+//   }
+// }
+
 // pages/home/product/product_management_screen.dart
 
-import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/show_transfer_card/product/product_controller.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/product/product_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:auth_app/functions/status_request.dart';
@@ -12,16 +547,15 @@ class ProductManagementScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final ProductManagementController controller = Get.put(ProductManagementController());
 
-    // الحصول على transferId من arguments
     final int? transferId = Get.arguments?['transferId'];
 
-    // إذا تم تمرير transferId، قم بتحميل البيانات
     if (transferId != null) {
       controller.loadTransferLines(transferId);
     }
 
     return Scaffold(
       backgroundColor: Colors.grey[100],
+      appBar: _buildAppBar(controller),
       body: Obx(() {
         if (controller.statusRequest.value == StatusRequest.loading &&
             controller.transferLines.isEmpty) {
@@ -33,68 +567,18 @@ class ProductManagementScreen extends StatelessWidget {
         }
 
         if (controller.statusRequest.value == StatusRequest.failure) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.error_outline,
-                  size: 80,
-                  color: Colors.grey[400],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'فشل في تحميل البيانات',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () {
-                    if (controller.transferId.value != null) {
-                      controller.loadTransferLines(controller.transferId.value!);
-                    }
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[800],
-                    foregroundColor: Colors.white,
-                  ),
-                  child: const Text('إعادة المحاولة'),
-                ),
-              ],
-            ),
-          );
+          return _buildErrorState(controller);
         }
 
         if (controller.filteredLines.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(
-                  Icons.inventory_2_outlined,
-                  size: 80,
-                  color: Colors.grey[400],
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'لا توجد أصناف في هذا التحويل',
-                  style: TextStyle(
-                    fontSize: 18,
-                    color: Colors.grey[600],
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
-          );
+          return _buildEmptyState();
         }
 
         return Column(
           children: [
+            // شريط الإحصائيات والأزرار
+            _buildStatsAndActionsBar(controller),
+
             // قائمة البطاقات
             Expanded(
               child: _buildProductCardsList(controller),
@@ -102,6 +586,226 @@ class ProductManagementScreen extends StatelessWidget {
           ],
         );
       }),
+      floatingActionButton: _buildFloatingActionButton(controller),
+    );
+  }
+
+  PreferredSizeWidget _buildAppBar(ProductManagementController controller) {
+    return AppBar(
+      backgroundColor: Colors.white,
+      elevation: 1,
+      title: const Text(
+        'إدارة أصناف التحويل',
+        style: TextStyle(
+          color: Colors.black87,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      leading: IconButton(
+        icon: const Icon(Icons.arrow_back, color: Colors.black87),
+        onPressed: () => _handleBackPress(controller),
+      ),
+      actions: [
+        // زر الحفظ
+        Obx(() => controller.hasUnsavedChanges.value
+            ? IconButton(
+                onPressed: controller.canSave ? () => controller.saveAllChangesToServer() : null,
+                icon: controller.isSaving.value
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.blue,
+                        ),
+                      )
+                    : const Icon(Icons.save, color: Colors.blue),
+                tooltip: 'حفظ التغييرات',
+              )
+            : const SizedBox.shrink()),
+
+        // عدد التغييرات غير المحفوظة
+        Obx(() => controller.hasUnsavedChanges.value
+            ? Container(
+                margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.orange,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${controller.unsavedChangesCount}',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              )
+            : const SizedBox.shrink()),
+      ],
+    );
+  }
+
+  Widget _buildStatsAndActionsBar(ProductManagementController controller) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.white,
+      child: Column(
+        children: [
+          // شريط البحث
+          TextField(
+            controller: controller.searchController,
+            onChanged: controller.updateSearch,
+            decoration: InputDecoration(
+              hintText: 'بحث بكود الصنف أو الوصف...',
+              prefixIcon: const Icon(Icons.search, color: Colors.grey),
+              suffixIcon: Obx(() => controller.hasActiveSearch
+                  ? IconButton(
+                      icon: const Icon(Icons.clear, color: Colors.grey),
+                      onPressed: controller.clearSearch,
+                    )
+                  : const SizedBox.shrink()),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: BorderSide(color: Colors.grey[300]!),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(color: Colors.blue),
+              ),
+              filled: true,
+              fillColor: Colors.grey[50],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // الإحصائيات
+          Obx(() {
+            final stats = controller.getProductStats();
+            return Row(
+              children: [
+                _buildStatCard('إجمالي الأصناف', '${stats['totalItems']}', Icons.inventory),
+                const SizedBox(width: 8),
+                _buildStatCard(
+                    'إجمالي الكمية', '${stats['totalQuantity'].toStringAsFixed(0)}', Icons.numbers),
+                const SizedBox(width: 8),
+                _buildStatCard('أصناف مختلفة', '${stats['uniqueItems']}', Icons.category),
+              ],
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStatCard(String title, String value, IconData icon) {
+    return Expanded(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: Colors.blue[50],
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.blue[100]!),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 16, color: Colors.blue[700]),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: Colors.blue[700],
+                      fontWeight: FontWeight.w500,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  Text(
+                    value,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.blue[800],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildErrorState(ProductManagementController controller) {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.error_outline,
+            size: 80,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'فشل في تحميل البيانات',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: () {
+              if (controller.transferId.value != null) {
+                controller.loadTransferLines(controller.transferId.value!);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.grey[800],
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('إعادة المحاولة'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(
+            Icons.inventory_2_outlined,
+            size: 80,
+            color: Colors.grey[400],
+          ),
+          const SizedBox(height: 16),
+          Text(
+            'لا توجد أصناف في هذا التحويل',
+            style: TextStyle(
+              fontSize: 18,
+              color: Colors.grey[600],
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -117,10 +821,33 @@ class ProductManagementScreen extends StatelessWidget {
   }
 
   Widget _buildProductCard(dynamic line, int rowNumber, ProductManagementController controller) {
+    // تحديد حالة السطر (جديد، معدل، أو عادي)
+    bool isNewLine = line.lineNum != null && line.lineNum! < 0;
+    bool isModifiedLine = controller.modifiedLines.containsKey(line.lineNum);
+    bool isDeletedLine = controller.deletedLines.contains(line.lineNum);
+
+    Color borderColor = Colors.grey[200]!;
+    Color statusColor = Colors.transparent;
+    String statusText = '';
+
+    if (isDeletedLine) {
+      borderColor = Colors.red[300]!;
+      statusColor = Colors.red[50]!;
+      statusText = 'محذوف';
+    } else if (isNewLine) {
+      borderColor = Colors.green[300]!;
+      statusColor = Colors.green[50]!;
+      statusText = 'جديد';
+    } else if (isModifiedLine) {
+      borderColor = Colors.orange[300]!;
+      statusColor = Colors.orange[50]!;
+      statusText = 'معدل';
+    }
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: statusColor.alpha == 0 ? Colors.white : statusColor,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
@@ -130,17 +857,14 @@ class ProductManagementScreen extends StatelessWidget {
             offset: const Offset(0, 2),
           ),
         ],
-        border: Border.all(
-          color: Colors.grey[200]!,
-          width: 1,
-        ),
+        border: Border.all(color: borderColor, width: 1.5),
       ),
       child: Container(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // رأس البطاقة - رقم الصنف واسم الصنف
+            // رأس البطاقة مع حالة السطر
             Row(
               children: [
                 Container(
@@ -158,6 +882,27 @@ class ProductManagementScreen extends StatelessWidget {
                     ),
                   ),
                 ),
+
+                if (statusText.isNotEmpty) ...[
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color:
+                          isDeletedLine ? Colors.red : (isNewLine ? Colors.green : Colors.orange),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Text(
+                      statusText,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+
                 const SizedBox(width: 12),
                 Expanded(
                   child: Column(
@@ -165,10 +910,11 @@ class ProductManagementScreen extends StatelessWidget {
                     children: [
                       Text(
                         line.itemCode ?? '',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87,
+                          color: isDeletedLine ? Colors.red[700] : Colors.black87,
+                          decoration: isDeletedLine ? TextDecoration.lineThrough : null,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -176,7 +922,8 @@ class ProductManagementScreen extends StatelessWidget {
                         line.description ?? '',
                         style: TextStyle(
                           fontSize: 14,
-                          color: Colors.grey[600],
+                          color: isDeletedLine ? Colors.red[600] : Colors.grey[600],
+                          decoration: isDeletedLine ? TextDecoration.lineThrough : null,
                         ),
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -184,12 +931,65 @@ class ProductManagementScreen extends StatelessWidget {
                     ],
                   ),
                 ),
+
+                // زر الحذف
+                PopupMenuButton<String>(
+                  onSelected: (value) {
+                    switch (value) {
+                      case 'delete':
+                        _showDeleteConfirmation(line, controller);
+                        break;
+                      case 'duplicate':
+                        controller.duplicateProduct(line);
+                        break;
+                      case 'edit':
+                        _showEditDialog(line, controller);
+                        break;
+                    }
+                  },
+                  itemBuilder: (context) => [
+                    const PopupMenuItem(
+                      value: 'edit',
+                      child: Row(
+                        children: [
+                          Icon(Icons.edit, size: 18, color: Colors.blue),
+                          SizedBox(width: 8),
+                          Text('تعديل'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'duplicate',
+                      child: Row(
+                        children: [
+                          Icon(Icons.copy, size: 18, color: Colors.green),
+                          SizedBox(width: 8),
+                          Text('نسخ'),
+                        ],
+                      ),
+                    ),
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(Icons.delete, size: 18, color: Colors.red),
+                          SizedBox(width: 8),
+                          Text('حذف'),
+                        ],
+                      ),
+                    ),
+                  ],
+                  child: Icon(
+                    Icons.more_vert,
+                    color: Colors.grey[600],
+                  ),
+                ),
               ],
             ),
 
             const SizedBox(height: 16),
 
-            // خط فاصل مع لون مميز
+            // خط فاصل
             Container(
               height: 1,
               color: Colors.grey[300],
@@ -201,7 +1001,6 @@ class ProductManagementScreen extends StatelessWidget {
             // معلومات الكمية والوحدة
             Row(
               children: [
-                // الكمية
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -215,14 +1014,11 @@ class ProductManagementScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      _buildEditableQuantityField(line, controller),
+                      _buildEditableQuantityField(line, controller, isDeletedLine),
                     ],
                   ),
                 ),
-
                 const SizedBox(width: 16),
-
-                // الوحدة
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -236,7 +1032,7 @@ class ProductManagementScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 8),
-                      _buildUnitSelectionField(line, controller),
+                      _buildUnitSelectionField(line, controller, isDeletedLine),
                     ],
                   ),
                 ),
@@ -286,6 +1082,127 @@ class ProductManagementScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildFloatingActionButton(ProductManagementController controller) {
+    return Obx(() => FloatingActionButton(
+          onPressed:
+              controller.hasSelectedTransfer ? () => _showAddProductDialog(controller) : null,
+          backgroundColor: controller.hasSelectedTransfer ? Colors.blue : Colors.grey,
+          child: const Icon(Icons.add, color: Colors.white),
+          tooltip: 'إضافة منتج جديد',
+        ));
+  }
+
+  void _handleBackPress(ProductManagementController controller) {
+    if (controller.hasUnsavedChanges.value) {
+      Get.dialog(
+        AlertDialog(
+          title: const Text('تحذير'),
+          content: const Text('لديك تغييرات غير محفوظة. هل تريد الخروج بدون حفظ؟'),
+          actions: [
+            TextButton(
+              onPressed: () => Get.back(),
+              child: const Text('إلغاء'),
+            ),
+            TextButton(
+              onPressed: () {
+                Get.back(); // إغلاق الحوار
+                Get.back(); // العودة للصفحة السابقة
+              },
+              child: const Text('خروج بدون حفظ', style: TextStyle(color: Colors.red)),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Get.back(); // إغلاق الحوار
+                await controller.saveAllChangesToServer();
+                if (!controller.hasUnsavedChanges.value) {
+                  Get.back(); // العودة للصفحة السابقة بعد الحفظ الناجح
+                }
+              },
+              child: const Text('حفظ والخروج'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      Get.back();
+    }
+  }
+
+  void _showDeleteConfirmation(dynamic line, ProductManagementController controller) {
+    Get.dialog(
+      AlertDialog(
+        title: const Text('تأكيد الحذف'),
+        content: Text('هل تريد حذف المنتج "${line.itemCode}"؟'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              controller.deleteProduct(line);
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('حذف', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAddProductDialog(ProductManagementController controller) {
+    // مثال بسيط - يمكن توسيعه لاحقاً
+    Get.dialog(
+      AlertDialog(
+        title: const Text('إضافة منتج جديد'),
+        content: const Text('سيتم إضافة واجهة إدخال المنتج هنا'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () {
+              Get.back();
+              // مثال على إضافة منتج
+              controller.addProduct({
+                'itemCode': 'ITEM001',
+                'description': 'منتج تجريبي',
+                'quantity': 1.0,
+                'price': 100.0,
+                'uomCode': 'حبة',
+                'baseQty1': 1,
+                'uomEntry': 5,
+              });
+            },
+            child: const Text('إضافة'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditDialog(dynamic line, ProductManagementController controller) {
+    // مثال بسيط - يمكن توسيعه لاحقاً
+    Get.dialog(
+      AlertDialog(
+        title: Text('تعديل المنتج ${line.itemCode}'),
+        content: const Text('سيتم إضافة واجهة تعديل المنتج هنا'),
+        actions: [
+          TextButton(
+            onPressed: () => Get.back(),
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () => Get.back(),
+            child: const Text('حفظ'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildInfoColumn(String label, String value, Color textColor) {
     return Column(
       children: [
@@ -310,23 +1227,25 @@ class ProductManagementScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildEditableQuantityField(dynamic line, ProductManagementController controller) {
+  Widget _buildEditableQuantityField(
+      dynamic line, ProductManagementController controller, bool isDisabled) {
     return Container(
       height: 48,
       child: TextField(
         controller: TextEditingController(
           text: line.quantity?.toStringAsFixed(0) ?? '0',
         ),
+        enabled: !isDisabled,
         keyboardType: TextInputType.number,
         textAlign: TextAlign.center,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          color: Colors.black87,
+          color: isDisabled ? Colors.grey : Colors.black87,
         ),
         decoration: InputDecoration(
           filled: true,
-          fillColor: Colors.grey[50],
+          fillColor: isDisabled ? Colors.grey[200] : Colors.grey[50],
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide(color: Colors.grey[300]!, width: 1.5),
@@ -339,30 +1258,36 @@ class ProductManagementScreen extends StatelessWidget {
             borderRadius: BorderRadius.circular(10),
             borderSide: BorderSide(color: Colors.blue[600]!, width: 2),
           ),
+          disabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10),
+            borderSide: BorderSide(color: Colors.grey[400]!, width: 1),
+          ),
           contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
-          isDense: false,
         ),
         onChanged: (value) {
-          // تحديث الكمية
-          double? newQuantity = double.tryParse(value);
-          if (newQuantity != null) {
-            controller.updateProductQuantity(line, newQuantity);
+          if (!isDisabled) {
+            double? newQuantity = double.tryParse(value);
+            if (newQuantity != null) {
+              controller.updateProductQuantity(line, newQuantity);
+            }
           }
         },
       ),
     );
   }
 
-  Widget _buildUnitSelectionField(dynamic line, ProductManagementController controller) {
+  Widget _buildUnitSelectionField(
+      dynamic line, ProductManagementController controller, bool isDisabled) {
     return Container(
       height: 48,
       child: InkWell(
-        onTap: () => _showUnitSelectionDialog(line, controller),
+        onTap: isDisabled ? null : () => _showUnitSelectionDialog(line, controller),
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           decoration: BoxDecoration(
-            color: Colors.grey[50],
-            border: Border.all(color: Colors.grey[300]!, width: 1.5),
+            color: isDisabled ? Colors.grey[200] : Colors.grey[50],
+            border:
+                Border.all(color: isDisabled ? Colors.grey[400]! : Colors.grey[300]!, width: 1.5),
             borderRadius: BorderRadius.circular(10),
           ),
           child: Row(
@@ -370,15 +1295,15 @@ class ProductManagementScreen extends StatelessWidget {
             children: [
               Text(
                 line.uomCode ?? 'كرتون',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
-                  color: Colors.black87,
+                  color: isDisabled ? Colors.grey : Colors.black87,
                 ),
               ),
               Icon(
                 Icons.keyboard_arrow_down_rounded,
-                color: Colors.grey[600],
+                color: isDisabled ? Colors.grey : Colors.grey[600],
                 size: 24,
               ),
             ],
@@ -400,7 +1325,6 @@ class ProductManagementScreen extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // عنوان النافذة
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -420,10 +1344,7 @@ class ProductManagementScreen extends StatelessWidget {
                   ),
                 ],
               ),
-
               const SizedBox(height: 24),
-
-              // قائمة الوحدات
               Column(
                 children: [
                   _buildUnitSelectionCard('1', 'حبة', '5', line, controller),
@@ -450,16 +1371,12 @@ class ProductManagementScreen extends StatelessWidget {
       child: InkWell(
         onTap: () async {
           try {
-            // إغلاق النافذة أولاً
             Get.back();
-
-            // ثم تطبيق اختيار الوحدة
             await Future.delayed(const Duration(milliseconds: 100));
             controller.updateProductUnit(
                 line, unitName, int.tryParse(baseQty) ?? 1, int.tryParse(uomEntry) ?? 1);
           } catch (e) {
             print('خطأ في تحديث الوحدة: $e');
-            // في حالة حدوث خطأ، تأكد من إغلاق النافذة
             if (Get.isDialogOpen ?? false) {
               Get.back();
             }
@@ -470,7 +1387,6 @@ class ProductManagementScreen extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           child: Row(
             children: [
-              // أيقونة الاختيار
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
@@ -483,10 +1399,7 @@ class ProductManagementScreen extends StatelessWidget {
                   size: 20,
                 ),
               ),
-
               const SizedBox(width: 16),
-
-              // معلومات الوحدة
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -509,8 +1422,6 @@ class ProductManagementScreen extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // UomEntry
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
@@ -532,6 +1443,10 @@ class ProductManagementScreen extends StatelessWidget {
     );
   }
 }
+
+
+
+
 
 // pages/home/product/product_management_screen.dart
 

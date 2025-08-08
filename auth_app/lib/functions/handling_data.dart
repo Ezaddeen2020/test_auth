@@ -17,7 +17,10 @@ Future<Map<String, dynamic>> handleEitherResult(
     return result.fold(
       (failure) {
         logMessage('API Error', failure.toString());
-        return {'status': 'failure', 'message': failureMessage};
+        return {
+          'status': 'failure',
+          'message': failureMessage,
+        };
       },
       (data) {
         logMessage(successTag, data.toString());

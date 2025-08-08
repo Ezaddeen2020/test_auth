@@ -1,11 +1,11 @@
 // ignore_for_file: file_names
 
-import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/show_transfer_card/product/product_page.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/product/product_page.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/services/transfer_api.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:auth_app/functions/status_request.dart';
-import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/show_transfer_card/models/details_model.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/models/details_model.dart';
 import 'package:auth_app/services/api/post_get_api.dart';
 
 class InvoiceController extends GetxController {

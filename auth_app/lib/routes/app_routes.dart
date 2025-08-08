@@ -97,8 +97,8 @@
 
 import 'package:auth_app/pages/configration/screens/configration_page.dart';
 import 'package:auth_app/pages/home/home_page.dart';
-import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/show_transfer_card/Invoic/invice_page.dart';
-import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/show_transfer_card/transfer_navigate/purchase_order.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/Invoic/invice_page.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/purchase_order.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/screens/transfer_screen.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_check/screens/stock_page.dart';
 
