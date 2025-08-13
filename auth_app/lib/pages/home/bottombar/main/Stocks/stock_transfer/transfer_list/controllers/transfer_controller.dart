@@ -1,18 +1,3 @@
-// // استيراد جميع الأجزاء
-// import 'package:auth_app/pages/home/transfare/controllers/transfer_action_controller.dart';
-// import 'package:auth_app/pages/home/transfare/controllers/transfer_data_operation_controller.dart';
-// import 'package:auth_app/pages/home/transfare/controllers/transfer_filter_search_controller.dart';
-
-// import 'transfer_controller_base.dart';
-
-// import 'transfer_utilities.dart';
-
-// /// الكنترولر الرئيسي للتحويلات - يجمع جميع الوظائف من الأجزاء المختلفة
-// class TransferController extends TransferControllerBase
-//     with TransferDataOperations, TransferFilterSearch, TransferActions, TransferUtilities {
-//   // يمكن إضافة أي وظائف إضافية هنا إذا لزم الأمر
-// }
-
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/product/product_page.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/models/details_model.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/purchase_order.dart';
@@ -74,20 +59,11 @@ class TransferController extends GetxController {
     super.onClose();
   }
 
-  // Scroll listener for pagination
-  // void _onScroll() {
-  //   if (scrollController.position.pixels >= scrollController.position.maxScrollExtent - 200 &&
-  //       hasMoreData.value &&
-  //       !isLoadingMore.value) {
-  //     loadMoreTransfers();
-  //   }
-  // }
-
-  ////////////////////      جلب قائمة التحويلات        /////////////////////////////////////////
+  //===============================     جلب قائمة التحويلات    =================================///
   Future<void> getTransfersList({bool isRefresh = false}) async {
     try {
       if (isRefresh) {
-        isRefreshing.value = true; //يخبر النظام أنك الآن في وضع تحديث البيانات
+        // isRefreshing.value = true; //يخبر النظام أنك الآن في وضع تحديث البيانات
         currentPage.value = 1; //يبدأ التحميل من الصفحة الأولى
         hasMoreData.value = true; //يوضح أن هناك صفحات أخرى يمكن تحميلها لاحقاً.
       } else {
@@ -149,40 +125,7 @@ class TransferController extends GetxController {
     }
   }
 
-  // تحميل المزيد من البيانات
-  // Future<void> loadMoreTransfers() async {
-  //   if (!hasMoreData.value || isLoadingMore.value) return;
-
-  //   try {
-  //     isLoadingMore.value = true;
-  //     currentPage.value++;
-
-  //     var response = await transferApi.getTransfersList(
-  //       page: currentPage.value,
-  //       pageSize: 20,
-  //     );
-
-  //     if (response['status'] == 'success') {
-  //       TransferResponse transferResponse = TransferResponse.fromJson(response['data']);
-
-  //       transfers.addAll(transferResponse.data);
-  //       hasMoreData.value = currentPage.value < totalPages.value;
-  //       applyFilters();
-  //     }
-  //   } catch (e) {
-  //     currentPage.value--; // إرجاع رقم الصفحة في حالة الخطأ
-  //     Get.snackbar(
-  //       'خطأ',
-  //       'فشل في تحميل المزيد من البيانات',
-  //       backgroundColor: Colors.red,
-  //       colorText: Colors.white,
-  //     );
-  //   } finally {
-  //     isLoadingMore.value = false;
-  //   }
-  // }
-
-  // تحميل المزيد من البيانات - النسخة المحسنة
+  //========================= تحميل المزيد من البيانات - النسخة المحسنة
   Future<void> loadMoreTransfers() async {
     // التحقق من الشروط قبل البدء
     if (!hasMoreData.value || isLoadingMore.value || isLoading.value) {
@@ -647,35 +590,6 @@ class TransferController extends GetxController {
     }
   }
 
-  // // دالة محدثة للانتقال إلى صفحة الفاتورة مع جلب التفاصيل
-// // دالة محدثة للانتقال إلى صفحة الفاتورة مع جلب التفاصيل الديناميكية
-//   Future<void> navigateToInvoiceWithDetails(TransferModel transfer) async {
-//     try {
-//       // التأكد من وجود InvoiceController أو إنشاؤه
-//       if (!Get.isRegistered<InvoiceController>()) {
-//         Get.put(InvoiceController());
-//       }
-
-//       final invoiceController = Get.find<InvoiceController>();
-
-//       // إعادة تعيين حالة التحميل قبل الانتقال
-//       invoiceController.resetLoadingState();
-
-//       // الانتقال مباشرة دون عرض مؤشر تحميل منفصل
-//       Get.to(() => const InvoicePage(), arguments: {
-//         'transfer': transfer,
-//         'transferId': transfer.id,
-//       });
-//     } catch (e) {
-//       Get.snackbar(
-//         'خطأ',
-//         'فشل في الانتقال إلى صفحة الفاتورة',
-//         backgroundColor: Colors.red,
-//         colorText: Colors.white,
-//       );
-//     }
-//   }
-
 // دالة محسنة وسريعة للانتقال إلى صفحة التفاصيل
   void navigateToInvoiceWithDetails(TransferModel transfer) {
     // انتقال فوري بدون تحققات غير ضرورية
@@ -690,34 +604,6 @@ class TransferController extends GetxController {
       duration: const Duration(milliseconds: 250), // مدة قصيرة
     );
   }
-
-// دالة محدثة للانتقال إلى صفحة التفاصيل مع التنقل بين الصفحات
-  // Future<void> navigateToInvoiceWithDetails(TransferModel transfer) async {
-  //   try {
-  //     // التأكد من وجود InvoiceController أو إنشاؤه
-  //     if (!Get.isRegistered<InvoiceController>()) {
-  //       Get.put(InvoiceController());
-  //     }
-
-  //     final invoiceController = Get.find<InvoiceController>();
-
-  //     // إعادة تعيين حالة التحميل قبل الانتقال
-  //     invoiceController.resetLoadingState();
-
-  //     // الانتقال إلى صفحة التفاصيل مع التنقل
-  //     Get.to(() => const TransferDetailsNavigationScreen(), arguments: {
-  //       'transfer': transfer,
-  //       'transferId': transfer.id,
-  //     });
-  //   } catch (e) {
-  //     Get.snackbar(
-  //       'خطأ',
-  //       'فشل في الانتقال إلى صفحة التفاصيل',
-  //       backgroundColor: Colors.red,
-  //       colorText: Colors.white,
-  //     );
-  //   }
-  // }
 
   // دالة للحصول على إحصائيات الأصناف في التحويل
   Map<String, dynamic> getTransferLinesStats(List<TransferLine> lines) {

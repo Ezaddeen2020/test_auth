@@ -7,12 +7,17 @@ import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfe
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/controllers/transfer_controller.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_check/controllers/stock_controller.dart';
 import 'package:auth_app/services/api/post_get_api.dart';
+import 'package:auth_app/internet_conection/internet_controller.dart';
 import 'package:get/get.dart';
 
 // Binding للـ AuthController
 class InitialBinding extends Bindings {
   @override
   void dependencies() {
+    Get.put<InternetConnectionController>(
+      InternetConnectionController(),
+      permanent: true,
+    );
     Get.lazyPut<PostGetPage>(() => PostGetPage());
     Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
     Get.lazyPut<PrinterController>(() => PrinterController(), fenix: true);
