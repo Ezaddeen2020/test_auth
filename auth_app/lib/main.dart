@@ -67,7 +67,7 @@
 import 'package:auth_app/binding/initial_binding.dart';
 import 'package:auth_app/classes/shared_preference.dart';
 import 'package:auth_app/routes/app_routes.dart';
-import 'package:auth_app/internet_conection/internet_status_banner.dart';
+import 'package:auth_app/check_internet/internet_status_banner.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_easyloading/flutter_easyloading.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';

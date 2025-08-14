@@ -1,10 +1,8 @@
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/controllers/transfer_controller.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/screens/widgets/transfer_card.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/screens/widgets/transfer_dialog.dart';
-import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/screens/widgets/transfer_status_bar.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-
 import 'package:auth_app/functions/status_request.dart';
 
 class TransferScreen extends StatelessWidget {
@@ -12,186 +10,382 @@ class TransferScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // final TransferController controller = Get.put(TransferController());
-    final TransferController controller = Get.find<TransferController>();
+    final controller = Get.find<TransferController>();
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
       appBar: _buildAppBar(controller),
       body: Column(
         children: [
-          // شريط الإحصائيات
-          TransferStatsBar(controller: controller),
-
-          // شريط البحث
-          TransferSearchBar(controller: controller),
-
-          // قائمة التحويلات
-          Expanded(
-            child: _buildTransfersList(controller),
-          ),
+          _buildStatsBar(controller),
+          _buildActionBar(controller),
+          Expanded(child: _buildContent(controller)),
+          _buildPagination(controller),
         ],
       ),
-      floatingActionButton: _buildFloatingActionButton(),
     );
   }
 
-  AppBar _buildAppBar(TransferController controller) {
-    return AppBar(
-      title: const Text(
-        'قائمة التحويلات',
-        style: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-      ),
-      backgroundColor: Colors.blue.shade900,
-      elevation: 0,
-      actions: [
-        IconButton(
-          icon: const Icon(Icons.refresh, color: Colors.white),
-          onPressed: () => controller.refreshTransfers(),
-        ),
-        IconButton(
-          icon: const Icon(Icons.filter_list, color: Colors.white),
-          onPressed: () => TransferDialogs.showFilterDialog(controller),
-        ),
-      ],
-    );
-  }
+  //======================= AppBar
+  PreferredSizeWidget _buildAppBar(TransferController controller) => AppBar(
+        title: const Text('قائمة التحويلات', style: TextStyle(fontSize: 18, color: Colors.white)),
+        backgroundColor: const Color(0xFF0D47A1),
+        centerTitle: true,
+        elevation: 0,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh, color: Colors.white),
+            onPressed: controller.refreshTransfers,
+          ),
+        ],
+      );
 
-  Widget _buildTransfersList(TransferController controller) {
-    return Obx(() {
-      if (controller.statusRequest.value == StatusRequest.loading && controller.transfers.isEmpty) {
-        return const Center(
-          child: CircularProgressIndicator(
-            color: Color(0xFF2196F3),
+  //===================== شريط الإحصائيات
+  Widget _buildStatsBar(TransferController controller) => Obx(() {
+        final stats = controller.getTransferStats();
+        final items = [
+          ('الإجمالي', stats['total'], Colors.white),
+          ('قيد التحضير', stats['pending'], Colors.orange[200]!),
+          ('تم الإرسال', stats['sent'], Colors.blue[200]!),
+          ('مكتمل', stats['posted'], Colors.green[200]!),
+        ];
+
+        return Container(
+          height: 70,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              colors: [Color(0xFF0D47A1), Color(0xFF1976D2)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Row(
+            children: items
+                .map((item) => Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text('${item.$2}',
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold, color: item.$3)),
+                          Text(item.$1,
+                              style: TextStyle(fontSize: 11, color: item.$3.withOpacity(0.9)),
+                              textAlign: TextAlign.center),
+                        ],
+                      ),
+                    ))
+                .toList(),
           ),
         );
-      }
+      });
 
-      if (controller.statusRequest.value == StatusRequest.failure) {
-        return _buildErrorState(controller);
-      }
-
-      if (controller.filteredTransfers.isEmpty) {
-        return _buildEmptyState();
-      }
-
-      return RefreshIndicator(
-        onRefresh: () => controller.refreshTransfers(),
-        color: const Color(0xFF2196F3),
-        child: ListView.builder(
-          controller: controller.scrollController,
-          padding: const EdgeInsets.all(16),
-          itemCount: controller.filteredTransfers.length + (controller.isLoadingMore.value ? 1 : 0),
-          itemBuilder: (context, index) {
-            if (index == controller.filteredTransfers.length) {
-              return Obx(() {
-                if (controller.isLoadingMore.value) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(16),
-                      child: CircularProgressIndicator(
-                        color: Color(0xFF2196F3),
-                      ),
-                    ),
-                  );
-                }
-                return const SizedBox.shrink();
-              });
-            }
-
-            return TransferCard(
-              transfer: controller.filteredTransfers[index],
-              controller: controller,
-            );
-          },
+  //=================== شريط العمليات (البحث + إضافة + فلتر)
+  Widget _buildActionBar(TransferController controller) => Container(
+        padding: const EdgeInsets.all(16),
+        color: Colors.white,
+        child: Row(
+          children: [
+            // حقل البحث
+            Expanded(child: _buildSearchField(controller)),
+            const SizedBox(width: 8),
+            // زر إضافة
+            _buildActionButton(
+              icon: Icons.add,
+              label: 'إضافة',
+              color: const Color(0xFF4CAF50),
+              onPressed: () => Get.snackbar('قريباً', 'سيتم إضافة صفحة إنشاء التحويل قريباً',
+                  backgroundColor: Colors.green, colorText: Colors.white),
+            ),
+            const SizedBox(width: 8),
+            // زر فلتر
+            _buildActionButton(
+              icon: Icons.tune,
+              color: const Color(0xFF2196F3),
+              onPressed: () => TransferDialogs.showFilterDialog(controller),
+            ),
+          ],
         ),
       );
-    });
-  }
 
-  Widget _buildErrorState(TransferController controller) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.error_outline,
-            size: 80,
-            color: Colors.grey[400],
+  //========================= حقل البحث
+  Widget _buildSearchField(TransferController controller) => Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(color: Colors.grey[300]!),
+        ),
+        child: TextField(
+          controller: controller.searchController,
+          onChanged: controller.updateSearch,
+          decoration: InputDecoration(
+            hintText: 'البحث في التحويلات...',
+            hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
+            prefixIcon: Icon(Icons.search, color: Colors.grey[500], size: 20),
+            suffixIcon: Obx(() => controller.searchQuery.value.isNotEmpty
+                ? GestureDetector(
+                    onTap: () {
+                      controller.searchController.clear();
+                      controller.updateSearch('');
+                    },
+                    child: Icon(Icons.clear, color: Colors.grey[500], size: 20),
+                  )
+                : const SizedBox.shrink()),
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
           ),
-          const SizedBox(height: 16),
-          Text(
-            'فشل في تحميل البيانات',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
+        ),
+      );
+
+  //=========================== زر عملية (إضافة أو فلتر)
+  Widget _buildActionButton({
+    required IconData icon,
+    String? label,
+    required Color color,
+    required VoidCallback onPressed,
+  }) =>
+      Container(
+        height: 44,
+        decoration: BoxDecoration(
+          color: color,
+          borderRadius: BorderRadius.circular(22),
+          boxShadow: label != null
+              ? [
+                  BoxShadow(
+                      color: color.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 2))
+                ]
+              : null,
+        ),
+        child: label != null
+            ? ElevatedButton.icon(
+                onPressed: onPressed,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  foregroundColor: Colors.white,
+                  elevation: 0,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+                ),
+                icon: Icon(icon, size: 18),
+                label:
+                    Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+              )
+            : IconButton(icon: Icon(icon, color: Colors.white, size: 20), onPressed: onPressed),
+      );
+
+  //============================ المحتوى الرئيسي
+  Widget _buildContent(TransferController controller) => Obx(() {
+        if (controller.statusRequest.value == StatusRequest.loading &&
+            controller.transfers.isEmpty) {
+          return const Center(child: CircularProgressIndicator(color: Color(0xFF2196F3)));
+        }
+
+        if (controller.statusRequest.value == StatusRequest.failure) {
+          return _buildEmptyState(
+            icon: Icons.wifi_off_rounded,
+            title: 'فشل في تحميل البيانات',
+            subtitle: 'تحقق من اتصال الإنترنت',
+            actionLabel: 'إعادة المحاولة',
+            onPressed: controller.getTransfersList,
+          );
+        }
+
+        if (controller.filteredTransfers.isEmpty) {
+          return _buildEmptyState(
+            icon: Icons.inventory_2_outlined,
+            title: 'لا توجد تحويلات',
+            subtitle: 'لم يتم العثور على أي تحويلات',
+          );
+        }
+
+        return RefreshIndicator(
+          onRefresh: controller.refreshTransfers,
+          color: const Color(0xFF2196F3),
+          child: ListView.builder(
+            controller: controller.scrollController,
+            padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+            itemCount: controller.filteredTransfers.length,
+            itemBuilder: (context, index) => Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: TransferCard(
+                transfer: controller.filteredTransfers[index],
+                controller: controller,
+              ),
             ),
           ),
-          const SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () => controller.getTransfersList(),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF2196F3),
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('إعادة المحاولة'),
-          ),
-        ],
-      ),
-    );
-  }
+        );
+      });
 
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.inbox_outlined,
-            size: 80,
-            color: Colors.grey[400],
+  //========================= حالة فارغة موحدة
+  Widget _buildEmptyState({
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    String? actionLabel,
+    VoidCallback? onPressed,
+  }) =>
+      Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, size: 64, color: Colors.grey[400]),
+              const SizedBox(height: 16),
+              Text(title,
+                  style: TextStyle(
+                      fontSize: 16, color: Colors.grey[600], fontWeight: FontWeight.w500)),
+              const SizedBox(height: 8),
+              Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+              if (actionLabel != null && onPressed != null) ...[
+                const SizedBox(height: 20),
+                ElevatedButton.icon(
+                  onPressed: onPressed,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF2196F3),
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  ),
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: Text(actionLabel),
+                ),
+              ],
+            ],
           ),
-          const SizedBox(height: 16),
-          Text(
-            'لا توجد تحويلات',
-            style: TextStyle(
-              fontSize: 18,
-              color: Colors.grey[600],
-              fontWeight: FontWeight.w500,
+        ),
+      );
+
+  //==================== شريط عداد الصفحات
+  Widget _buildPagination(TransferController controller) => Obx(() {
+        if (controller.totalPages.value <= 1) return const SizedBox.shrink();
+
+        return Container(
+          height: 60,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            boxShadow: [
+              BoxShadow(
+                  color: Colors.black.withOpacity(0.05), blurRadius: 4, offset: const Offset(0, -2))
+            ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildNavButton(
+                  'السابق',
+                  Icons.chevron_right,
+                  controller.currentPage.value > 1 && !controller.isLoading.value,
+                  () => controller.goToPage(controller.currentPage.value - 1)),
+              _buildPageInfo(controller),
+              _buildNavButton(
+                  'التالي',
+                  Icons.chevron_left,
+                  controller.currentPage.value < controller.totalPages.value &&
+                      !controller.isLoading.value,
+                  () => controller.goToPage(controller.currentPage.value + 1)),
+            ],
+          ),
+        );
+      });
+
+  //========================== زر تنقل
+  Widget _buildNavButton(String label, IconData icon, bool enabled, VoidCallback onPressed) =>
+      TextButton.icon(
+        onPressed: enabled ? onPressed : null,
+        style: TextButton.styleFrom(
+          foregroundColor: enabled ? const Color(0xFF2196F3) : Colors.grey[400],
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        ),
+        icon: Icon(icon, size: 18),
+        label: Text(label, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
+      );
+
+  //============================== كونتينر عرض الصفحات
+  Widget _buildPageInfo(TransferController controller) => GestureDetector(
+        onTap: () => _showPageDialog(controller),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          decoration: BoxDecoration(
+            color: const Color(0xFF2196F3).withOpacity(0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: const Color(0xFF2196F3).withOpacity(0.3)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              controller.isLoading.value
+                  ? const SizedBox(
+                      width: 12,
+                      height: 12,
+                      child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF2196F3))))
+                  : const Icon(Icons.more_horiz, size: 16, color: Color(0xFF2196F3)),
+              const SizedBox(width: 8),
+              Text('${controller.currentPage.value} / ${controller.totalPages.value}',
+                  style: const TextStyle(
+                      fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF2196F3))),
+            ],
+          ),
+        ),
+      );
+
+  //========================== نافذة اختيار الصفحة
+  void _showPageDialog(TransferController controller) => Get.dialog(
+        AlertDialog(
+          title: const Text('اختر الصفحة'),
+          content: SizedBox(
+            width: double.maxFinite,
+            height: 200,
+            child: GridView.builder(
+              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 5,
+                childAspectRatio: 1,
+                crossAxisSpacing: 8,
+                mainAxisSpacing: 8,
+              ),
+              itemCount: controller.totalPages.value,
+              itemBuilder: (context, index) {
+                final pageNumber = index + 1;
+                final isCurrentPage = pageNumber == controller.currentPage.value;
+
+                return GestureDetector(
+                  onTap: () {
+                    Get.back();
+                    controller.goToPage(pageNumber);
+                  },
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: isCurrentPage ? const Color(0xFF2196F3) : Colors.grey[100],
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                          color: isCurrentPage ? const Color(0xFF2196F3) : Colors.grey[300]!),
+                    ),
+                    child: Center(
+                      child: Text(
+                        pageNumber.toString(),
+                        style: TextStyle(
+                          color: isCurrentPage ? Colors.white : Colors.grey[700],
+                          fontWeight: isCurrentPage ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildFloatingActionButton() {
-    return FloatingActionButton.extended(
-      onPressed: () {
-        // الانتقال إلى صفحة إنشاء تحويل جديد
-        // Get.to(() => CreateTransferScreen());
-      },
-      backgroundColor: const Color(0xFF0D47A1),
-      icon: const Icon(Icons.add, color: Colors.white),
-      label: const Text('إنشاء تحويل', style: TextStyle(color: Colors.white)),
-    );
-  }
+          actions: [TextButton(onPressed: () => Get.back(), child: const Text('إلغاء'))],
+        ),
+      );
 }
 
-
-
-
-
-
-
-
 // import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/controllers/transfer_controller.dart';
-// import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/models/transfer_stock.dart';
+// import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/screens/widgets/transfer_card.dart';
+// import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/screens/widgets/transfer_dialog.dart';
+// import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/screens/widgets/transfer_status_bar.dart';
 // import 'package:flutter/material.dart';
 // import 'package:get/get.dart';
 
@@ -202,793 +396,173 @@ class TransferScreen extends StatelessWidget {
 
 //   @override
 //   Widget build(BuildContext context) {
-//     final TransferController controller = Get.put(TransferController());
+//     // final TransferController controller = Get.put(TransferController());
+//     final TransferController controller = Get.find<TransferController>();
 
 //     return Scaffold(
 //       backgroundColor: Colors.grey[50],
-//       appBar: AppBar(
-//         title: const Text(
-//           'قائمة التحويلات',
-//           style: TextStyle(
-//             fontSize: 20,
-//             fontWeight: FontWeight.bold,
-//             color: Colors.white,
-//           ),
-//         ),
-//         backgroundColor: Colors.blue.shade900,
-//         elevation: 0,
-//         actions: [
-//           IconButton(
-//             icon: const Icon(Icons.refresh, color: Colors.white),
-//             onPressed: () => controller.refreshTransfers(),
-//           ),
-//           IconButton(
-//             icon: const Icon(Icons.filter_list, color: Colors.white),
-//             onPressed: () => _showFilterDialog(context, controller),
-//           ),
-//         ],
-//       ),
+//       appBar: _buildAppBar(controller),
 //       body: Column(
 //         children: [
 //           // شريط الإحصائيات
-//           _buildStatsBar(controller),
+//           TransferStatsBar(controller: controller),
 
 //           // شريط البحث
-//           _buildSearchBar(controller),
+//           TransferSearchBar(controller: controller),
 
 //           // قائمة التحويلات
 //           Expanded(
-//             child: Obx(() {
-//               if (controller.statusRequest.value == StatusRequest.loading &&
-//                   controller.transfers.isEmpty) {
-//                 return const Center(
-//                   child: CircularProgressIndicator(
-//                     color: Color(0xFF2196F3),
-//                   ),
-//                 );
-//               }
-
-//               if (controller.statusRequest.value == StatusRequest.failure) {
-//                 return Center(
-//                   child: Column(
-//                     mainAxisAlignment: MainAxisAlignment.center,
-//                     children: [
-//                       Icon(
-//                         Icons.error_outline,
-//                         size: 80,
-//                         color: Colors.grey[400],
-//                       ),
-//                       const SizedBox(height: 16),
-//                       Text(
-//                         'فشل في تحميل البيانات',
-//                         style: TextStyle(
-//                           fontSize: 18,
-//                           color: Colors.grey[600],
-//                           fontWeight: FontWeight.w500,
-//                         ),
-//                       ),
-//                       const SizedBox(height: 16),
-//                       ElevatedButton(
-//                         onPressed: () => controller.getTransfersList(),
-//                         style: ElevatedButton.styleFrom(
-//                           backgroundColor: const Color(0xFF2196F3),
-//                           foregroundColor: Colors.white,
-//                         ),
-//                         child: const Text('إعادة المحاولة'),
-//                       ),
-//                     ],
-//                   ),
-//                 );
-//               }
-
-//               if (controller.filteredTransfers.isEmpty) {
-//                 return Center(
-//                   child: Column(
-//                     mainAxisAlignment: MainAxisAlignment.center,
-//                     children: [
-//                       Icon(
-//                         Icons.inbox_outlined,
-//                         size: 80,
-//                         color: Colors.grey[400],
-//                       ),
-//                       const SizedBox(height: 16),
-//                       Text(
-//                         'لا توجد تحويلات',
-//                         style: TextStyle(
-//                           fontSize: 18,
-//                           color: Colors.grey[600],
-//                           fontWeight: FontWeight.w500,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 );
-//               }
-
-//               return RefreshIndicator(
-//                 onRefresh: () => controller.refreshTransfers(),
-//                 color: const Color(0xFF2196F3),
-//                 child: ListView.builder(
-//                   controller: controller.scrollController,
-//                   padding: const EdgeInsets.all(16),
-//                   itemCount: controller.filteredTransfers.length +
-//                       (controller.isLoadingMore.value ? 1 : 0),
-//                   itemBuilder: (context, index) {
-//                     if (index == controller.filteredTransfers.length) {
-//                       return Obx(() {
-//                         if (controller.isLoadingMore.value) {
-//                           return const Center(
-//                             child: Padding(
-//                               padding: EdgeInsets.all(16),
-//                               child: CircularProgressIndicator(
-//                                 color: Color(0xFF2196F3),
-//                               ),
-//                             ),
-//                           );
-//                         }
-//                         return const SizedBox.shrink();
-//                       });
-//                     }
-
-//                     return _buildTransferCard(
-//                       controller.filteredTransfers[index],
-//                       controller,
-//                     );
-//                   },
-//                 ),
-//               );
-//             }),
+//             child: _buildTransfersList(controller),
 //           ),
 //         ],
 //       ),
-//       floatingActionButton: FloatingActionButton.extended(
-//         onPressed: () {
-//           // الانتقال إلى صفحة إنشاء تحويل جديد
-//           // Get.to(() => CreateTransferScreen());
-//         },
-//         backgroundColor: const Color(0xFF0D47A1),
-//         icon: const Icon(Icons.add, color: Colors.white),
-//         label: const Text('إنشاء تحويل', style: TextStyle(color: Colors.white)),
-//       ),
+//       floatingActionButton: _buildFloatingActionButton(),
 //     );
 //   }
 
-//   Widget _buildStatsBar(TransferController controller) {
-//     return Obx(() {
-//       final stats = controller.getTransferStats();
-
-//       return Container(
-//         padding: const EdgeInsets.all(16),
-//         decoration: const BoxDecoration(
-//           // color: Color(0xFF2196F3),
-//           color: Color(0xFF0D47A1),
-
-//           borderRadius: BorderRadius.only(
-//             bottomLeft: Radius.circular(20),
-//             bottomRight: Radius.circular(20),
-//           ),
+//   AppBar _buildAppBar(TransferController controller) {
+//     return AppBar(
+//       title: const Text(
+//         'قائمة التحويلات',
+//         style: TextStyle(
+//           fontSize: 20,
+//           fontWeight: FontWeight.bold,
+//           color: Colors.white,
 //         ),
-//         child: Row(
-//           children: [
-//             Expanded(
-//               child: _buildStatItem(
-//                 'الإجمالي',
-//                 stats['total'].toString(),
-//                 Icons.all_inbox,
-//                 Colors.white,
-//               ),
-//             ),
-//             Expanded(
-//               child: _buildStatItem(
-//                 'قيد التحضير',
-//                 stats['pending'].toString(),
-//                 Icons.pending_actions,
-//                 Colors.orange[200]!,
-//               ),
-//             ),
-//             Expanded(
-//               child: _buildStatItem(
-//                 'تم الإرسال',
-//                 stats['sent'].toString(),
-//                 Icons.send,
-//                 Colors.blue[200]!,
-//               ),
-//             ),
-//             Expanded(
-//               child: _buildStatItem(
-//                 'مكتمل',
-//                 stats['posted'].toString(),
-//                 Icons.check_circle,
-//                 Colors.green[200]!,
-//               ),
-//             ),
-//           ],
+//       ),
+//       backgroundColor: Colors.blue.shade900,
+//       elevation: 0,
+//       actions: [
+//         IconButton(
+//           icon: const Icon(Icons.refresh, color: Colors.white),
+//           onPressed: () => controller.refreshTransfers(),
 //         ),
-//       );
-//     });
-//   }
-
-//   Widget _buildStatItem(String title, String value, IconData icon, Color color) {
-//     return Column(
-//       children: [
-//         Icon(icon, color: color, size: 24),
-//         const SizedBox(height: 4),
-//         Text(
-//           value,
-//           style: const TextStyle(
-//             fontSize: 18,
-//             fontWeight: FontWeight.bold,
-//             color: Colors.white,
-//           ),
-//         ),
-//         Text(
-//           title,
-//           style: TextStyle(
-//             fontSize: 12,
-//             color: Colors.white.withOpacity(0.8),
-//           ),
-//           textAlign: TextAlign.center,
+//         IconButton(
+//           icon: const Icon(Icons.filter_list, color: Colors.white),
+//           onPressed: () => TransferDialogs.showFilterDialog(controller),
 //         ),
 //       ],
 //     );
 //   }
 
-//   Widget _buildSearchBar(TransferController controller) {
-//     return Container(
-//       padding: const EdgeInsets.all(16),
-//       child: TextField(
-//         controller: controller.searchController,
-//         onChanged: controller.updateSearch,
-//         decoration: InputDecoration(
-//           hintText: 'البحث في التحويلات...',
-//           prefixIcon: const Icon(Icons.search, color: Color(0xFF2196F3)),
-//           suffixIcon: Obx(() {
-//             if (controller.searchQuery.value.isNotEmpty) {
-//               return IconButton(
-//                 icon: const Icon(Icons.clear),
-//                 onPressed: () {
-//                   controller.searchController.clear();
-//                   controller.updateSearch('');
-//                 },
-//               );
-//             }
-//             return const SizedBox.shrink();
-//           }),
-//           border: OutlineInputBorder(
-//             borderRadius: BorderRadius.circular(12),
-//             borderSide: BorderSide(color: Colors.grey[300]!),
+//   Widget _buildTransfersList(TransferController controller) {
+//     return Obx(() {
+//       if (controller.statusRequest.value == StatusRequest.loading && controller.transfers.isEmpty) {
+//         return const Center(
+//           child: CircularProgressIndicator(
+//             color: Color(0xFF2196F3),
 //           ),
-//           focusedBorder: OutlineInputBorder(
-//             borderRadius: BorderRadius.circular(12),
-//             borderSide: const BorderSide(color: Color(0xFF2196F3)),
-//           ),
-//           filled: true,
-//           fillColor: Colors.white,
-//         ),
-//       ),
-//     );
-//   }
+//         );
+//       }
 
-//   Widget _buildTransferCard(TransferModel transfer, TransferController controller) {
-//     return Card(
-//       margin: const EdgeInsets.only(bottom: 12),
-//       elevation: 2,
-//       shape: RoundedRectangleBorder(
-//         borderRadius: BorderRadius.circular(12),
-//       ),
-//       child: InkWell(
-//         // استخدام الدالة المحدثة للانتقال الديناميكي
-//         onTap: () => controller.navigateToInvoiceWithDetails(transfer),
-//         borderRadius: BorderRadius.circular(12),
-//         child: Padding(
+//       if (controller.statusRequest.value == StatusRequest.failure) {
+//         return _buildErrorState(controller);
+//       }
+
+//       if (controller.filteredTransfers.isEmpty) {
+//         return _buildEmptyState();
+//       }
+
+//       return RefreshIndicator(
+//         onRefresh: () => controller.refreshTransfers(),
+//         color: const Color(0xFF2196F3),
+//         child: ListView.builder(
+//           controller: controller.scrollController,
 //           padding: const EdgeInsets.all(16),
-//           child: Column(
-//             crossAxisAlignment: CrossAxisAlignment.start,
-//             children: [
-//               // الرأس
-//               Row(
-//                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-//                 children: [
-//                   Expanded(
-//                     child: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.start,
-//                       children: [
-//                         Text(
-//                           'رقم المرجع: ${transfer.ref ?? 'غير محدد'}',
-//                           style: const TextStyle(
-//                             fontSize: 16,
-//                             fontWeight: FontWeight.bold,
-//                             color: Color(0xFF2196F3),
-//                           ),
-//                         ),
-//                         const SizedBox(height: 4),
-//                         Text(
-//                           'رقم التحويل: ${transfer.id}', // عرض transferId الديناميكي
-//                           style: TextStyle(
-//                             fontSize: 12,
-//                             color: Colors.grey[600],
-//                           ),
-//                         ),
-//                         Text(
-//                           'تاريخ الإنشاء: ${transfer.formattedCreateDate}',
-//                           style: TextStyle(
-//                             fontSize: 12,
-//                             color: Colors.grey[600],
-//                           ),
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                   Column(
-//                     children: [
-//                       _buildStatusChip(transfer),
-//                       const SizedBox(height: 8),
-//                       // إضافة زر للانتقال إلى إدارة المنتجات
-//                       TextButton.icon(
-//                         onPressed: () => controller.navigateToProductManagement(transfer),
-//                         icon: const Icon(Icons.inventory_2, size: 16),
-//                         label: const Text('إدارة الأصناف', style: TextStyle(fontSize: 12)),
-//                         style: TextButton.styleFrom(
-//                           foregroundColor: Colors.blue[700],
-//                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-//                         ),
+//           itemCount: controller.filteredTransfers.length + (controller.isLoadingMore.value ? 1 : 0),
+//           itemBuilder: (context, index) {
+//             if (index == controller.filteredTransfers.length) {
+//               return Obx(() {
+//                 if (controller.isLoadingMore.value) {
+//                   return const Center(
+//                     child: Padding(
+//                       padding: EdgeInsets.all(16),
+//                       child: CircularProgressIndicator(
+//                         color: Color(0xFF2196F3),
 //                       ),
-//                     ],
-//                   ),
-//                 ],
-//               ),
-
-//               const Divider(height: 20),
-
-//               // معلومات المستودعات
-//               Row(
-//                 children: [
-//                   Expanded(
-//                     child: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.start,
-//                       children: [
-//                         Text(
-//                           'من:',
-//                           style: TextStyle(
-//                             fontSize: 12,
-//                             color: Colors.grey[600],
-//                           ),
-//                         ),
-//                         Text(
-//                           transfer.whsNameFrom.trim(),
-//                           style: const TextStyle(
-//                             fontSize: 14,
-//                             fontWeight: FontWeight.w500,
-//                           ),
-//                           maxLines: 2,
-//                           overflow: TextOverflow.ellipsis,
-//                         ),
-//                       ],
 //                     ),
-//                   ),
-//                   const Icon(
-//                     Icons.arrow_forward,
-//                     color: Color(0xFF2196F3),
-//                     size: 20,
-//                   ),
-//                   const SizedBox(width: 8),
-//                   Expanded(
-//                     child: Column(
-//                       crossAxisAlignment: CrossAxisAlignment.start,
-//                       children: [
-//                         Text(
-//                           'إلى:',
-//                           style: TextStyle(
-//                             fontSize: 12,
-//                             color: Colors.grey[600],
-//                           ),
-//                         ),
-//                         Text(
-//                           transfer.whsNameTo.trim(),
-//                           style: const TextStyle(
-//                             fontSize: 14,
-//                             fontWeight: FontWeight.w500,
-//                           ),
-//                           maxLines: 2,
-//                           overflow: TextOverflow.ellipsis,
-//                         ),
-//                       ],
-//                     ),
-//                   ),
-//                 ],
-//               ),
+//                   );
+//                 }
+//                 return const SizedBox.shrink();
+//               });
+//             }
 
-//               const SizedBox(height: 12),
-
-//               // معلومات المنشئ والإجراءات
-//               Row(
-//                 children: [
-//                   Icon(
-//                     Icons.person,
-//                     size: 16,
-//                     color: Colors.grey[600],
-//                   ),
-//                   const SizedBox(width: 4),
-//                   Text(
-//                     'المنشئ: ${transfer.creatby.trim()}',
-//                     style: TextStyle(
-//                       fontSize: 12,
-//                       color: Colors.grey[600],
-//                     ),
-//                   ),
-//                   const Spacer(),
-//                   // إضافة أيقونة تشير للانتقال للفاتورة
-//                   Row(
-//                     children: [
-//                       Icon(
-//                         Icons.receipt_long,
-//                         size: 16,
-//                         color: Colors.grey[600],
-//                       ),
-//                       const SizedBox(width: 4),
-//                       Text(
-//                         'عرض الفاتورة',
-//                         style: TextStyle(
-//                           fontSize: 12,
-//                           color: Colors.grey[600],
-//                           fontStyle: FontStyle.italic,
-//                         ),
-//                       ),
-//                     ],
-//                   ),
-//                 ],
-//               ),
-
-//               // أزرار العمليات
-//               const SizedBox(height: 12),
-//               _buildActionButtons(transfer, controller),
-//             ],
-//           ),
+//             return TransferCard(
+//               transfer: controller.filteredTransfers[index],
+//               controller: controller,
+//             );
+//           },
 //         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildStatusChip(TransferModel transfer) {
-//     Color backgroundColor;
-//     Color textColor;
-//     String text = transfer.statusText;
-
-//     if (transfer.sapPost) {
-//       backgroundColor = Colors.green[100]!;
-//       textColor = Colors.green[800]!;
-//     } else if (transfer.aproveRecive) {
-//       backgroundColor = Colors.blue[100]!;
-//       textColor = Colors.blue[800]!;
-//     } else if (transfer.isSended) {
-//       backgroundColor = Colors.orange[100]!;
-//       textColor = Colors.orange[800]!;
-//     } else {
-//       backgroundColor = Colors.grey[100]!;
-//       textColor = Colors.grey[800]!;
-//     }
-
-//     return Container(
-//       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-//       decoration: BoxDecoration(
-//         color: backgroundColor,
-//         borderRadius: BorderRadius.circular(20),
-//       ),
-//       child: Text(
-//         text,
-//         style: TextStyle(
-//           fontSize: 12,
-//           fontWeight: FontWeight.w500,
-//           color: textColor,
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildActionButtons(TransferModel transfer, TransferController controller) {
-//     List<Widget> buttons = [];
-
-//     if (controller.canSendTransfer(transfer)) {
-//       buttons.add(
-//         Obx(() => ElevatedButton.icon(
-//               onPressed: controller.isLoading.value
-//                   ? null
-//                   : () => _confirmAction(
-//                         'إرسال التحويل',
-//                         'هل تريد إرسال هذا التحويل؟',
-//                         () => controller.sendTransfer(transfer.id),
-//                       ),
-//               icon: const Icon(Icons.send, size: 16),
-//               label: const Text('إرسال'),
-//               style: ElevatedButton.styleFrom(
-//                 backgroundColor: Colors.orange,
-//                 foregroundColor: Colors.white,
-//                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-//               ),
-//             )),
 //       );
-//     }
-
-//     if (controller.canReceiveTransfer(transfer)) {
-//       buttons.add(
-//         Obx(() => ElevatedButton.icon(
-//               onPressed: controller.isLoading.value
-//                   ? null
-//                   : () => _confirmAction(
-//                         'استلام التحويل',
-//                         'هل تريد استلام هذا التحويل؟',
-//                         () => controller.receiveTransfer(transfer.id),
-//                       ),
-//               icon: const Icon(Icons.download, size: 16),
-//               label: const Text('استلام'),
-//               style: ElevatedButton.styleFrom(
-//                 backgroundColor: Colors.blue,
-//                 foregroundColor: Colors.white,
-//                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-//               ),
-//             )),
-//       );
-//     }
-
-//     if (controller.canPostToSAP(transfer)) {
-//       buttons.add(
-//         Obx(() => ElevatedButton.icon(
-//               onPressed: controller.isLoading.value
-//                   ? null
-//                   : () => _confirmAction(
-//                         'ترحيل إلى SAP',
-//                         'هل تريد ترحيل هذا التحويل إلى SAP؟',
-//                         () => controller.postToSAP(transfer.id),
-//                       ),
-//               icon: const Icon(Icons.cloud_upload, size: 16),
-//               label: const Text('ترحيل'),
-//               style: ElevatedButton.styleFrom(
-//                 backgroundColor: Colors.green,
-//                 foregroundColor: Colors.white,
-//                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-//               ),
-//             )),
-//       );
-//     }
-
-//     if (buttons.isEmpty) {
-//       return const SizedBox.shrink();
-//     }
-
-//     return Wrap(
-//       spacing: 8,
-//       runSpacing: 4,
-//       children: buttons,
-//     );
+//     });
 //   }
 
-//   void _confirmAction(String title, String message, VoidCallback onConfirm) {
-//     Get.dialog(
-//       AlertDialog(
-//         title: Text(title),
-//         content: Text(message),
-//         actions: [
-//           TextButton(
-//             onPressed: () => Get.back(),
-//             child: const Text('إلغاء'),
-//           ),
-//           ElevatedButton(
-//             onPressed: () {
-//               Get.back();
-//               onConfirm();
-//             },
-//             style: ElevatedButton.styleFrom(
-//               backgroundColor: const Color(0xFF2196F3),
-//               foregroundColor: Colors.white,
-//             ),
-//             child: const Text('تأكيد'),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-
-//   void _showTransferDetails(TransferModel transfer, TransferController controller) {
-//     controller.selectTransfer(transfer);
-//     Get.bottomSheet(
-//       TransferDetailsBottomSheet(transfer: transfer),
-//       isScrollControlled: true,
-//       backgroundColor: Colors.transparent,
-//     );
-//   }
-
-//   void _showFilterDialog(BuildContext context, TransferController controller) {
-//     Get.dialog(
-//       AlertDialog(
-//         title: const Text('فلترة التحويلات'),
-//         content: SizedBox(
-//           width: double.maxFinite,
-//           child: Column(
-//             mainAxisSize: MainAxisSize.min,
-//             children: [
-//               // فلتر الحالة
-//               Obx(() => DropdownButtonFormField<String>(
-//                     value: controller.selectedStatusFilter.value,
-//                     decoration: const InputDecoration(
-//                       labelText: 'الحالة',
-//                       border: OutlineInputBorder(),
-//                     ),
-//                     items: const [
-//                       DropdownMenuItem(value: 'all', child: Text('جميع الحالات')),
-//                       DropdownMenuItem(value: 'pending', child: Text('قيد التحضير')),
-//                       DropdownMenuItem(value: 'sent', child: Text('تم الإرسال')),
-//                       DropdownMenuItem(value: 'received', child: Text('تم الاستلام')),
-//                       DropdownMenuItem(value: 'posted', child: Text('مُرحّل إلى SAP')),
-//                     ],
-//                     onChanged: (value) => controller.updateStatusFilter(value!),
-//                   )),
-//             ],
-//           ),
-//         ),
-//         actions: [
-//           TextButton(
-//             onPressed: () {
-//               controller.resetFilters();
-//               Get.back();
-//             },
-//             child: const Text('إعادة تعيين'),
-//           ),
-//           ElevatedButton(
-//             onPressed: () => Get.back(),
-//             style: ElevatedButton.styleFrom(
-//               backgroundColor: const Color(0xFF2196F3),
-//               foregroundColor: Colors.white,
-//             ),
-//             child: const Text('تطبيق'),
-//           ),
-//         ],
-//       ),
-//     );
-//   }
-// }
-
-// // BottomSheet لتفاصيل التحويل
-// class TransferDetailsBottomSheet extends StatelessWidget {
-//   final TransferModel transfer;
-
-//   const TransferDetailsBottomSheet({
-//     super.key,
-//     required this.transfer,
-//   });
-
-//   @override
-//   Widget build(BuildContext context) {
-//     return Container(
-//       decoration: const BoxDecoration(
-//         color: Colors.white,
-//         borderRadius: BorderRadius.only(
-//           topLeft: Radius.circular(20),
-//           topRight: Radius.circular(20),
-//         ),
-//       ),
-//       child: SingleChildScrollView(
-//         padding: const EdgeInsets.all(20),
-//         child: Column(
-//           crossAxisAlignment: CrossAxisAlignment.start,
-//           mainAxisSize: MainAxisSize.min,
-//           children: [
-//             // Handle bar
-//             Center(
-//               child: Container(
-//                 width: 40,
-//                 height: 4,
-//                 decoration: BoxDecoration(
-//                   color: Colors.grey[300],
-//                   borderRadius: BorderRadius.circular(2),
-//                 ),
-//               ),
-//             ),
-
-//             const SizedBox(height: 20),
-
-//             // العنوان
-//             const Text(
-//               'تفاصيل التحويل',
-//               style: TextStyle(
-//                 fontSize: 24,
-//                 fontWeight: FontWeight.bold,
-//                 color: Color(0xFF2196F3),
-//               ),
-//             ),
-
-//             const SizedBox(height: 20),
-
-//             // التفاصيل
-//             _buildDetailRow('رقم المرجع', transfer.ref ?? 'غير محدد'),
-//             _buildDetailRow('رقم التحويل', transfer.id.toString()),
-//             _buildDetailRow('تاريخ الإنشاء', transfer.formattedCreateDate),
-//             _buildDetailRow('المنشئ', transfer.creatby.trim()),
-
-//             const Divider(height: 30),
-
-//             _buildDetailRow('من المستودع', transfer.whsNameFrom.trim()),
-//             _buildDetailRow('رمز المستودع المرسل', transfer.whscodeFrom.trim()),
-//             _buildDetailRow('إلى المستودع', transfer.whsNameTo.trim()),
-//             _buildDetailRow('رمز المستودع المستقبل', transfer.whscodeTo.trim()),
-
-//             const Divider(height: 30),
-
-//             _buildDetailRow('حالة الإرسال', transfer.isSended ? 'تم الإرسال' : 'لم يتم الإرسال'),
-//             if (transfer.sendedBy != null)
-//               _buildDetailRow('المرسل بواسطة', transfer.sendedBy!.trim()),
-
-//             _buildDetailRow(
-//                 'حالة الاستلام', transfer.aproveRecive ? 'تم الاستلام' : 'لم يتم الاستلام'),
-//             if (transfer.aproveReciveBy != null)
-//               _buildDetailRow('المستلم بواسطة', transfer.aproveReciveBy!.trim()),
-
-//             _buildDetailRow('حالة الترحيل', transfer.sapPost ? 'تم الترحيل' : 'لم يتم الترحيل'),
-//             if (transfer.sapPostBy != null)
-//               _buildDetailRow('المرحل بواسطة', transfer.sapPostBy!.trim()),
-//             if (transfer.sapPostDate != null)
-//               _buildDetailRow('تاريخ الترحيل', transfer.formattedSapPostDate),
-
-//             if (transfer.note != null && transfer.note!.isNotEmpty) ...[
-//               const Divider(height: 30),
-//               _buildDetailRow('ملاحظات', transfer.note!),
-//             ],
-
-//             const SizedBox(height: 30),
-
-//             // إغلاق
-//             SizedBox(
-//               width: double.infinity,
-//               child: ElevatedButton(
-//                 onPressed: () => Get.back(),
-//                 style: ElevatedButton.styleFrom(
-//                   backgroundColor: const Color(0xFF2196F3),
-//                   foregroundColor: Colors.white,
-//                   padding: const EdgeInsets.symmetric(vertical: 15),
-//                   shape: RoundedRectangleBorder(
-//                     borderRadius: BorderRadius.circular(10),
-//                   ),
-//                 ),
-//                 child: const Text(
-//                   'إغلاق',
-//                   style: TextStyle(fontSize: 16),
-//                 ),
-//               ),
-//             ),
-//           ],
-//         ),
-//       ),
-//     );
-//   }
-
-//   Widget _buildDetailRow(String label, String value) {
-//     return Padding(
-//       padding: const EdgeInsets.only(bottom: 12),
-//       child: Row(
-//         crossAxisAlignment: CrossAxisAlignment.start,
+//   Widget _buildErrorState(TransferController controller) {
+//     return Center(
+//       child: Column(
+//         mainAxisAlignment: MainAxisAlignment.center,
 //         children: [
-//           SizedBox(
-//             width: 120,
-//             child: Text(
-//               '$label:',
-//               style: TextStyle(
-//                 fontSize: 14,
-//                 fontWeight: FontWeight.w500,
-//                 color: Colors.grey[700],
-//                 // color: Colors.red,
-//               ),
+//           Icon(
+//             Icons.error_outline,
+//             size: 80,
+//             color: Colors.grey[400],
+//           ),
+//           const SizedBox(height: 16),
+//           Text(
+//             'فشل في تحميل البيانات',
+//             style: TextStyle(
+//               fontSize: 18,
+//               color: Colors.grey[600],
+//               fontWeight: FontWeight.w500,
 //             ),
 //           ),
-//           Expanded(
-//             child: Text(
-//               value,
-//               style: const TextStyle(
-//                 fontSize: 14,
-//                 fontWeight: FontWeight.w400,
-//               ),
+//           const SizedBox(height: 16),
+//           ElevatedButton(
+//             onPressed: () => controller.getTransfersList(),
+//             style: ElevatedButton.styleFrom(
+//               backgroundColor: const Color(0xFF2196F3),
+//               foregroundColor: Colors.white,
+//             ),
+//             child: const Text('إعادة المحاولة'),
+//           ),
+//         ],
+//       ),
+//     );
+//   }
+
+//   Widget _buildEmptyState() {
+//     return Center(
+//       child: Column(
+//         mainAxisAlignment: MainAxisAlignment.center,
+//         children: [
+//           Icon(
+//             Icons.inbox_outlined,
+//             size: 80,
+//             color: Colors.grey[400],
+//           ),
+//           const SizedBox(height: 16),
+//           Text(
+//             'لا توجد تحويلات',
+//             style: TextStyle(
+//               fontSize: 18,
+//               color: Colors.grey[600],
+//               fontWeight: FontWeight.w500,
 //             ),
 //           ),
 //         ],
 //       ),
+//     );
+//   }
+
+//   Widget _buildFloatingActionButton() {
+//     return FloatingActionButton.extended(
+//       onPressed: () {
+//         // الانتقال إلى صفحة إنشاء تحويل جديد
+//         // Get.to(() => CreateTransferScreen());
+//       },
+//       backgroundColor: const Color(0xFF0D47A1),
+//       icon: const Icon(Icons.add, color: Colors.white),
+//       label: const Text('إنشاء تحويل', style: TextStyle(color: Colors.white)),
 //     );
 //   }
 // }

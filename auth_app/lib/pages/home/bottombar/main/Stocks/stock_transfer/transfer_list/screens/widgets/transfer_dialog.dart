@@ -36,7 +36,7 @@ class TransferDialogs {
     );
   }
 
-  /// عرض تفاصيل التحويل
+  //======================= عرض تفاصيل التحويل
   static void showTransferDetails(TransferModel transfer, TransferController controller) {
     controller.selectTransfer(transfer);
     Get.bottomSheet(
@@ -46,7 +46,7 @@ class TransferDialogs {
     );
   }
 
-  /// عرض نافذة الفلترة
+  //=================== عرض نافذة الفلترة
   static void showFilterDialog(TransferController controller) {
     Get.dialog(
       AlertDialog(

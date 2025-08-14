@@ -1,6 +1,6 @@
 // lib/widgets/internet_status_overlay.dart
 
-import 'package:auth_app/internet_conection/internet_controller.dart';
+import 'package:auth_app/check_internet/internet_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
