@@ -1,557 +1,3 @@
-class ApiServices {
-  // أضف /echo في الـ base URL
-  static String server = "https://qitaf3.dynalias.net:44322/echo";
-
-  static const headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
-
-  // Authentication endpoints
-  static String login = "$server/api/Account/login";
-  static String register = "$server/api/Account/register";
-  static String testApi = "$server/api/SalesDataVTec/Test";
-
-  // Stock endpoints
-  static String getStockItem(String code) {
-    return "$server/api/StockSAPWPOS1/$code";
-  }
-
-  // Transfer endpoints
-  static String getTransfersList(int page, int pageSize) {
-    return "$server/api/TransferApi/TransfersList?page=$page&pageSize=$pageSize";
-  }
-
-  // دالة محدثة لجلب تفاصيل التحويل - ديناميكي
-  static String getTransferDetails(int transferId) {
-    return "$server/api/TransferApi/transfer-details?id=$transferId";
-  }
-
-  static String sendTransfer() {
-    return "$server/api/TransferApi/SendTransfer";
-  }
-
-  static String receiveTransfer() {
-    return "$server/api/TransferApi/ReceiveTransfer";
-  }
-
-  static String postTransferToSAP() {
-    return "$server/api/TransferApi/PostToSAP";
-  }
-
-  static String createTransfer() {
-    return "$server/api/TransferApi/CreateTransfer";
-  }
-
-  static String searchTransfers(Map<String, dynamic> params) {
-    String queryString =
-        params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value.toString())}').join('&');
-    return "$server/api/TransferApi/SearchTransfers?$queryString";
-  }
-
-  // دالة موحدة لإدارة أسطر التحويل (إضافة/تعديل)
-  static String upsertTransferLine() {
-    return "$server/api/TransferApi/UpsertLine";
-  }
-
-  // حذف سطر تحويل
-  static String deleteTransferLine() {
-    return "$server/api/TransferApi/DeleteLine";
-  }
-
-  // تحديث معلومات التحويل (الهيدر)
-  static String updateTransferHeader() {
-    return "$server/api/TransferApi/UpdateHeader";
-  }
-
-  // الحصول على الوحدات المتاحة لصنف معين
-  static String getItemUnits(String itemCode) {
-    return "$server/api/Items/Units/$itemCode";
-  }
-
-  // البحث عن الأصناف
-  static String searchItems(Map<String, dynamic> params) {
-    String queryString =
-        params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value.toString())}').join('&');
-    return "$server/api/Items/Search?$queryString";
-  }
-
-  // الحصول على معلومات صنف معين
-  static String getItemDetails(String itemCode) {
-    return "$server/api/Items/Details/$itemCode";
-  }
-
-  // التحقق من كمية المخزون المتاحة
-  static String checkStockQuantity(String itemCode, String warehouseCode) {
-    return "$server/api/Stock/Check?itemCode=$itemCode&warehouseCode=$warehouseCode";
-  }
-
-  // إلغاء التحويل
-  static String cancelTransfer() {
-    return "$server/api/TransferApi/Cancel";
-  }
-
-  // Headers مع Bearer Token
-  static Map<String, String> headersWithToken(String token) {
-    return {
-      'Accept': 'application/json',
-      'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
-    };
-  }
-}
-
-
-
-
-// services/api_service.dart - Updated Version
-// services/api_service.dart - Updated Version
-
-// pages/home/transfare/services/transfer_api.dart - Fixed Version
-
-// import 'package:auth_app/functions/handling_data.dart';
-// import 'package:auth_app/pages/home/transfare/services/transfer_api.dart';
-// import 'package:auth_app/services/api/post_get_api.dart';
-// import 'package:auth_app/classes/shared_preference.dart';
-
-// class TransferApi {
-//   final PostGetPage postGetPage;
-
-//   TransferApi(this.postGetPage);
-
-//   // جلب قائمة التحويلات مع Pagination
-//   Future<Map<String, dynamic>> getTransfersList({
-//     int page = 1,
-//     int pageSize = 20,
-//   }) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer', 'Getting transfers list - Page: $page, PageSize: $pageSize');
-
-//     return handleEitherResult(
-//       postGetPage.getDataWithToken(
-//         ApiServices.getTransfersList(page, pageSize),
-//         token,
-//       ),
-//       'Transfers List Retrieved Successfully',
-//       'فشل في جلب قائمة التحويلات',
-//     );
-//   }
-
-//   // جلب تفاصيل تحويل محدد - محدثة للعمل ديناميكياً مع أي transferId
-//   Future<Map<String, dynamic>> getTransferDetails(int transferId) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer', 'Getting transfer details for ID: $transferId');
-
-//     return handleEitherResult(
-//       postGetPage.getDataWithToken(
-//         ApiServices.getTransferDetails(transferId), // يتم تمرير transferId ديناميكياً
-//         token,
-//       ),
-//       'Transfer Details Retrieved Successfully',
-//       'فشل في جلب تفاصيل التحويل',
-//     );
-//   }
-
-//   // إرسال التحويل
-//   Future<Map<String, dynamic>> sendTransfer(int transferId) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer', 'Sending transfer with ID: $transferId');
-
-//     return handleEitherResult(
-//       postGetPage.postDataWithToken(
-//         ApiServices.sendTransfer(),
-//         {'transferId': transferId},
-//         token,
-//       ),
-//       'Transfer Sent Successfully',
-//       'فشل في إرسال التحويل',
-//     );
-//   }
-
-//   // استلام التحويل
-//   Future<Map<String, dynamic>> receiveTransfer(int transferId) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer', 'Receiving transfer with ID: $transferId');
-
-//     return handleEitherResult(
-//       postGetPage.postDataWithToken(
-//         ApiServices.receiveTransfer(),
-//         {'transferId': transferId},
-//         token,
-//       ),
-//       'Transfer Received Successfully',
-//       'فشل في استلام التحويل',
-//     );
-//   }
-
-//   // ترحيل إلى SAP
-//   Future<Map<String, dynamic>> postToSAP(int transferId) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer', 'Posting transfer to SAP with ID: $transferId');
-
-//     return handleEitherResult(
-//       postGetPage.postDataWithToken(
-//         ApiServices.postTransferToSAP(),
-//         {'transferId': transferId},
-//         token,
-//       ),
-//       'Transfer Posted to SAP Successfully',
-//       'فشل في ترحيل التحويل إلى SAP',
-//     );
-//   }
-
-//   // البحث في التحويلات
-//   Future<Map<String, dynamic>> searchTransfers({
-//     String? ref,
-//     String? whscodeFrom,
-//     String? whscodeTo,
-//     String? creatby,
-//     bool? isSended,
-//     bool? aproveRecive,
-//     bool? sapPost,
-//     int page = 1,
-//     int pageSize = 20,
-//   }) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     Map<String, dynamic> searchParams = {
-//       'page': page,
-//       'pageSize': pageSize,
-//     };
-
-//     if (ref != null && ref.isNotEmpty) searchParams['ref'] = ref;
-//     if (whscodeFrom != null && whscodeFrom.isNotEmpty) searchParams['whscodeFrom'] = whscodeFrom;
-//     if (whscodeTo != null && whscodeTo.isNotEmpty) searchParams['whscodeTo'] = whscodeTo;
-//     if (creatby != null && creatby.isNotEmpty) searchParams['creatby'] = creatby;
-//     if (isSended != null) searchParams['isSended'] = isSended;
-//     if (aproveRecive != null) searchParams['aproveRecive'] = aproveRecive;
-//     if (sapPost != null) searchParams['sapPost'] = sapPost;
-
-//     logMessage('Transfer', 'Searching transfers with params: $searchParams');
-
-//     return handleEitherResult(
-//       postGetPage.getDataWithToken(
-//         ApiServices.searchTransfers(searchParams),
-//         token,
-//       ),
-//       'Transfer Search Results Retrieved Successfully',
-//       'فشل في البحث عن التحويلات',
-//     );
-//   }
-
-//   // إدارة سطر التحويل (إضافة/تعديل)
-//   Future<Map<String, dynamic>> upsertTransferLine({
-//     required int docEntry,
-//     int? lineNum, // إذا كان null أو 0 أو -1 = إضافة جديدة
-//     required String itemCode,
-//     required String description,
-//     required double quantity,
-//     required double price,
-//     required double lineTotal,
-//     required String uomCode,
-//     String? uomCode2,
-//     double? invQty,
-//     int? baseQty1,
-//     int? ugpEntry,
-//     int? uomEntry,
-//   }) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     // تحضير البيانات للإرسال
-//     Map<String, dynamic> lineData = {
-//       'docEntry': docEntry,
-//       'itemCode': itemCode,
-//       'description': description,
-//       'quantity': quantity,
-//       'price': price,
-//       'lineTotal': lineTotal,
-//       'uomCode': uomCode,
-//       'uomCode2': uomCode2,
-//       'invQty': invQty,
-//       'baseQty1': baseQty1,
-//       'ugpEntry': ugpEntry,
-//       'uomEntry': uomEntry,
-//     };
-
-//     // تحديد نوع العملية بناءً على lineNum
-//     if (lineNum != null && lineNum > 0) {
-//       // عملية تعديل - إضافة lineNum
-//       lineData['lineNum'] = lineNum;
-//       logMessage('Transfer', 'Updating existing line with lineNum: $lineNum');
-//     } else {
-//       // عملية إضافة جديدة - عدم إرسال lineNum أو إرسال -1
-//       lineData['lineNum'] = -1;
-//       logMessage('Transfer', 'Adding new line (lineNum will be generated)');
-//     }
-
-//     return handleEitherResult(
-//       postGetPage.postDataWithToken(
-//         ApiServices.upsertTransferLine(),
-//         lineData,
-//         token,
-//       ),
-//       lineNum != null && lineNum > 0 ? 'Line Updated Successfully' : 'Line Added Successfully',
-//       lineNum != null && lineNum > 0 ? 'فشل في تعديل السطر' : 'فشل في إضافة السطر',
-//     );
-//   }
-
-//   // حذف سطر التحويل
-//   Future<Map<String, dynamic>> deleteTransferLine({
-//     required int docEntry,
-//     required int lineNum,
-//   }) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     Map<String, dynamic> deleteData = {
-//       'docEntry': docEntry,
-//       'lineNum': lineNum,
-//     };
-
-//     logMessage('Transfer', 'Deleting line with docEntry: $docEntry, lineNum: $lineNum');
-
-//     return handleEitherResult(
-//       postGetPage.postDataWithToken(
-//         ApiServices.deleteTransferLine(),
-//         deleteData,
-//         token,
-//       ),
-//       'Line Deleted Successfully',
-//       'فشل في حذف السطر',
-//     );
-//   }
-
-//   // إنشاء تحويل جديد
-//   Future<Map<String, dynamic>> createTransfer({
-//     required String whscodeFrom,
-//     required String whscodeTo,
-//     String? driverName,
-//     String? driverCode,
-//     String? driverMobil,
-//     String? careNum,
-//     String? note,
-//   }) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     Map<String, dynamic> transferData = {
-//       'whscodeFrom': whscodeFrom,
-//       'whscodeTo': whscodeTo,
-//     };
-
-//     if (driverName != null && driverName.isNotEmpty) transferData['driverName'] = driverName;
-//     if (driverCode != null && driverCode.isNotEmpty) transferData['driverCode'] = driverCode;
-//     if (driverMobil != null && driverMobil.isNotEmpty) transferData['driverMobil'] = driverMobil;
-//     if (careNum != null && careNum.isNotEmpty) transferData['careNum'] = careNum;
-//     if (note != null && note.isNotEmpty) transferData['note'] = note;
-
-//     logMessage('Transfer', 'Creating new transfer: $transferData');
-
-//     return handleEitherResult(
-//       postGetPage.postDataWithToken(
-//         ApiServices.createTransfer(),
-//         transferData,
-//         token,
-//       ),
-//       'Transfer Created Successfully',
-//       'فشل في إنشاء التحويل',
-//     );
-//   }
-
-//   // تحديث معلومات التحويل (الهيدر)
-//   Future<Map<String, dynamic>> updateTransferHeader({
-//     required int transferId,
-//     String? driverName,
-//     String? driverCode,
-//     String? driverMobil,
-//     String? careNum,
-//     String? note,
-//   }) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     Map<String, dynamic> updateData = {
-//       'transferId': transferId,
-//     };
-
-//     if (driverName != null) updateData['driverName'] = driverName;
-//     if (driverCode != null) updateData['driverCode'] = driverCode;
-//     if (driverMobil != null) updateData['driverMobil'] = driverMobil;
-//     if (careNum != null) updateData['careNum'] = careNum;
-//     if (note != null) updateData['note'] = note;
-
-//     logMessage('Transfer', 'Updating transfer header for ID: $transferId');
-
-//     return handleEitherResult(
-//       postGetPage.postDataWithToken(
-//         ApiServices.updateTransferHeader(),
-//         updateData,
-//         token,
-//       ),
-//       'Transfer Header Updated Successfully',
-//       'فشل في تحديث معلومات التحويل',
-//     );
-//   }
-
-//   // الحصول على الوحدات المتاحة لصنف معين
-//   Future<Map<String, dynamic>> getItemUnits(String itemCode) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer', 'Getting units for item: $itemCode');
-
-//     return handleEitherResult(
-//       postGetPage.getDataWithToken(
-//         ApiServices.getItemUnits(itemCode),
-//         token,
-//       ),
-//       'Item Units Retrieved Successfully',
-//       'فشل في جلب وحدات الصنف',
-//     );
-//   }
-
-//   // البحث عن الأصناف
-//   Future<Map<String, dynamic>> searchItems({
-//     String? itemCode,
-//     String? itemName,
-//     int page = 1,
-//     int pageSize = 20,
-//   }) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     Map<String, dynamic> searchParams = {
-//       'page': page,
-//       'pageSize': pageSize,
-//     };
-
-//     if (itemCode != null && itemCode.isNotEmpty) searchParams['itemCode'] = itemCode;
-//     if (itemName != null && itemName.isNotEmpty) searchParams['itemName'] = itemName;
-
-//     logMessage('Transfer', 'Searching items with params: $searchParams');
-
-//     return handleEitherResult(
-//       postGetPage.getDataWithToken(
-//         ApiServices.searchItems(searchParams),
-//         token,
-//       ),
-//       'Items Search Results Retrieved Successfully',
-//       'فشل في البحث عن الأصناف',
-//     );
-//   }
-
-//   // الحصول على معلومات صنف معين
-//   Future<Map<String, dynamic>> getItemDetails(String itemCode) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer', 'Getting item details for: $itemCode');
-
-//     return handleEitherResult(
-//       postGetPage.getDataWithToken(
-//         ApiServices.getItemDetails(itemCode),
-//         token,
-//       ),
-//       'Item Details Retrieved Successfully',
-//       'فشل في جلب تفاصيل الصنف',
-//     );
-//   }
-
-//   // التحقق من كمية المخزون المتاحة
-//   Future<Map<String, dynamic>> checkStockQuantity({
-//     required String itemCode,
-//     required String warehouseCode,
-//   }) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer', 'Checking stock for item: $itemCode in warehouse: $warehouseCode');
-
-//     return handleEitherResult(
-//       postGetPage.getDataWithToken(
-//         ApiServices.checkStockQuantity(itemCode, warehouseCode),
-//         token,
-//       ),
-//       'Stock Quantity Retrieved Successfully',
-//       'فشل في جلب كمية المخزون',
-//     );
-//   }
-
-//   // إلغاء التحويل
-//   Future<Map<String, dynamic>> cancelTransfer(int transferId) async {
-//     String token = Preferences.getString('auth_token');
-
-//     if (token.isEmpty) {
-//       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
-//     }
-
-//     logMessage('Transfer', 'Cancelling transfer with ID: $transferId');
-
-//     return handleEitherResult(
-//       postGetPage.postDataWithToken(
-//         ApiServices.cancelTransfer(),
-//         {'transferId': transferId},
-//         token,
-//       ),
-//       'Transfer Cancelled Successfully',
-//       'فشل في إلغاء التحويل',
-//     );
-//   }
-// }
-
-// services/api_service.dart - Updated Version
-
 // class ApiServices {
 //   // أضف /echo في الـ base URL
 //   static String server = "https://qitaf3.dynalias.net:44322/echo";
@@ -599,14 +45,47 @@ class ApiServices {
 //         params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value.toString())}').join('&');
 //     return "$server/api/TransferApi/SearchTransfers?$queryString";
 //   }
-//     // دالة موحدة لإدارة أسطر التحويل (إضافة/تعديل)
+
+//   // دالة موحدة لإدارة أسطر التحويل (إضافة/تعديل)
 //   static String upsertTransferLine() {
 //     return "$server/api/TransferApi/UpsertLine";
 //   }
 
-//    // حذف سطر تحويل
+//   // حذف سطر تحويل
 //   static String deleteTransferLine() {
 //     return "$server/api/TransferApi/DeleteLine";
+//   }
+
+//   // تحديث معلومات التحويل (الهيدر)
+//   static String updateTransferHeader() {
+//     return "$server/api/TransferApi/UpdateHeader";
+//   }
+
+//   // الحصول على الوحدات المتاحة لصنف معين
+//   static String getItemUnits(String itemCode) {
+//     return "$server/api/Items/Units/$itemCode";
+//   }
+
+//   // البحث عن الأصناف
+//   static String searchItems(Map<String, dynamic> params) {
+//     String queryString =
+//         params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value.toString())}').join('&');
+//     return "$server/api/Items/Search?$queryString";
+//   }
+
+//   // الحصول على معلومات صنف معين
+//   static String getItemDetails(String itemCode) {
+//     return "$server/api/Items/Details/$itemCode";
+//   }
+
+//   // التحقق من كمية المخزون المتاحة
+//   static String checkStockQuantity(String itemCode, String warehouseCode) {
+//     return "$server/api/Stock/Check?itemCode=$itemCode&warehouseCode=$warehouseCode";
+//   }
+
+//   // إلغاء التحويل
+//   static String cancelTransfer() {
+//     return "$server/api/TransferApi/Cancel";
 //   }
 
 //   // Headers مع Bearer Token
@@ -619,3 +98,584 @@ class ApiServices {
 //   }
 // }
 
+// محدث: api_service.dart - إصلاح endpoints الوحدات
+
+// class ApiServices {
+//   static String server = "https://qitaf3.dynalias.net:44322/echo";
+//   static const headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
+
+//   // ... باقي الكود كما هو ...
+
+//   /// 🔧 تم تحديث endpoint جلب الوحدات - الإصدار المحدث
+//   /// يجب تجريب هذه الـ endpoints حسب الأولوية
+//   static String getItemUnits(String itemCode) {
+//     // الـ endpoint الأساسي المحتمل (من التحويلات)
+//     return "$server/api/TransferApi/ItemUnits/$itemCode";
+//   }
+
+//   /// 🔧 endpoints بديلة للوحدات - يجب تجريبها بالترتيب
+
+//   // البديل الأول: من قسم الأصناف
+//   // static String getItemUnitsFromItems(String itemCode) {
+//   //   return "$server/api/Items/Units/$itemCode";
+//   // }
+
+//   // // البديل الثاني: من قسم المخزون
+//   // static String getItemUnitsFromStock(String itemCode) {
+//   //   return "$server/api/StockSAPWPOS1/Units/$itemCode";
+//   // }
+
+//   // // البديل الثالث: مع query parameter
+//   // static String getItemUnitsWithQuery(String itemCode) {
+//   //   return "$server/api/TransferApi/GetItemUnits?itemCode=${Uri.encodeComponent(itemCode)}";
+//   // }
+
+//   // // البديل الرابع: مع code parameter
+//   // static String getItemUnitsWithCode(String itemCode) {
+//   //   return "$server/api/TransferApi/ItemUnits?code=${Uri.encodeComponent(itemCode)}";
+//   // }
+
+//   // // البديل الخامس: endpoint عام للوحدات
+//   // static String getUnits(String itemCode) {
+//   //   return "$server/api/Units/$itemCode";
+//   // }
+
+//   // // البديل السادس: في حالة كان الـ endpoint يتطلب POST بدلاً من GET
+//   // static String getItemUnitsPost() {
+//   //   return "$server/api/TransferApi/GetItemUnits";
+//   // }
+
+//   // /// دالة لإرجاع جميع الـ endpoints المحتملة للوحدات
+//   // static List<String> getAllUnitEndpoints(String itemCode) {
+//   //   return [
+//   //     getItemUnits(itemCode),
+//   //     getItemUnitsFromItems(itemCode),
+//   //     getItemUnitsFromStock(itemCode),
+//   //     getItemUnitsWithQuery(itemCode),
+//   //     getItemUnitsWithCode(itemCode),
+//   //     getUnits(itemCode),
+//   //   ];
+//   // }
+
+// //  static String getItemUnits(String itemCode) {
+// //     // الـ endpoint الأساسي المحتمل (من التحويلات)
+// //     return "$server/api/TransferApi/ItemUnits/$itemCode";
+// //   }
+
+//   /// 🔧 endpoints بديلة للوحدات - يجب تجريبها بالترتيب
+
+//   // البديل الأول: من قسم الأصناف
+//   static String getItemUnitsFromItems(String itemCode) {
+//     return "$server/api/Items/Units/$itemCode";
+//   }
+
+//   // البديل الثاني: من قسم المخزون
+//   static String getItemUnitsFromStock(String itemCode) {
+//     return "$server/api/StockSAPWPOS1/Units/$itemCode";
+//   }
+
+//   // البديل الثالث: مع query parameter
+//   static String getItemUnitsWithQuery(String itemCode) {
+//     return "$server/api/TransferApi/GetItemUnits?itemCode=${Uri.encodeComponent(itemCode)}";
+//   }
+
+//   // البديل الرابع: مع code parameter
+//   static String getItemUnitsWithCode(String itemCode) {
+//     return "$server/api/TransferApi/ItemUnits?code=${Uri.encodeComponent(itemCode)}";
+//   }
+
+//   // البديل الخامس: endpoint عام للوحدات
+//   static String getUnits(String itemCode) {
+//     return "$server/api/Units/$itemCode";
+//   }
+
+//   // البديل السادس: في حالة كان الـ endpoint يتطلب POST بدلاً من GET
+//   static String getItemUnitsPost() {
+//     return "$server/api/TransferApi/GetItemUnits";
+//   }
+
+//   /// دالة لإرجاع جميع الـ endpoints المحتملة للوحدات
+//   static List<String> getAllUnitEndpoints(String itemCode) {
+//     return [
+//       getItemUnits(itemCode),
+//       getItemUnitsFromItems(itemCode),
+//       getItemUnitsFromStock(itemCode),
+//       getItemUnitsWithQuery(itemCode),
+//       getItemUnitsWithCode(itemCode),
+//       getUnits(itemCode),
+//     ];
+//   }
+
+//   /// دالة للحصول على الـ endpoint الأكثر احتمالاً للعمل
+//   /// بناءً على التجربة والاختبار
+//   static String getPreferredUnitEndpoint(String itemCode) {
+//     // يمكن تغيير هذا بناءً على أي endpoint يعمل بالفعل
+//     return getItemUnits(itemCode);
+//   }
+
+//   //   // البحث عن الأصناف
+//   static String searchItems(Map<String, dynamic> params) {
+//     String queryString =
+//         params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value.toString())}').join('&');
+//     return "$server/api/Items/Search?$queryString";
+//   }
+
+//     static String updateTransferHeader() {
+//     return "$server/api/TransferApi/UpdateHeader";
+//   }
+
+// //   static String receiveTransfer() {
+// //     return "$server/api/TransferApi/ReceiveTransfer";
+// //   }
+
+//   /// دالة للحصول على الـ endpoint الأكثر احتمالاً للعمل
+//   // /// بناءً على التجربة والاختبار
+//   // static String getPreferredUnitEndpoint(String itemCode) {
+//   //   // يمكن تغيير هذا بناءً على أي endpoint يعمل بالفعل
+//   //   return getItemUnits(itemCode);
+//   // }
+
+//   // Transfer endpoints
+//   static String getTransfersList(int page, int pageSize) {
+//     return "$server/api/TransferApi/TransfersList?page=$page&pageSize=$pageSize";
+//   }
+
+//   // دالة محدثة لجلب تفاصيل التحويل - ديناميكي
+//   static String getTransferDetails(int transferId) {
+//     return "$server/api/TransferApi/transfer-details?id=$transferId";
+//   }
+
+//     static String createTransfer() {
+//     return "$server/api/TransferApi/CreateTransfer";
+//   }
+
+// //   // حذف سطر تحويل
+//   static String deleteTransferLine() {
+//     return "$server/api/TransferApi/DeleteLine";
+//   }
+
+//   static String searchTransfers(Map<String, dynamic> params) {
+//     String queryString =
+//         params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value.toString())}').join('&');
+//     return "$server/api/TransferApi/SearchTransfers?$queryString";
+//   }
+
+//   static String postTransferToSAP() {
+//     return "$server/api/TransferApi/PostToSAP";
+//   }
+
+//   // الحصول على معلومات صنف معين
+//   static String getItemDetails(String itemCode) {
+//     return "$server/api/Items/Details/$itemCode";
+//   }
+
+//   // التحقق من كمية المخزون المتاحة
+//   static String checkStockQuantity(String itemCode, String warehouseCode) {
+//     return "$server/api/Stock/Check?itemCode=$itemCode&warehouseCode=$warehouseCode";
+//   }
+
+//   // إلغاء التحويل
+//   static String cancelTransfer() {
+//     return "$server/api/TransferApi/Cancel";
+//   }
+
+//   static String sendTransfer() {
+//     return "$server/api/TransferApi/SendTransfer";
+//   }
+
+//   static String receiveTransfer() {
+//     return "$server/api/TransferApi/ReceiveTransfer";
+//   }
+
+//     // دالة موحدة لإدارة أسطر التحويل (إضافة/تعديل)
+//   static String upsertTransferLine() {
+//     return "$server/api/TransferApi/UpsertLine";
+//   }
+//   // ... باقي الكود كما هو ...
+// }
+
+class ApiServices {
+  // أضف /echo في الـ base URL
+  static String server = "https://qitaf3.dynalias.net:44322/echo";
+
+  static const headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
+
+  // Authentication endpoints
+  static String login = "$server/api/Account/login";
+  static String register = "$server/api/Account/register";
+  static String testApi = "$server/api/SalesDataVTec/Test";
+
+  // Stock endpoints
+  static String getStockItem(String code) {
+    return "$server/api/StockSAPWPOS1/$code";
+  }
+
+  // Transfer endpoints - محدث حسب نمط MVC
+  static String getTransfersList(int page, int pageSize) {
+    return "$server/api/TransferApi/TransfersList?page=$page&pageSize=$pageSize";
+  }
+
+  // دالة محدثة لجلب تفاصيل التحويل - ديناميكي
+  static String getTransferDetails(int transferId) {
+    return "$server/api/TransferApi/transfer-details?id=$transferId";
+  }
+
+  static String sendTransfer() {
+    return "$server/api/TransferApi/SendTransfer";
+  }
+
+  static String receiveTransfer() {
+    return "$server/api/TransferApi/ReceiveTransfer";
+  }
+
+  static String postTransferToSAP() {
+    return "$server/api/TransferApi/PostToSAP";
+  }
+
+  static String createTransfer() {
+    return "$server/api/TransferApi/CreateTransfer";
+  }
+
+  static String searchTransfers(Map<String, dynamic> params) {
+    String queryString =
+        params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value.toString())}').join('&');
+    return "$server/api/TransferApi/SearchTransfers?$queryString";
+  }
+
+  // دالة موحدة لإدارة أسطر التحويل (إضافة/تعديل)
+  static String upsertTransferLine() {
+    return "$server/api/TransferApi/UpsertLine";
+  }
+
+  // حذف سطر تحويل
+  static String deleteTransferLine() {
+    return "$server/api/TransferApi/DeleteLine";
+  }
+
+  // تحديث معلومات التحويل (الهيدر)
+  static String updateTransferHeader() {
+    return "$server/api/TransferApi/UpdateHeader";
+  }
+
+  // ============= endpoints الوحدات المصححة - حسب نمط الشركة =============
+
+  static String getItemUnits(String itemCode) {
+    // النمط المحتمل: Transfer/GetUnits مع POST data
+    return "$server/Transfer/GetUnits";
+  }
+
+  /// endpoints بديلة محتملة بناءً على النمط المرئي
+  static String getItemUnitsAlternative1(String itemCode) {
+    // إذا كان يستخدم GET مع parameter
+    return "$server/Transfer/GetUnits?itemCode=$itemCode";
+  }
+
+  static String getItemUnitsAlternative2(String itemCode) {
+    // إذا كان يستخدم action مختلف
+    return "$server/Transfer/GetItemUnits?code=$itemCode";
+  }
+
+  static String getItemUnitsAlternative3(String itemCode) {
+    // نمط RESTful
+    return "$server/Transfer/Items/$itemCode/Units";
+  }
+
+  static String getItemUnitsAlternative4(String itemCode) {
+    // نمط مع route parameter
+    return "$server/Transfer/Units/$itemCode";
+  }
+
+  /// دالة POST للوحدات - الأكثر احتمالاً
+  static String getItemUnitsPost() {
+    return "$server/Transfer/GetUnits";
+  }
+
+  /// دالة للحصول على الوحدات مع معرف التحويل
+  static String getItemUnitsWithTransferId(int transferId, String itemCode) {
+    return "$server/Transfer/GetUnits?transferId=$transferId&itemCode=$itemCode";
+  }
+
+  /// endpoints محتملة أخرى
+  static List<String> getPossibleUnitEndpoints(String itemCode, {int? transferId}) {
+    List<String> endpoints = [
+      // POST endpoints (الأكثر احتمالاً)
+      "$server/Transfer/GetUnits",
+      "$server/Transfer/GetItemUnits",
+      "$server/Transfer/Units",
+
+      // GET endpoints
+      "$server/Transfer/GetUnits?itemCode=$itemCode",
+      "$server/Transfer/GetItemUnits?code=$itemCode",
+      "$server/Transfer/Units/$itemCode",
+      "$server/Transfer/Items/$itemCode/Units",
+    ];
+
+    // إضافة endpoints مع transferId إذا كان متوفر
+    if (transferId != null) {
+      endpoints.addAll([
+        "$server/Transfer/GetUnits?transferId=$transferId&itemCode=$itemCode",
+        "$server/Transfer/GetItemUnits?transferId=$transferId&itemCode=$itemCode",
+      ]);
+    }
+
+    return endpoints;
+  }
+
+  // /// الـ endpoint الصحيح للوحدات - بناءً على نمط MVC للشركة
+  // static String getItemUnits(String itemCode) {
+  //   // استخدام نمط MVC Controller مثل Transfer/Edit
+  //   return "$server/Transfer/GetItemUnits/$itemCode";
+  // }
+
+  /// endpoints بديلة مصححة حسب نمط الشركة
+
+  // البديل الأول: استخدام controller منفصل للوحدات
+  static String getItemUnitsFromItems(String itemCode) {
+    return "$server/Items/GetUnits/$itemCode";
+  }
+
+  // البديل الثاني: من controller المخزون
+  static String getItemUnitsFromStock(String itemCode) {
+    return "$server/Stock/GetItemUnits/$itemCode";
+  }
+
+  // البديل الثالث: استخدام action منفصل في Transfer controller
+  static String getItemUnitsFromTransfer(String itemCode) {
+    return "$server/Transfer/Units/$itemCode";
+  }
+
+  // البديل الرابع: endpoint مع query parameter
+  static String getItemUnitsWithQuery(String itemCode) {
+    return "$server/Transfer/GetUnits?itemCode=${Uri.encodeComponent(itemCode)}";
+  }
+
+  // البديل الخامس: استخدام API controller (إذا كان موجود)
+  static String getItemUnitsApi(String itemCode) {
+    return "$server/api/Transfer/GetItemUnits/$itemCode";
+  }
+
+  // البديل السادس: نمط RESTful إذا كان مدعوم
+  static String getItemUnitsRest(String itemCode) {
+    return "$server/api/items/$itemCode/units";
+  }
+
+  // // البديل السابع: POST request للوحدات
+  // static String getItemUnitsPost() {
+  //   return "$server/Transfer/GetItemUnits";
+  // }
+
+  // البديل الثامن: endpoint الوحدات العام
+  static String getUnitsGeneral(String itemCode) {
+    return "$server/Units/Get/$itemCode";
+  }
+
+  /// دالة لإرجاع جميع الـ endpoints المحتملة للوحدات - مصححة
+  static List<String> getAllUnitEndpoints(String itemCode) {
+    return [
+      getItemUnits(itemCode), // Transfer/GetItemUnits/{code}
+      getItemUnitsFromTransfer(itemCode), // Transfer/Units/{code}
+      getItemUnitsWithQuery(itemCode), // Transfer/GetUnits?itemCode={code}
+      getItemUnitsFromItems(itemCode), // Items/GetUnits/{code}
+      getItemUnitsFromStock(itemCode), // Stock/GetItemUnits/{code}
+      getItemUnitsApi(itemCode), // api/Transfer/GetItemUnits/{code}
+      getItemUnitsRest(itemCode), // api/items/{code}/units
+      getUnitsGeneral(itemCode), // Units/Get/{code}
+    ];
+  }
+
+  /// دالة للحصول على الـ endpoint الأكثر احتمالاً للعمل
+  /// بناءً على نمط الشركة (MVC)
+  static String getPreferredUnitEndpoint(String itemCode) {
+    // الأولوية للـ endpoint الذي يشبه نمط Transfer/Edit
+    return getItemUnits(itemCode); // Transfer/GetItemUnits/{code}
+  }
+
+  // =============== باقي الـ endpoints مصححة ===============
+
+  // البحث عن الأصناف - مصحح
+  static String searchItems(Map<String, dynamic> params) {
+    String queryString =
+        params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value.toString())}').join('&');
+    return "$server/Items/Search?$queryString";
+  }
+
+  // الحصول على معلومات صنف معين - مصحح
+  static String getItemDetails(String itemCode) {
+    return "$server/Items/Details/$itemCode";
+  }
+
+  // التحقق من كمية المخزون المتاحة - مصحح
+  static String checkStockQuantity(String itemCode, String warehouseCode) {
+    return "$server/Stock/CheckQuantity?itemCode=$itemCode&warehouseCode=$warehouseCode";
+  }
+
+  // إلغاء التحويل
+  static String cancelTransfer() {
+    return "$server/api/TransferApi/Cancel";
+  }
+
+  // ==================== الدالة المفقودة - Headers مع Token ====================
+
+  /// Headers مع Bearer Token - الدالة المطلوبة
+  static Map<String, String> headersWithToken(String token) {
+    return {
+      'Accept': 'application/json',
+      'Content-Type': 'application/json',
+      'Authorization': 'Bearer $token',
+    };
+  }
+
+  // ==================== دوال مساعدة للتشخيص ====================
+
+  /// دالة لتجريب endpoint معين وإرجاع النتيجة
+  static String testEndpoint(String basePattern, String itemCode, {String? action}) {
+    action = action ?? 'GetItemUnits';
+    return basePattern.replaceAll('{action}', action).replaceAll('{itemCode}', itemCode);
+  }
+
+  /// دالة لتوليد endpoints محتملة بناءً على الأنماط المختلفة
+  static List<String> generatePossibleEndpoints(String itemCode) {
+    List<String> patterns = [
+      '$server/Transfer/GetItemUnits/$itemCode',
+      '$server/Transfer/Units/$itemCode',
+      '$server/Transfer/GetUnits?itemCode=$itemCode',
+      '$server/api/Transfer/GetItemUnits/$itemCode',
+      '$server/api/Transfer/Units/$itemCode',
+      '$server/Items/GetUnits/$itemCode',
+      '$server/Items/Units/$itemCode',
+      '$server/Stock/GetItemUnits/$itemCode',
+      '$server/Units/Get/$itemCode',
+      '$server/api/items/$itemCode/units',
+    ];
+
+    return patterns;
+  }
+}
+// class ApiServices {
+//   // أضف /echo في الـ base URL
+//   static String server = "https://qitaf3.dynalias.net:44322/echo";
+
+//   static const headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
+
+//   // Authentication endpoints
+//   static String login = "$server/api/Account/login";
+//   static String register = "$server/api/Account/register";
+//   static String testApi = "$server/api/SalesDataVTec/Test";
+
+//   // Stock endpoints
+//   static String getStockItem(String code) {
+//     return "$server/api/StockSAPWPOS1/$code";
+//   }
+
+//   // Transfer endpoints
+//   static String getTransfersList(int page, int pageSize) {
+//     return "$server/api/TransferApi/TransfersList?page=$page&pageSize=$pageSize";
+//   }
+
+//   // دالة محدثة لجلب تفاصيل التحويل - ديناميكي
+//   static String getTransferDetails(int transferId) {
+//     return "$server/api/TransferApi/transfer-details?id=$transferId";
+//   }
+
+//   static String sendTransfer() {
+//     return "$server/api/TransferApi/SendTransfer";
+//   }
+
+//   static String receiveTransfer() {
+//     return "$server/api/TransferApi/ReceiveTransfer";
+//   }
+
+//   static String postTransferToSAP() {
+//     return "$server/api/TransferApi/PostToSAP";
+//   }
+
+//   static String createTransfer() {
+//     return "$server/api/TransferApi/CreateTransfer";
+//   }
+
+//   static String searchTransfers(Map<String, dynamic> params) {
+//     String queryString =
+//         params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value.toString())}').join('&');
+//     return "$server/api/TransferApi/SearchTransfers?$queryString";
+//   }
+
+//   // دالة موحدة لإدارة أسطر التحويل (إضافة/تعديل)
+//   static String upsertTransferLine() {
+//     return "$server/api/TransferApi/UpsertLine";
+//   }
+
+//   // حذف سطر تحويل
+//   static String deleteTransferLine() {
+//     return "$server/api/TransferApi/DeleteLine";
+//   }
+
+//   // تحديث معلومات التحويل (الهيدر)
+//   static String updateTransferHeader() {
+//     return "$server/api/TransferApi/UpdateHeader";
+//   }
+
+//   // 🔧 تم تحديث endpoint جلب الوحدات - تجريب عدة احتمالات
+//   static String getItemUnits(String itemCode) {
+//     // جرب هذه الـ endpoints المختلفة حتى تجد الصحيح:
+
+//     // الاحتمال الأول: endpoint مباشر للوحدات
+//     return "$server/api/TransferApi/ItemUnits/$itemCode";
+
+//     // إذا لم يعمل، جرب هذا:
+//     // return "$server/api/Items/Units/$itemCode";
+
+//     // أو هذا:
+//     // return "$server/api/StockSAPWPOS1/Units/$itemCode";
+
+//     // أو هذا للوحدات من التحويل:
+//     // return "$server/api/TransferApi/GetItemUnits?itemCode=$itemCode";
+//   }
+
+//   // 🔧 endpoints بديلة لجلب الوحدات
+//   static String getItemUnitsAlternative1(String itemCode) {
+//     return "$server/api/Items/Units/$itemCode";
+//   }
+
+//   static String getItemUnitsAlternative2(String itemCode) {
+//     return "$server/api/StockSAPWPOS1/Units/$itemCode";
+//   }
+
+//   static String getItemUnitsAlternative3(String itemCode) {
+//     return "$server/api/TransferApi/GetItemUnits?itemCode=$itemCode";
+//   }
+
+//   static String getItemUnitsAlternative4(String itemCode) {
+//     return "$server/api/TransferApi/ItemUnits?code=$itemCode";
+//   }
+
+//   // البحث عن الأصناف
+//   static String searchItems(Map<String, dynamic> params) {
+//     String queryString =
+//         params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value.toString())}').join('&');
+//     return "$server/api/Items/Search?$queryString";
+//   }
+
+//   // الحصول على معلومات صنف معين
+//   static String getItemDetails(String itemCode) {
+//     return "$server/api/Items/Details/$itemCode";
+//   }
+
+//   // التحقق من كمية المخزون المتاحة
+//   static String checkStockQuantity(String itemCode, String warehouseCode) {
+//     return "$server/api/Stock/Check?itemCode=$itemCode&warehouseCode=$warehouseCode";
+//   }
+
+//   // إلغاء التحويل
+//   static String cancelTransfer() {
+//     return "$server/api/TransferApi/Cancel";
+//   }
+
+//   // Headers مع Bearer Token
+//   static Map<String, String> headersWithToken(String token) {
+//     return {
+//       'Accept': 'application/json',
+//       'Content-Type': 'application/json',
+//       'Authorization': 'Bearer $token',
+//     };
+//   }
+// }
