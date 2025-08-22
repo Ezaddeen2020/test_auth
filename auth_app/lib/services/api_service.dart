@@ -294,6 +294,269 @@
 //   // ... باقي الكود كما هو ...
 // }
 
+// class ApiServices {
+//   // أضف /echo في الـ base URL
+//   static String server = "https://qitaf3.dynalias.net:44322/echo";
+
+//   static const headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
+
+//   // Authentication endpoints
+//   static String login = "$server/api/Account/login";
+//   static String register = "$server/api/Account/register";
+//   static String testApi = "$server/api/SalesDataVTec/Test";
+
+//   // Stock endpoints
+//   static String getStockItem(String code) {
+//     return "$server/api/StockSAPWPOS1/$code";
+//   }
+
+//   // Transfer endpoints - محدث حسب نمط MVC
+//   static String getTransfersList(int page, int pageSize) {
+//     return "$server/api/TransferApi/TransfersList?page=$page&pageSize=$pageSize";
+//   }
+
+//   // دالة محدثة لجلب تفاصيل التحويل - ديناميكي
+//   static String getTransferDetails(int transferId) {
+//     return "$server/api/TransferApi/transfer-details?id=$transferId";
+//   }
+
+//   static String sendTransfer() {
+//     return "$server/api/TransferApi/SendTransfer";
+//   }
+
+//   static String receiveTransfer() {
+//     return "$server/api/TransferApi/ReceiveTransfer";
+//   }
+
+//   static String postTransferToSAP() {
+//     return "$server/api/TransferApi/PostToSAP";
+//   }
+
+//   static String createTransfer() {
+//     return "$server/api/TransferApi/CreateTransfer";
+//   }
+
+//   static String searchTransfers(Map<String, dynamic> params) {
+//     String queryString =
+//         params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value.toString())}').join('&');
+//     return "$server/api/TransferApi/SearchTransfers?$queryString";
+//   }
+
+//   // دالة موحدة لإدارة أسطر التحويل (إضافة/تعديل)
+//   static String upsertTransferLine() {
+//     return "$server/api/TransferApi/UpsertLine";
+//   }
+
+//   // حذف سطر تحويل
+//   static String deleteTransferLine() {
+//     return "$server/api/TransferApi/DeleteLine";
+//   }
+
+//   // تحديث معلومات التحويل (الهيدر)
+//   static String updateTransferHeader() {
+//     return "$server/api/TransferApi/UpdateHeader";
+//   }
+
+//   // ============= endpoints الوحدات المصححة - حسب نمط الشركة =============
+
+//   // static String getItemUnits(String itemCode) {
+//   //   // النمط المحتمل: Transfer/GetUnits مع POST data
+//   //   return "$server/Uom/GetUoms?itemCode=$itemCode";
+//   // }
+
+//     static String getItemUnits(String itemCode) {
+//     return "$server/Uom/GetUoms?itemCode=${Uri.encodeComponent(itemCode)}";
+//   }
+// // https://qitaf3.dynalias.net:44322/echo/Uom/GetUoms?itemCode=INV03610
+//   /// endpoints بديلة محتملة بناءً على النمط المرئي
+//   // static String getItemUnitsAlternative1(String itemCode) {
+//   //   // إذا كان يستخدم GET مع parameter
+//   //   return "$server/Transfer/GetUnits?itemCode=$itemCode";
+//   // }
+
+//   // static String getItemUnitsAlternative2(String itemCode) {
+//   //   // إذا كان يستخدم action مختلف
+//   //   return "$server/Transfer/GetItemUnits?code=$itemCode";
+//   // }
+
+//   static String getItemUnitsAlternative3(String itemCode) {
+//     // نمط RESTful
+//     return "$server/Transfer/Items/$itemCode/Units";
+//   }
+
+//   static String getItemUnitsAlternative4(String itemCode) {
+//     // نمط مع route parameter
+//     return "$server/Transfer/Units/$itemCode";
+//   }
+
+//   /// دالة POST للوحدات - الأكثر احتمالاً
+//   static String getItemUnitsPost() {
+//     return "$server/Transfer/GetUnits";
+//   }
+
+//   /// دالة للحصول على الوحدات مع معرف التحويل
+//   static String getItemUnitsWithTransferId(int transferId, String itemCode) {
+//     return "$server/Transfer/GetUnits?transferId=$transferId&itemCode=$itemCode";
+//   }
+
+//   /// endpoints محتملة أخرى
+//   static List<String> getPossibleUnitEndpoints(String itemCode, {int? transferId}) {
+//     List<String> endpoints = [
+//       // POST endpoints (الأكثر احتمالاً)
+//       "$server/Transfer/GetUnits",
+//       "$server/Transfer/GetItemUnits",
+//       "$server/Transfer/Units",
+
+//       // GET endpoints
+//       "$server/Transfer/GetUnits?itemCode=$itemCode",
+//       "$server/Transfer/GetItemUnits?code=$itemCode",
+//       "$server/Transfer/Units/$itemCode",
+//       "$server/Transfer/Items/$itemCode/Units",
+//     ];
+
+//     // إضافة endpoints مع transferId إذا كان متوفر
+//     if (transferId != null) {
+//       endpoints.addAll([
+//         "$server/Transfer/GetUnits?transferId=$transferId&itemCode=$itemCode",
+//         "$server/Transfer/GetItemUnits?transferId=$transferId&itemCode=$itemCode",
+//       ]);
+//     }
+
+//     return endpoints;
+//   }
+
+//   // /// الـ endpoint الصحيح للوحدات - بناءً على نمط MVC للشركة
+//   // static String getItemUnits(String itemCode) {
+//   //   // استخدام نمط MVC Controller مثل Transfer/Edit
+//   //   return "$server/Transfer/GetItemUnits/$itemCode";
+//   // }
+
+//   /// endpoints بديلة مصححة حسب نمط الشركة
+
+//   // البديل الأول: استخدام controller منفصل للوحدات
+//   static String getItemUnitsFromItems(String itemCode) {
+//     return "$server/Items/GetUnits/$itemCode";
+//   }
+
+//   // البديل الثاني: من controller المخزون
+//   static String getItemUnitsFromStock(String itemCode) {
+//     return "$server/Stock/GetItemUnits/$itemCode";
+//   }
+
+//   // البديل الثالث: استخدام action منفصل في Transfer controller
+//   static String getItemUnitsFromTransfer(String itemCode) {
+//     return "$server/Transfer/Units/$itemCode";
+//   }
+
+//   // البديل الرابع: endpoint مع query parameter
+//   static String getItemUnitsWithQuery(String itemCode) {
+//     return "$server/Transfer/GetUnits?itemCode=${Uri.encodeComponent(itemCode)}";
+//   }
+
+//   // البديل الخامس: استخدام API controller (إذا كان موجود)
+//   static String getItemUnitsApi(String itemCode) {
+//     return "$server/api/Transfer/GetItemUnits/$itemCode";
+//   }
+
+//   // البديل السادس: نمط RESTful إذا كان مدعوم
+//   static String getItemUnitsRest(String itemCode) {
+//     return "$server/api/items/$itemCode/units";
+//   }
+
+//   // // البديل السابع: POST request للوحدات
+//   // static String getItemUnitsPost() {
+//   //   return "$server/Transfer/GetItemUnits";
+//   // }
+
+//   // البديل الثامن: endpoint الوحدات العام
+//   static String getUnitsGeneral(String itemCode) {
+//     return "$server/Units/Get/$itemCode";
+//   }
+
+//   /// دالة لإرجاع جميع الـ endpoints المحتملة للوحدات - مصححة
+//   static List<String> getAllUnitEndpoints(String itemCode) {
+//     return [
+//       getItemUnits(itemCode), // Transfer/GetItemUnits/{code}
+//       getItemUnitsFromTransfer(itemCode), // Transfer/Units/{code}
+//       getItemUnitsWithQuery(itemCode), // Transfer/GetUnits?itemCode={code}
+//       getItemUnitsFromItems(itemCode), // Items/GetUnits/{code}
+//       getItemUnitsFromStock(itemCode), // Stock/GetItemUnits/{code}
+//       getItemUnitsApi(itemCode), // api/Transfer/GetItemUnits/{code}
+//       getItemUnitsRest(itemCode), // api/items/{code}/units
+//       getUnitsGeneral(itemCode), // Units/Get/{code}
+//     ];
+//   }
+
+//   /// دالة للحصول على الـ endpoint الأكثر احتمالاً للعمل
+//   /// بناءً على نمط الشركة (MVC)
+//   static String getPreferredUnitEndpoint(String itemCode) {
+//     // الأولوية للـ endpoint الذي يشبه نمط Transfer/Edit
+//     return getItemUnits(itemCode); // Transfer/GetItemUnits/{code}
+//   }
+
+//   // =============== باقي الـ endpoints مصححة ===============
+
+//   // البحث عن الأصناف - مصحح
+//   static String searchItems(Map<String, dynamic> params) {
+//     String queryString =
+//         params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value.toString())}').join('&');
+//     return "$server/Items/Search?$queryString";
+//   }
+
+//   // الحصول على معلومات صنف معين - مصحح
+//   static String getItemDetails(String itemCode) {
+//     return "$server/Items/Details/$itemCode";
+//   }
+
+//   // التحقق من كمية المخزون المتاحة - مصحح
+//   static String checkStockQuantity(String itemCode, String warehouseCode) {
+//     return "$server/Stock/CheckQuantity?itemCode=$itemCode&warehouseCode=$warehouseCode";
+//   }
+
+//   // إلغاء التحويل
+//   static String cancelTransfer() {
+//     return "$server/api/TransferApi/Cancel";
+//   }
+
+//   // ==================== الدالة المفقودة - Headers مع Token ====================
+
+//   /// Headers مع Bearer Token - الدالة المطلوبة
+//   static Map<String, String> headersWithToken(String token) {
+//     return {
+//       'Accept': 'application/json',
+//       'Content-Type': 'application/json',
+//       'Authorization': 'Bearer $token',
+//     };
+//   }
+
+//   // ==================== دوال مساعدة للتشخيص ====================
+
+//   /// دالة لتجريب endpoint معين وإرجاع النتيجة
+//   static String testEndpoint(String basePattern, String itemCode, {String? action}) {
+//     action = action ?? 'GetItemUnits';
+//     return basePattern.replaceAll('{action}', action).replaceAll('{itemCode}', itemCode);
+//   }
+
+//   /// دالة لتوليد endpoints محتملة بناءً على الأنماط المختلفة
+//   static List<String> generatePossibleEndpoints(String itemCode) {
+//     List<String> patterns = [
+//       '$server/Transfer/GetItemUnits/$itemCode',
+//       '$server/Transfer/Units/$itemCode',
+//       '$server/Transfer/GetUnits?itemCode=$itemCode',
+//       '$server/api/Transfer/GetItemUnits/$itemCode',
+//       '$server/api/Transfer/Units/$itemCode',
+//       '$server/Items/GetUnits/$itemCode',
+//       '$server/Items/Units/$itemCode',
+//       '$server/Stock/GetItemUnits/$itemCode',
+//       '$server/Units/Get/$itemCode',
+//       '$server/api/items/$itemCode/units',
+//     ];
+
+//     return patterns;
+//   }
+// }
+
+// تحديث ApiServices مع الـ endpoint الصحيح
 class ApiServices {
   // أضف /echo في الـ base URL
   static String server = "https://qitaf3.dynalias.net:44322/echo";
@@ -357,154 +620,24 @@ class ApiServices {
     return "$server/api/TransferApi/UpdateHeader";
   }
 
-  // ============= endpoints الوحدات المصححة - حسب نمط الشركة =============
-
+  // ============= الـ endpoint الصحيح للوحدات =============
   static String getItemUnits(String itemCode) {
-    // النمط المحتمل: Transfer/GetUnits مع POST data
-    return "$server/Transfer/GetUnits";
+    return "$server/Uom/GetUoms?itemCode=${Uri.encodeComponent(itemCode)}";
   }
 
-  /// endpoints بديلة محتملة بناءً على النمط المرئي
-  static String getItemUnitsAlternative1(String itemCode) {
-    // إذا كان يستخدم GET مع parameter
-    return "$server/Transfer/GetUnits?itemCode=$itemCode";
-  }
-
-  static String getItemUnitsAlternative2(String itemCode) {
-    // إذا كان يستخدم action مختلف
-    return "$server/Transfer/GetItemUnits?code=$itemCode";
-  }
-
-  static String getItemUnitsAlternative3(String itemCode) {
-    // نمط RESTful
-    return "$server/Transfer/Items/$itemCode/Units";
-  }
-
-  static String getItemUnitsAlternative4(String itemCode) {
-    // نمط مع route parameter
-    return "$server/Transfer/Units/$itemCode";
-  }
-
-  /// دالة POST للوحدات - الأكثر احتمالاً
-  static String getItemUnitsPost() {
-    return "$server/Transfer/GetUnits";
-  }
-
-  /// دالة للحصول على الوحدات مع معرف التحويل
-  static String getItemUnitsWithTransferId(int transferId, String itemCode) {
-    return "$server/Transfer/GetUnits?transferId=$transferId&itemCode=$itemCode";
-  }
-
-  /// endpoints محتملة أخرى
-  static List<String> getPossibleUnitEndpoints(String itemCode, {int? transferId}) {
-    List<String> endpoints = [
-      // POST endpoints (الأكثر احتمالاً)
-      "$server/Transfer/GetUnits",
-      "$server/Transfer/GetItemUnits",
-      "$server/Transfer/Units",
-
-      // GET endpoints
-      "$server/Transfer/GetUnits?itemCode=$itemCode",
-      "$server/Transfer/GetItemUnits?code=$itemCode",
-      "$server/Transfer/Units/$itemCode",
-      "$server/Transfer/Items/$itemCode/Units",
-    ];
-
-    // إضافة endpoints مع transferId إذا كان متوفر
-    if (transferId != null) {
-      endpoints.addAll([
-        "$server/Transfer/GetUnits?transferId=$transferId&itemCode=$itemCode",
-        "$server/Transfer/GetItemUnits?transferId=$transferId&itemCode=$itemCode",
-      ]);
-    }
-
-    return endpoints;
-  }
-
-  // /// الـ endpoint الصحيح للوحدات - بناءً على نمط MVC للشركة
-  // static String getItemUnits(String itemCode) {
-  //   // استخدام نمط MVC Controller مثل Transfer/Edit
-  //   return "$server/Transfer/GetItemUnits/$itemCode";
-  // }
-
-  /// endpoints بديلة مصححة حسب نمط الشركة
-
-  // البديل الأول: استخدام controller منفصل للوحدات
-  static String getItemUnitsFromItems(String itemCode) {
-    return "$server/Items/GetUnits/$itemCode";
-  }
-
-  // البديل الثاني: من controller المخزون
-  static String getItemUnitsFromStock(String itemCode) {
-    return "$server/Stock/GetItemUnits/$itemCode";
-  }
-
-  // البديل الثالث: استخدام action منفصل في Transfer controller
-  static String getItemUnitsFromTransfer(String itemCode) {
-    return "$server/Transfer/Units/$itemCode";
-  }
-
-  // البديل الرابع: endpoint مع query parameter
-  static String getItemUnitsWithQuery(String itemCode) {
-    return "$server/Transfer/GetUnits?itemCode=${Uri.encodeComponent(itemCode)}";
-  }
-
-  // البديل الخامس: استخدام API controller (إذا كان موجود)
-  static String getItemUnitsApi(String itemCode) {
-    return "$server/api/Transfer/GetItemUnits/$itemCode";
-  }
-
-  // البديل السادس: نمط RESTful إذا كان مدعوم
-  static String getItemUnitsRest(String itemCode) {
-    return "$server/api/items/$itemCode/units";
-  }
-
-  // // البديل السابع: POST request للوحدات
-  // static String getItemUnitsPost() {
-  //   return "$server/Transfer/GetItemUnits";
-  // }
-
-  // البديل الثامن: endpoint الوحدات العام
-  static String getUnitsGeneral(String itemCode) {
-    return "$server/Units/Get/$itemCode";
-  }
-
-  /// دالة لإرجاع جميع الـ endpoints المحتملة للوحدات - مصححة
-  static List<String> getAllUnitEndpoints(String itemCode) {
-    return [
-      getItemUnits(itemCode), // Transfer/GetItemUnits/{code}
-      getItemUnitsFromTransfer(itemCode), // Transfer/Units/{code}
-      getItemUnitsWithQuery(itemCode), // Transfer/GetUnits?itemCode={code}
-      getItemUnitsFromItems(itemCode), // Items/GetUnits/{code}
-      getItemUnitsFromStock(itemCode), // Stock/GetItemUnits/{code}
-      getItemUnitsApi(itemCode), // api/Transfer/GetItemUnits/{code}
-      getItemUnitsRest(itemCode), // api/items/{code}/units
-      getUnitsGeneral(itemCode), // Units/Get/{code}
-    ];
-  }
-
-  /// دالة للحصول على الـ endpoint الأكثر احتمالاً للعمل
-  /// بناءً على نمط الشركة (MVC)
-  static String getPreferredUnitEndpoint(String itemCode) {
-    // الأولوية للـ endpoint الذي يشبه نمط Transfer/Edit
-    return getItemUnits(itemCode); // Transfer/GetItemUnits/{code}
-  }
-
-  // =============== باقي الـ endpoints مصححة ===============
-
-  // البحث عن الأصناف - مصحح
+  // البحث عن الأصناف
   static String searchItems(Map<String, dynamic> params) {
     String queryString =
         params.entries.map((e) => '${e.key}=${Uri.encodeComponent(e.value.toString())}').join('&');
     return "$server/Items/Search?$queryString";
   }
 
-  // الحصول على معلومات صنف معين - مصحح
+  // الحصول على معلومات صنف معين
   static String getItemDetails(String itemCode) {
     return "$server/Items/Details/$itemCode";
   }
 
-  // التحقق من كمية المخزون المتاحة - مصحح
+  // التحقق من كمية المخزون المتاحة
   static String checkStockQuantity(String itemCode, String warehouseCode) {
     return "$server/Stock/CheckQuantity?itemCode=$itemCode&warehouseCode=$warehouseCode";
   }
@@ -514,9 +647,7 @@ class ApiServices {
     return "$server/api/TransferApi/Cancel";
   }
 
-  // ==================== الدالة المفقودة - Headers مع Token ====================
-
-  /// Headers مع Bearer Token - الدالة المطلوبة
+  // Headers مع Bearer Token
   static Map<String, String> headersWithToken(String token) {
     return {
       'Accept': 'application/json',
@@ -525,17 +656,12 @@ class ApiServices {
     };
   }
 
-  // ==================== دوال مساعدة للتشخيص ====================
+  // ==================== الطرق المفقودة المصححة ====================
 
-  /// دالة لتجريب endpoint معين وإرجاع النتيجة
-  static String testEndpoint(String basePattern, String itemCode, {String? action}) {
-    action = action ?? 'GetItemUnits';
-    return basePattern.replaceAll('{action}', action).replaceAll('{itemCode}', itemCode);
-  }
-
-  /// دالة لتوليد endpoints محتملة بناءً على الأنماط المختلفة
+  /// دالة لتوليد endpoints محتملة بناءً على الأنماط المختلفة - مُصححة
   static List<String> generatePossibleEndpoints(String itemCode) {
     List<String> patterns = [
+      '$server/Uom/GetUoms?itemCode=${Uri.encodeComponent(itemCode)}', // الـ endpoint الصحيح
       '$server/Transfer/GetItemUnits/$itemCode',
       '$server/Transfer/Units/$itemCode',
       '$server/Transfer/GetUnits?itemCode=$itemCode',
@@ -549,6 +675,37 @@ class ApiServices {
     ];
 
     return patterns;
+  }
+
+  /// دالة للحصول على جميع الـ endpoints المحتملة للوحدات - مُصححة
+  static List<String> getAllUnitEndpoints(String itemCode) {
+    return [
+      getItemUnits(itemCode), // الـ endpoint الصحيح أولاً
+      '$server/Transfer/GetItemUnits/$itemCode',
+      '$server/Transfer/Units/$itemCode',
+      '$server/Transfer/GetUnits?itemCode=$itemCode',
+      '$server/Items/GetUnits/$itemCode',
+      '$server/Stock/GetItemUnits/$itemCode',
+      '$server/api/Transfer/GetItemUnits/$itemCode',
+      '$server/api/items/$itemCode/units',
+      '$server/Units/Get/$itemCode',
+    ];
+  }
+
+  /// دالة للحصول على الـ endpoint الأكثر احتمالاً للعمل
+  static String getPreferredUnitEndpoint(String itemCode) {
+    return getItemUnits(itemCode); // استخدام الـ endpoint الصحيح
+  }
+
+  /// دالة POST للوحدات
+  static String getItemUnitsPost() {
+    return "$server/Uom/GetUoms"; // للـ POST requests
+  }
+
+  /// دالة لاختبار endpoint معين
+  static String testEndpoint(String basePattern, String itemCode, {String? action}) {
+    action = action ?? 'GetUoms';
+    return basePattern.replaceAll('{action}', action).replaceAll('{itemCode}', itemCode);
   }
 }
 // class ApiServices {

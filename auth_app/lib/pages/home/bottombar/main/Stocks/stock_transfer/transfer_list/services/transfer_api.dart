@@ -5,7 +5,6 @@ import 'package:auth_app/services/api/post_get_api.dart';
 import 'package:auth_app/classes/shared_preference.dart';
 import 'package:auth_app/services/api_service.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
 
 class TransferApi {
   final PostGetPage postGetPage;
@@ -400,133 +399,21 @@ class TransferApi {
       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
     }
 
-    logMessage('Transfer', 'Getting units for item: $itemCode using website pattern');
+    logMessage('Transfer', 'Getting units for item: $itemCode');
 
-    // بناءً على الموقع، يبدو أن النظام يستخدم POST requests
+    // استخدام الـ endpoint الصحيح من الاستجابة المقدمة
+    String endpoint = "${ApiServices.server}/Uom/GetUoms?itemCode=${Uri.encodeComponent(itemCode)}";
 
-    // المحاولة الأولى: POST مع itemCode فقط
     try {
-      logMessage('Transfer', 'Trying POST Transfer/GetUnits with itemCode only');
-
-      var response = await handleEitherResult(
-        postGetPage.postDataWithToken(
-          "${ApiServices.server}/Transfer/GetUnits",
-          {'itemCode': itemCode.trim()},
-          token,
-        ),
+      return handleEitherResult(
+        postGetPage.getDataWithToken(endpoint, token),
         'Item Units Retrieved Successfully',
         'فشل في جلب وحدات الصنف',
       );
-
-      if (response['status'] == 'success' && response['data'] != null) {
-        logMessage('Transfer', 'Success with POST Transfer/GetUnits');
-        return response;
-      }
     } catch (e) {
-      logMessage('Transfer', 'POST Transfer/GetUnits failed: ${e.toString()}');
+      logMessage('Transfer', 'Error getting item units: ${e.toString()}');
+      return {'status': 'error', 'message': 'فشل في جلب وحدات الصنف: ${e.toString()}'};
     }
-
-    // المحاولة الثانية: POST مع transferId + itemCode (إذا كان متوفر)
-    try {
-      // محاولة الحصول على transferId من الـ controller
-      int? currentTransferId;
-      try {
-        var controller = Get.find<ProductManagementController>();
-        currentTransferId = controller.transferId.value;
-      } catch (e) {
-        logMessage('Transfer', 'Could not get transferId: ${e.toString()}');
-      }
-
-      if (currentTransferId != null) {
-        logMessage('Transfer', 'Trying POST with transferId: $currentTransferId');
-
-        var response = await handleEitherResult(
-          postGetPage.postDataWithToken(
-            "${ApiServices.server}/Transfer/GetUnits",
-            {
-              'transferId': currentTransferId,
-              'itemCode': itemCode.trim(),
-            },
-            token,
-          ),
-          'Item Units Retrieved Successfully',
-          'فشل في جلب وحدات الصنف',
-        );
-
-        if (response['status'] == 'success' && response['data'] != null) {
-          logMessage('Transfer', 'Success with POST Transfer/GetUnits + transferId');
-          return response;
-        }
-      }
-    } catch (e) {
-      logMessage('Transfer', 'POST with transferId failed: ${e.toString()}');
-    }
-
-    // المحاولة الثالثة: endpoints POST أخرى
-    List<String> postEndpoints = [
-      "${ApiServices.server}/Transfer/GetItemUnits",
-      "${ApiServices.server}/Transfer/Units",
-      "${ApiServices.server}/Transfer/GetItemUnits",
-    ];
-
-    for (String endpoint in postEndpoints) {
-      try {
-        logMessage('Transfer', 'Trying POST: $endpoint');
-
-        var response = await handleEitherResult(
-          postGetPage.postDataWithToken(
-            endpoint,
-            {'itemCode': itemCode.trim()},
-            token,
-          ),
-          'Item Units Retrieved Successfully',
-          'فشل في جلب وحدات الصنف',
-        );
-
-        if (response['status'] == 'success' && response['data'] != null) {
-          logMessage('Transfer', 'Success with POST: $endpoint');
-          return response;
-        }
-      } catch (e) {
-        logMessage('Transfer', 'POST $endpoint failed: ${e.toString()}');
-        continue;
-      }
-    }
-
-    // المحاولة الرابعة: GET requests (كبديل)
-    List<String> getEndpoints = [
-      "${ApiServices.server}/Transfer/GetUnits?itemCode=${Uri.encodeComponent(itemCode)}",
-      "${ApiServices.server}/Transfer/GetItemUnits?code=${Uri.encodeComponent(itemCode)}",
-      "${ApiServices.server}/Transfer/Units/${Uri.encodeComponent(itemCode)}",
-    ];
-
-    for (String endpoint in getEndpoints) {
-      try {
-        logMessage('Transfer', 'Trying GET: $endpoint');
-
-        var response = await handleEitherResult(
-          postGetPage.getDataWithToken(endpoint, token),
-          'Item Units Retrieved Successfully',
-          'فشل في جلب وحدات الصنف',
-        );
-
-        if (response['status'] == 'success' && response['data'] != null) {
-          logMessage('Transfer', 'Success with GET: $endpoint');
-          return response;
-        }
-      } catch (e) {
-        logMessage('Transfer', 'GET $endpoint failed: ${e.toString()}');
-        continue;
-      }
-    }
-
-    // فشل جميع المحاولات
-    logMessage('Transfer', 'All endpoints failed for item: $itemCode');
-    return {
-      'status': 'error',
-      'message':
-          'فشل في جلب وحدات الصنف من جميع الـ endpoints المحتملة. يرجى التحقق من الـ endpoint الصحيح في Developer Tools.'
-    };
   }
 
   Future<Map<String, dynamic>> testSpecificEndpoint(String itemCode, String endpoint,
