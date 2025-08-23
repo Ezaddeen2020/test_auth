@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:auth_app/classes/shared_preference.dart';
 import 'package:auth_app/functions/handling_data.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/product/model/uom_model.dart';
@@ -48,70 +50,10 @@ class ProductManagementController extends GetxController {
   @override
   void onClose() {
     searchController.dispose();
+    _searchTimer?.cancel(); // إضافة هذا السطر فقط
+
     super.onClose();
   }
-
-  /// جلب وحدات صنف معين بشكل ديناميكي
-  // Future<List<ItemUnit>> getItemUnits(String itemCode) async {
-  //   try {
-  //     // التحقق من وجود الوحدات في الذاكرة المؤقتة
-  //     if (itemUnitsCache.containsKey(itemCode)) {
-  //       logMessage('Transfer', 'Units loaded from cache for: $itemCode');
-  //       return itemUnitsCache[itemCode]!;
-  //     }
-
-  //     // جلب الوحدات من الخادم
-  //     logMessage('Transfer', 'Loading units from server for: $itemCode');
-  //     isLoadingUnits.value = true;
-
-  //     var response = await transferApi.getItemUnits(itemCode.trim());
-  //     logMessage('Transfer', 'Units API response: ${response.toString()}');
-
-  //     if (response['status'] == 'success') {
-  //       List<ItemUnit> units = [];
-
-  //       // تحويل البيانات إلى قائمة وحدات
-  //       if (response['data'] != null) {
-  //         var unitsData = response['data'];
-
-  //         // التعامل مع أنواع البيانات المختلفة
-  //         if (unitsData is List) {
-  //           units =
-  //               unitsData.map((unit) => ItemUnit.fromJson(unit as Map<String, dynamic>)).toList();
-  //         } else if (unitsData is Map) {
-  //           // إذا كانت البيانات Map واحد، نحوله إلى قائمة
-  //           units = [ItemUnit.fromJson(unitsData as Map<String, dynamic>)];
-  //         }
-
-  //         logMessage('Transfer', 'Parsed ${units.length} units for item: $itemCode');
-  //       }
-
-  //       // إذا لم تكن هناك وحدات، إنشاء وحدة افتراضية
-  //       if (units.isEmpty) {
-  //         logMessage('Transfer', 'No units found, creating default unit for: $itemCode');
-  //         units = _getDefaultUnits();
-  //       }
-
-  //       // حفظ في الذاكرة المؤقتة
-  //       itemUnitsCache[itemCode] = units;
-  //       return units;
-  //     } else {
-  //       logMessage('Transfer', 'API error: ${response['message']}');
-  //       // في حالة الفشل، إرجاع وحدات افتراضية
-  //       List<ItemUnit> defaultUnits = _getDefaultUnits();
-  //       itemUnitsCache[itemCode] = defaultUnits;
-  //       return defaultUnits;
-  //     }
-  //   } catch (e) {
-  //     logMessage('Transfer', 'Exception in getItemUnits: ${e.toString()}');
-  //     // في حالة الاستثناء، إرجاع وحدات افتراضية
-  //     List<ItemUnit> defaultUnits = _getDefaultUnits();
-  //     itemUnitsCache[itemCode] = defaultUnits;
-  //     return defaultUnits;
-  //   } finally {
-  //     isLoadingUnits.value = false;
-  //   }
-  // }
 
   Future<List<ItemUnit>> getItemUnits(String itemCode) async {
     try {
@@ -247,6 +189,17 @@ class ProductManagementController extends GetxController {
     );
   }
 
+  // تنظيف الـ cache من الإدخالات القديمة
+  void _cleanupOldCacheEntries() {
+    if (itemUnitsCache.length > 50) {
+      // تحديد حد أقصى
+      var keys = itemUnitsCache.keys.toList();
+      for (int i = 0; i < keys.length - 30; i++) {
+        itemUnitsCache.remove(keys[i]);
+      }
+    }
+  }
+
   /// endpoint بديل 3
   Future<Map<String, dynamic>> _tryAlternativeEndpoint3(String itemCode) async {
     return await handleEitherResult(
@@ -258,236 +211,6 @@ class ProductManagementController extends GetxController {
       'فشل في جلب وحدات الصنف',
     );
   }
-
-  // /// التحقق من صحة بيانات الوحدات المستلمة
-  // bool _validateUnitsData(List<ItemUnit> units) {
-  //   for (ItemUnit unit in units) {
-  //     // التحقق من وجود البيانات الأساسية
-  //     if (unit.uomCode.isEmpty || unit.uomName.isEmpty || unit.baseQty <= 0 || unit.uomEntry <= 0) {
-  //       return false;
-  //     }
-  //   }
-  //   return true;
-  // }
-
-  /// إرجاع وحدات افتراضية في حالة عدم توفر البيانات
-  // List<ItemUnit> _getDefaultUnits() {
-  //   return [
-  //     ItemUnit(
-  //       uomCode: 'حبة',
-  //       uomName: 'حبة',
-  //       baseQty: 1,
-  //       uomEntry: 1,
-  //       ugpEntry: 1,
-  //     ),
-  //     ItemUnit(
-  //       uomCode: 'شد12',
-  //       uomName: 'شد 12',
-  //       baseQty: 12,
-  //       uomEntry: 2,
-  //       ugpEntry: 1,
-  //     ),
-  //     ItemUnit(
-  //       uomCode: 'كرتون',
-  //       uomName: 'كرتون',
-  //       baseQty: 50,
-  //       uomEntry: 3,
-  //       ugpEntry: 1,
-  //     ),
-  //   ];
-  // }
-
-  /// عرض نافذة اختيار الوحدة لصنف معين
-  // Future<void> showUnitSelectionDialog(TransferLine line) async {
-  //   if (line.itemCode == null || line.itemCode!.isEmpty) {
-  //     Get.snackbar(
-  //       'خطأ',
-  //       'كود الصنف غير متوفر',
-  //       backgroundColor: Colors.red,
-  //       colorText: Colors.white,
-  //     );
-  //     return;
-  //   }
-
-  //   try {
-  //     // جلب وحدات الصنف
-  //     List<ItemUnit> units = await getItemUnits(line.itemCode!);
-
-  //     if (units.isEmpty) {
-  //       Get.snackbar(
-  //         'تنبيه',
-  //         'لا توجد وحدات متوفرة لهذا الصنف',
-  //         backgroundColor: Colors.orange,
-  //         colorText: Colors.white,
-  //       );
-  //       return;
-  //     }
-
-  //     // عرض النافذة
-  //     Get.dialog(
-  //       Dialog(
-  //         shape: RoundedRectangleBorder(
-  //           borderRadius: BorderRadius.circular(16),
-  //         ),
-  //         child: Container(
-  //           width: 400,
-  //           constraints: const BoxConstraints(maxHeight: 600),
-  //           padding: const EdgeInsets.all(24),
-  //           child: Column(
-  //             mainAxisSize: MainAxisSize.min,
-  //             children: [
-  //               // رأس النافذة
-  //               Row(
-  //                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
-  //                 children: [
-  //                   Expanded(
-  //                     child: Column(
-  //                       crossAxisAlignment: CrossAxisAlignment.start,
-  //                       children: [
-  //                         const Text(
-  //                           'اختيار الوحدة',
-  //                           style: TextStyle(
-  //                             fontSize: 20,
-  //                             fontWeight: FontWeight.bold,
-  //                           ),
-  //                         ),
-  //                         const SizedBox(height: 4),
-  //                         Text(
-  //                           'الصنف: ${line.itemCode}',
-  //                           style: TextStyle(
-  //                             fontSize: 14,
-  //                             color: Colors.grey[600],
-  //                           ),
-  //                         ),
-  //                       ],
-  //                     ),
-  //                   ),
-  //                   IconButton(
-  //                     onPressed: () => Get.back(),
-  //                     icon: const Icon(Icons.close),
-  //                     style: IconButton.styleFrom(
-  //                       backgroundColor: Colors.grey[100],
-  //                     ),
-  //                   ),
-  //                 ],
-  //               ),
-
-  //               const SizedBox(height: 24),
-
-  //               // قائمة الوحدات
-  //               Flexible(
-  //                 child: ListView.builder(
-  //                   shrinkWrap: true,
-  //                   itemCount: units.length,
-  //                   itemBuilder: (context, index) {
-  //                     final unit = units[index];
-  //                     final isSelected = unit.uomCode == line.uomCode;
-
-  //                     return Card(
-  //                       margin: const EdgeInsets.only(bottom: 12),
-  //                       elevation: isSelected ? 4 : 2,
-  //                       shape: RoundedRectangleBorder(
-  //                         borderRadius: BorderRadius.circular(12),
-  //                         side: BorderSide(
-  //                           color: isSelected ? Colors.blue : Colors.transparent,
-  //                           width: 2,
-  //                         ),
-  //                       ),
-  //                       child: InkWell(
-  //                         onTap: () {
-  //                           Get.back();
-  //                           updateProductUnit(
-  //                             line,
-  //                             unit.uomCode,
-  //                             unit.baseQty,
-  //                             unit.uomEntry,
-  //                           );
-  //                         },
-  //                         borderRadius: BorderRadius.circular(12),
-  //                         child: Container(
-  //                           padding: const EdgeInsets.all(16),
-  //                           child: Row(
-  //                             children: [
-  //                               // أيقونة الوحدة
-  //                               Container(
-  //                                 padding: const EdgeInsets.all(8),
-  //                                 decoration: BoxDecoration(
-  //                                   color: isSelected ? Colors.blue[50] : Colors.green[50],
-  //                                   borderRadius: BorderRadius.circular(8),
-  //                                 ),
-  //                                 child: Icon(
-  //                                   isSelected ? Icons.check_circle : Icons.check_circle_outline,
-  //                                   color: isSelected ? Colors.blue[600] : Colors.green[600],
-  //                                   size: 20,
-  //                                 ),
-  //                               ),
-
-  //                               const SizedBox(width: 16),
-
-  //                               // معلومات الوحدة
-  //                               Expanded(
-  //                                 child: Column(
-  //                                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                                   children: [
-  //                                     Text(
-  //                                       unit.uomName,
-  //                                       style: TextStyle(
-  //                                         fontSize: 16,
-  //                                         fontWeight: FontWeight.bold,
-  //                                         color: isSelected ? Colors.blue[700] : Colors.black87,
-  //                                       ),
-  //                                     ),
-  //                                     const SizedBox(height: 4),
-  //                                     Text(
-  //                                       'الكمية الأساسية: ${unit.baseQty}',
-  //                                       style: TextStyle(
-  //                                         fontSize: 14,
-  //                                         color: Colors.grey[600],
-  //                                       ),
-  //                                     ),
-  //                                   ],
-  //                                 ),
-  //                               ),
-
-  //                               // معرف الوحدة
-  //                               Container(
-  //                                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-  //                                 decoration: BoxDecoration(
-  //                                   color: isSelected ? Colors.blue[100] : Colors.grey[100],
-  //                                   borderRadius: BorderRadius.circular(20),
-  //                                 ),
-  //                                 child: Text(
-  //                                   '${unit.uomEntry}',
-  //                                   style: TextStyle(
-  //                                     fontSize: 12,
-  //                                     fontWeight: FontWeight.w500,
-  //                                     color: isSelected ? Colors.blue[700] : Colors.black87,
-  //                                   ),
-  //                                 ),
-  //                               ),
-  //                             ],
-  //                           ),
-  //                         ),
-  //                       ),
-  //                     );
-  //                   },
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-  //     );
-  //   } catch (e) {
-  //     logMessage('Transfer', 'Error in showUnitSelectionDialog: ${e.toString()}');
-  //     Get.snackbar(
-  //       'خطأ',
-  //       'فشل في عرض وحدات الصنف: ${e.toString()}',
-  //       backgroundColor: Colors.red,
-  //       colorText: Colors.white,
-  //     );
-  //   }
-  // }
 
   /// عرض نافذة اختيار الوحدة
   Future<void> showUnitSelectionDialog(TransferLine line) async {
@@ -519,119 +242,431 @@ class ProductManagementController extends GetxController {
       // ترتيب الوحدات حسب الكمية الأساسية
       List<ItemUnit> sortedUnits = List.from(units);
       sortedUnits.sort((a, b) => a.baseQty.compareTo(b.baseQty));
+      // Dialog الوحدات المتجاوب والديناميكي - استبدل به الكود في showUnitSelectionDialog
 
-      // عرض النافذة مطابقة للصورة
       Get.dialog(
         Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(16),
           ),
-          child: Container(
-            width: 700,
-            constraints: const BoxConstraints(maxHeight: 600),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // رأس النافذة
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.grey[100],
-                    borderRadius: const BorderRadius.only(
-                      topLeft: Radius.circular(8),
-                      topRight: Radius.circular(8),
+          elevation: 0,
+          backgroundColor: Colors.transparent,
+          insetPadding: const EdgeInsets.all(16), // هامش من جميع الجهات
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              // تحديد عرض الـ dialog حسب حجم الشاشة
+              double dialogWidth = constraints.maxWidth > 600 ? 600 : constraints.maxWidth - 32;
+
+              // تحديد الارتفاع الأقصى
+              double maxHeight = constraints.maxHeight * 0.8;
+
+              return Container(
+                width: dialogWidth,
+                constraints: BoxConstraints(
+                  maxHeight: maxHeight,
+                  minHeight: 300,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.1),
+                      spreadRadius: 0,
+                      blurRadius: 20,
+                      offset: const Offset(0, 10),
                     ),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'اختيار الوحدة - ${line.itemCode}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // رأس النافذة المحسن والمرن
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [Colors.blue[600]!, Colors.blue[700]!],
+                        ),
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(16),
+                          topRight: Radius.circular(16),
                         ),
                       ),
-                      IconButton(
-                        onPressed: () => Get.back(),
-                        icon: const Icon(Icons.close),
-                        iconSize: 20,
-                      ),
-                    ],
-                  ),
-                ),
-
-                // رأس الجدول
-                Container(
-                  color: Colors.grey[300],
-                  child: Table(
-                    columnWidths: const {
-                      0: FlexColumnWidth(1), // #
-                      1: FlexColumnWidth(2), // UomEntry
-                      2: FlexColumnWidth(3), // اسم الوحدة
-                      3: FlexColumnWidth(2), // الكمية الأساسية
-                      4: FlexColumnWidth(2), // الكمية
-                      5: FlexColumnWidth(1.5), // اختر
-                    },
-                    children: [
-                      TableRow(
+                      child: Row(
                         children: [
-                          _buildTableHeader('#'),
-                          _buildTableHeader('UomEntry'),
-                          _buildTableHeader('اسم الوحدة'),
-                          _buildTableHeader('الكمية الأساسية'),
-                          _buildTableHeader('الكمية'),
-                          _buildTableHeader('اختر'),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.straighten,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'اختيار الوحدة',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  line.itemCode ?? '',
+                                  style: TextStyle(
+                                    color: Colors.white.withOpacity(0.9),
+                                    fontSize: 12,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                          IconButton(
+                            onPressed: () => Get.back(),
+                            icon: const Icon(
+                              Icons.close,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                            constraints: const BoxConstraints(),
+                            padding: const EdgeInsets.all(4),
+                          ),
                         ],
                       ),
-                    ],
-                  ),
-                ),
-
-                // محتوى الجدول
-                Flexible(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey[300]!),
                     ),
-                    child: Table(
-                      columnWidths: const {
-                        0: FlexColumnWidth(1), // #
-                        1: FlexColumnWidth(2), // UomEntry
-                        2: FlexColumnWidth(3), // اسم الوحدة
-                        3: FlexColumnWidth(2), // الكمية الأساسية
-                        4: FlexColumnWidth(2), // الكمية
-                        5: FlexColumnWidth(1.5), // اختر
-                      },
-                      children: sortedUnits.asMap().entries.map((entry) {
-                        int index = entry.key;
-                        ItemUnit unit = entry.value;
-                        bool isSelected = unit.uomName == line.uomCode;
 
-                        return TableRow(
-                          decoration: BoxDecoration(
-                            color: isSelected
-                                ? Colors.blue[50]
-                                : (index % 2 == 0 ? Colors.white : Colors.grey[50]),
+                    // محتوى قائمة الوحدات - تصميم بديل للجدول
+                    Expanded(
+                      child: Container(
+                        margin: const EdgeInsets.all(12),
+                        child: ListView.builder(
+                          itemCount: sortedUnits.length,
+                          itemBuilder: (context, index) {
+                            ItemUnit unit = sortedUnits[index];
+                            bool isSelected = unit.uomName == line.uomCode;
+
+                            return Container(
+                              margin: const EdgeInsets.only(bottom: 8),
+                              decoration: BoxDecoration(
+                                color: isSelected ? Colors.blue[50] : Colors.white,
+                                border: Border.all(
+                                  color: isSelected ? Colors.blue[300]! : Colors.grey[300]!,
+                                  width: isSelected ? 2 : 1,
+                                ),
+                                borderRadius: BorderRadius.circular(12),
+                                boxShadow: [
+                                  if (isSelected)
+                                    BoxShadow(
+                                      color: Colors.blue.withOpacity(0.1),
+                                      spreadRadius: 1,
+                                      blurRadius: 4,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                ],
+                              ),
+                              child: InkWell(
+                                onTap: () {
+                                  Get.back();
+                                  updateProductUnit(
+                                    line,
+                                    unit.uomName,
+                                    unit.baseQty,
+                                    unit.uomEntry,
+                                  );
+                                },
+                                borderRadius: BorderRadius.circular(12),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(16),
+                                  child: Row(
+                                    children: [
+                                      // رقم تسلسلي
+                                      Container(
+                                        width: 32,
+                                        height: 32,
+                                        decoration: BoxDecoration(
+                                          color: isSelected ? Colors.blue[600] : Colors.grey[400],
+                                          borderRadius: BorderRadius.circular(16),
+                                        ),
+                                        child: Center(
+                                          child: Text(
+                                            '${index + 1}',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+
+                                      const SizedBox(width: 16),
+
+                                      // معلومات الوحدة
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            // اسم الوحدة
+                                            Text(
+                                              unit.uomName,
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                fontWeight: FontWeight.bold,
+                                                color:
+                                                    isSelected ? Colors.blue[700] : Colors.black87,
+                                              ),
+                                            ),
+
+                                            const SizedBox(height: 4),
+
+                                            // معلومات إضافية في صف واحد
+                                            Wrap(
+                                              spacing: 12,
+                                              runSpacing: 4,
+                                              children: [
+                                                _buildInfoChip(
+                                                  'Entry: ${unit.uomEntry}',
+                                                  Icons.numbers,
+                                                  Colors.grey[600]!,
+                                                ),
+                                                _buildInfoChip(
+                                                  'الكمية: ${unit.baseQty}',
+                                                  Icons.inventory,
+                                                  Colors.green[600]!,
+                                                ),
+                                              ],
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+
+                                      // زر الحالة
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 12,
+                                          vertical: 6,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: isSelected ? Colors.blue[600] : Colors.green[500],
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Icon(
+                                              isSelected
+                                                  ? Icons.check_circle
+                                                  : Icons.radio_button_unchecked,
+                                              color: Colors.white,
+                                              size: 16,
+                                            ),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              isSelected ? 'محدد' : 'اختيار',
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                    ),
+
+                    // تذييل مع معلومات
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.grey[50],
+                        borderRadius: const BorderRadius.only(
+                          bottomLeft: Radius.circular(16),
+                          bottomRight: Radius.circular(16),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.info_outline,
+                                color: Colors.blue[600],
+                                size: 16,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'انقر على الوحدة لاختيارها',
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
                           ),
-                          children: [
-                            _buildTableCell((index + 1).toString()),
-                            _buildTableCell(unit.uomEntry.toString()),
-                            _buildTableCell(unit.uomName),
-                            _buildTableCell(unit.baseQty.toString()),
-                            _buildTableCell(unit.baseQty.toString()),
-                            _buildSelectButton(unit, line, isSelected),
-                          ],
-                        );
-                      }).toList(),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blue[100],
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Text(
+                              '${sortedUnits.length} وحدة',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.blue[700],
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
-            ),
+              );
+            },
           ),
         ),
       );
+
+      // عرض النافذة مطابقة للصورة
+      // Get.dialog(
+      //   Dialog(
+      //     shape: RoundedRectangleBorder(
+      //       borderRadius: BorderRadius.circular(8),
+      //     ),
+      //     child: Container(
+      //       width: 700,
+      //       constraints: const BoxConstraints(maxHeight: 600),
+      //       child: Column(
+      //         mainAxisSize: MainAxisSize.min,
+      //         children: [
+      //           // رأس النافذة
+      //           Container(
+      //             padding: const EdgeInsets.all(16),
+      //             decoration: BoxDecoration(
+      //               color: Colors.grey[100],
+      //               borderRadius: const BorderRadius.only(
+      //                 topLeft: Radius.circular(8),
+      //                 topRight: Radius.circular(8),
+      //               ),
+      //             ),
+      //             child: Row(
+      //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      //               children: [
+      //                 Text(
+      //                   'اختيار الوحدة - ${line.itemCode}',
+      //                   style: const TextStyle(
+      //                     fontSize: 18,
+      //                     fontWeight: FontWeight.bold,
+      //                   ),
+      //                 ),
+      //                 IconButton(
+      //                   onPressed: () => Get.back(),
+      //                   icon: const Icon(Icons.close),
+      //                   iconSize: 20,
+      //                 ),
+      //               ],
+      //             ),
+      //           ),
+
+      //           // رأس الجدول
+      //           Container(
+      //             color: Colors.grey[300],
+      //             child: Table(
+      //               columnWidths: const {
+      //                 0: FlexColumnWidth(1), // #
+      //                 1: FlexColumnWidth(2), // UomEntry
+      //                 2: FlexColumnWidth(3), // اسم الوحدة
+      //                 3: FlexColumnWidth(2), // الكمية الأساسية
+      //                 4: FlexColumnWidth(2), // الكمية
+      //                 5: FlexColumnWidth(1.5), // اختر
+      //               },
+      //               children: [
+      //                 TableRow(
+      //                   children: [
+      //                     _buildTableHeader('#'),
+      //                     _buildTableHeader('UomEntry'),
+      //                     _buildTableHeader('اسم الوحدة'),
+      //                     _buildTableHeader('الكمية الأساسية'),
+      //                     _buildTableHeader('الكمية'),
+      //                     _buildTableHeader('اختر'),
+      //                   ],
+      //                 ),
+      //               ],
+      //             ),
+      //           ),
+
+      //           // محتوى الجدول
+      //           Flexible(
+      //             child: Container(
+      //               decoration: BoxDecoration(
+      //                 border: Border.all(color: Colors.grey[300]!),
+      //               ),
+      //               child: Table(
+      //                 columnWidths: const {
+      //                   0: FlexColumnWidth(1), // #
+      //                   1: FlexColumnWidth(2), // UomEntry
+      //                   2: FlexColumnWidth(3), // اسم الوحدة
+      //                   3: FlexColumnWidth(2), // الكمية الأساسية
+      //                   4: FlexColumnWidth(2), // الكمية
+      //                   5: FlexColumnWidth(1.5), // اختر
+      //                 },
+      //                 children: sortedUnits.asMap().entries.map((entry) {
+      //                   int index = entry.key;
+      //                   ItemUnit unit = entry.value;
+      //                   bool isSelected = unit.uomName == line.uomCode;
+
+      //                   return TableRow(
+      //                     decoration: BoxDecoration(
+      //                       color: isSelected
+      //                           ? Colors.blue[50]
+      //                           : (index % 2 == 0 ? Colors.white : Colors.grey[50]),
+      //                     ),
+      //                     children: [
+      //                       _buildTableCell((index + 1).toString()),
+      //                       _buildTableCell(unit.uomEntry.toString()),
+      //                       _buildTableCell(unit.uomName),
+      //                       _buildTableCell(unit.baseQty.toString()),
+      //                       _buildTableCell(unit.baseQty.toString()),
+      //                       _buildSelectButton(unit, line, isSelected),
+      //                     ],
+      //                   );
+      //                 }).toList(),
+      //               ),
+      //             ),
+      //           ),
+      //         ],
+      //       ),
+      //     ),
+      //   ),
+      // );
     } catch (e) {
       logMessage('Transfer', 'Error in showUnitSelectionDialog: ${e.toString()}');
       Get.snackbar(
@@ -644,68 +679,187 @@ class ProductManagementController extends GetxController {
     }
   }
 
-  // دالة مساعدة لبناء رأس الجدول
-  Widget _buildTableHeader(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontWeight: FontWeight.bold,
-          fontSize: 14,
-          color: Colors.black87,
+  Widget _buildInfoChip(String text, IconData icon, Color color) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 12,
+          color: color,
         ),
-        textAlign: TextAlign.center,
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: TextStyle(
+            fontSize: 11,
+            color: color,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
+  // دالة مساعدة لبناء رأس الجدول
+  // Widget _buildTableHeader(String text) {
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+  //     child: Text(
+  //       text,
+  //       style: const TextStyle(
+  //         fontWeight: FontWeight.bold,
+  //         fontSize: 14,
+  //         color: Colors.black87,
+  //       ),
+  //       textAlign: TextAlign.center,
+  //     ),
+  //   );
+  // }
+
+// Widget محسن لرأس الجدول
+  Widget _buildEnhancedTableHeader(String text, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 14,
+            color: Colors.grey[600],
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              text,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                color: Colors.grey[700],
+              ),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+        ],
       ),
     );
   }
 
 // دالة مساعدة لبناء خلايا الجدول
-  Widget _buildTableCell(String text) {
+  // Widget _buildTableCell(String text) {
+  //   return Container(
+  //     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+  //     decoration: BoxDecoration(
+  //       border: Border(
+  //         right: BorderSide(color: Colors.grey[300]!, width: 0.5),
+  //         bottom: BorderSide(color: Colors.grey[300]!, width: 0.5),
+  //       ),
+  //     ),
+  //     child: Text(
+  //       text,
+  //       style: const TextStyle(fontSize: 14),
+  //       textAlign: TextAlign.center,
+  //     ),
+  //   );
+  // }
+
+// Widget محسن لخلايا الجدول
+  Widget _buildEnhancedTableCell(String text, {bool isNumber = false, bool isSelected = false}) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-      decoration: BoxDecoration(
-        border: Border(
-          right: BorderSide(color: Colors.grey[300]!, width: 0.5),
-          bottom: BorderSide(color: Colors.grey[300]!, width: 0.5),
-        ),
-      ),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 14),
+        style: TextStyle(
+          fontSize: isNumber ? 13 : 14,
+          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+          color: isSelected ? Colors.blue[700] : Colors.black87,
+        ),
         textAlign: TextAlign.center,
+        overflow: TextOverflow.ellipsis,
       ),
     );
   }
 
   // دالة مساعدة لبناء زر الاختيار
-  Widget _buildSelectButton(ItemUnit unit, TransferLine line, bool isSelected) {
+  // Widget _buildSelectButton(ItemUnit unit, TransferLine line, bool isSelected) {
+  //   return Container(
+  //     padding: const EdgeInsets.all(8),
+  //     decoration: BoxDecoration(
+  //       border: Border(
+  //         bottom: BorderSide(color: Colors.grey[300]!, width: 0.5),
+  //       ),
+  //     ),
+  //     child: Center(
+  //       child: ElevatedButton(
+  //         onPressed: () {
+  //           Get.back();
+  //           updateProductUnit(
+  //             line,
+  //             unit.uomName, // استخدام uomName كـ uomCode
+  //             unit.baseQty,
+  //             unit.uomEntry,
+  //           );
+  //         },
+  //         style: ElevatedButton.styleFrom(
+  //           backgroundColor: isSelected ? Colors.blue : Colors.green,
+  //           foregroundColor: Colors.white,
+  //           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+  //           minimumSize: const Size(80, 32),
+  //           textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+  //         ),
+  //         child: Text(isSelected ? 'محدد' : 'اختيار'),
+  //       ),
+  //     ),
+  //   );
+  // }
+
+  Widget _buildEnhancedSelectButton(ItemUnit unit, TransferLine line, bool isSelected) {
     return Container(
       padding: const EdgeInsets.all(8),
-      decoration: BoxDecoration(
-        border: Border(
-          bottom: BorderSide(color: Colors.grey[300]!, width: 0.5),
-        ),
-      ),
       child: Center(
-        child: ElevatedButton(
-          onPressed: () {
-            Get.back();
-            updateProductUnit(
-              line,
-              unit.uomName, // استخدام uomName كـ uomCode
-              unit.baseQty,
-              unit.uomEntry,
-            );
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: isSelected ? Colors.blue : Colors.green,
-            foregroundColor: Colors.white,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            minimumSize: const Size(80, 32),
-            textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          child: ElevatedButton(
+            onPressed: () {
+              Get.back();
+              updateProductUnit(
+                line,
+                unit.uomName,
+                unit.baseQty,
+                unit.uomEntry,
+              );
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: isSelected ? Colors.blue[600] : Colors.green[500],
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              minimumSize: const Size(70, 36),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              elevation: isSelected ? 2 : 1,
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  isSelected ? Icons.check : Icons.touch_app,
+                  size: 14,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  isSelected ? 'محدد' : 'اختيار',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
           ),
-          child: Text(isSelected ? 'محدد' : 'اختيار'),
         ),
       ),
     );
@@ -754,56 +908,6 @@ class ProductManagementController extends GetxController {
       isLoading.value = false;
     }
   }
-
-  // تحديث وحدة المنتج
-  // void updateProductUnit(TransferLine line, String newUnitCode, int newBaseQty, int newUomEntry) {
-  //   try {
-  //     int index = transferLines
-  //         .indexWhere((item) => item.lineNum == line.lineNum && item.itemCode == line.itemCode);
-
-  //     if (index != -1) {
-  //       // إنشاء سطر محدث بالوحدة الجديدة
-  //       TransferLine updatedLine = TransferLine(
-  //         docEntry: line.docEntry,
-  //         lineNum: line.lineNum,
-  //         itemCode: line.itemCode,
-  //         description: line.description,
-  //         quantity: line.quantity,
-  //         price: line.price,
-  //         lineTotal: line.lineTotal,
-  //         uomCode: newUnitCode,
-  //         uomCode2: line.uomCode2,
-  //         invQty: line.invQty,
-  //         baseQty1: newBaseQty,
-  //         ugpEntry: line.ugpEntry,
-  //         uomEntry: newUomEntry,
-  //       );
-
-  //       transferLines[index] = updatedLine;
-
-  //       // تتبع التغيير
-  //       _trackLineChange(updatedLine);
-
-  //       _applyFilter();
-
-  //       Get.snackbar(
-  //         'تم التحديث',
-  //         'تم تغيير الوحدة إلى $newUnitCode',
-  //         backgroundColor: Colors.green,
-  //         colorText: Colors.white,
-  //         duration: const Duration(seconds: 2),
-  //       );
-  //     }
-  //   } catch (e) {
-  //     logMessage('Transfer', 'Error in updateProductUnit: ${e.toString()}');
-  //     Get.snackbar(
-  //       'خطأ',
-  //       'فشل في تحديث الوحدة: ${e.toString()}',
-  //       backgroundColor: Colors.red,
-  //       colorText: Colors.white,
-  //     );
-  //   }
-  // }
 
   // باقي الدوال الموجودة...
   void updateProductUnit(TransferLine line, String newUnitCode, int newBaseQty, int newUomEntry) {
@@ -855,8 +959,20 @@ class ProductManagementController extends GetxController {
     }
   }
 
+// إضافة دالة مساعدة دون تغيير الدوال الموجودة
+  bool _isValidQuantity(double? quantity) {
+    if (quantity == null) return false;
+    if (quantity < 0) return false;
+    if (quantity > 999999) return false;
+    return true;
+  }
+
   // تحديث كمية المنتج
   void updateProductQuantity(TransferLine line, double newQuantity) {
+    if (!_isValidQuantity(newQuantity)) {
+      Get.snackbar('خطأ', 'قيمة الكمية غير صالحة');
+      return;
+    }
     try {
       int index = transferLines
           .indexWhere((item) => item.lineNum == line.lineNum && item.itemCode == line.itemCode);
@@ -905,28 +1021,33 @@ class ProductManagementController extends GetxController {
     deletedLines.clear();
   }
 
-  void updateSearch(String query) {
-    searchQuery.value = query;
-    _applyFilter();
+  // void updateSearch(String query) {
+  //   searchQuery.value = query;
+  //   _applyFilter();
+  // }
+
+  // إضافة دالة مساعدة للـ error handling
+  void _showErrorSnackbar(String title, String message, {Exception? exception}) {
+    String fullMessage = exception != null ? '$message: ${exception.toString()}' : message;
+    Get.snackbar(
+      title,
+      fullMessage,
+      backgroundColor: Colors.red,
+      colorText: Colors.white,
+      duration: const Duration(seconds: 3),
+    );
   }
 
-  // void _applyFilter() {
-  //   if (transferLines.isEmpty) {
-  //     filteredLines.clear();
-  //     return;
-  //   }
+  Timer? _searchTimer;
 
-  //   if (searchQuery.value.isEmpty) {
-  //     filteredLines.value = List.from(transferLines);
-  //   } else {
-  //     String query = searchQuery.value.toLowerCase();
-  //     filteredLines.value = transferLines.where((line) {
-  //       bool matchesItemCode = line.itemCode?.toLowerCase().contains(query) ?? false;
-  //       bool matchesDescription = line.description?.toLowerCase().contains(query) ?? false;
-  //       return matchesItemCode || matchesDescription;
-  //     }).toList();
-  //   }
-  // }
+  // تعديل دالة موجودة دون تغيير signature
+  void updateSearch(String query) {
+    _searchTimer?.cancel();
+    _searchTimer = Timer(const Duration(milliseconds: 300), () {
+      searchQuery.value = query;
+      _applyFilter();
+    });
+  }
 
   void _applyFilter() {
     if (transferLines.isEmpty) {
@@ -1473,49 +1594,3 @@ class ProductManagementController extends GetxController {
     print('[$tag] $message');
   }
 }
-
-/// نموذج بيانات للوحدة
-// class ItemUnit {
-//   final String uomCode;
-//   final String uomName;
-//   final int baseQty;
-//   final int uomEntry;
-//   final int ugpEntry;
-//   final String? description;
-
-//   ItemUnit({
-//     required this.uomCode,
-//     required this.uomName,
-//     required this.baseQty,
-//     required this.uomEntry,
-//     required this.ugpEntry,
-//     this.description,
-//   });
-
-//   factory ItemUnit.fromJson(Map<String, dynamic> json) {
-//     return ItemUnit(
-//       uomCode: json['uomCode']?.toString() ?? '',
-//       uomName: json['uomName']?.toString() ?? json['uomCode']?.toString() ?? '',
-//       baseQty: json['baseQty']?.toInt() ?? 1,
-//       uomEntry: json['uomEntry']?.toInt() ?? 1,
-//       ugpEntry: json['ugpEntry']?.toInt() ?? 1,
-//       description: json['description']?.toString(),
-//     );
-//   }
-
-//   Map<String, dynamic> toJson() {
-//     return {
-//       'uomCode': uomCode,
-//       'uomName': uomName,
-//       'baseQty': baseQty,
-//       'uomEntry': uomEntry,
-//       'ugpEntry': ugpEntry,
-//       'description': description,
-//     };
-//   }
-
-//   @override
-//   String toString() {
-//     return 'ItemUnit{uomCode: $uomCode, uomName: $uomName, baseQty: $baseQty}';
-//   }
-// }

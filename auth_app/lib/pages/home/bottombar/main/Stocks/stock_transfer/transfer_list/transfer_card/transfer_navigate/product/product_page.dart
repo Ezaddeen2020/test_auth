@@ -337,8 +337,12 @@ class ProductManagementScreen extends StatelessWidget {
 
   Widget _buildProductCardsList(ProductManagementController controller) {
     return ListView.builder(
+      key: const PageStorageKey<String>('products_list'), // للاحتفاظ بالـ scroll position
+
       padding: const EdgeInsets.all(16),
       itemCount: controller.filteredLines.length,
+      addAutomaticKeepAlives: false, // توفير ذاكرة
+      addRepaintBoundaries: true, // تحسين الرسم
       itemBuilder: (context, index) {
         final line = controller.filteredLines[index];
         return _buildProductCard(line, index + 1, controller);
@@ -611,11 +615,25 @@ class ProductManagementScreen extends StatelessWidget {
   // الحل النهائي لحقل الكمية - منع عكس الأرقام
   Widget _buildEditableQuantityField(
       dynamic line, ProductManagementController controller, bool isDisabled) {
+    // إنشاء controller محلي مع قيمة محدثة
+    // final TextEditingController quantityController =
+    //     TextEditingController(text: line.quantity?.toStringAsFixed(0) ?? '0');
+
+    // التنظيف عند إعادة البناء
+    // WidgetsBinding.instance.addPostFrameCallback((_) {
+    //   if (!quantityController.hasListeners) {
+    //     quantityController.addListener(() {
+    //       // منع الحلقة اللا نهائية
+    //     });
+    //   }
+    // });
     return Container(
       height: 48,
       child: TextFormField(
         // استخدام initialValue بدلاً من controller لتجنب مشكلة عكس الأرقام
         initialValue: line.quantity?.toStringAsFixed(0) ?? '0',
+        // controller: quantityController, // استخدام controller بدلاً من initialValue
+
         enabled: !isDisabled,
         keyboardType: TextInputType.number,
         textAlign: TextAlign.center,
@@ -728,12 +746,12 @@ class ProductManagementScreen extends StatelessWidget {
                   if (isLoadingCurrentItem) {
                     return Row(
                       children: [
-                        SizedBox(
+                        const SizedBox(
                           width: 16,
                           height: 16,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            color: Colors.blue[600],
+                            color: Color.fromARGB(255, 0, 13, 23),
                           ),
                         ),
                         const SizedBox(width: 8),

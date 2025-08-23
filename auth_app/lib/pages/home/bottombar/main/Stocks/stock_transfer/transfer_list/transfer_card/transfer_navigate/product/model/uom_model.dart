@@ -14,7 +14,7 @@ class UomModel {
     return UomModel(
       uomEntry: json['uomEntry'] ?? 0,
       uomName: json['uomName']?.toString().trim() ?? '',
-      baseQty: _parseDouble(json['baseQty']) ?? 1.0,
+      baseQty: _parseDouble(json['baseQty']),
     );
   }
 
