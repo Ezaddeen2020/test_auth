@@ -358,12 +358,12 @@ class SignUpPage extends StatelessWidget {
                   const SizedBox(height: 32),
 
                   // Enhanced Sign Up Button
-                  Obx(() => _buildEnhancedButton(
-                        text: 'إنشاء حساب',
-                        onPressed: authController.signUp,
-                        isLoading: authController.isLoading.value,
-                        isPrimary: true,
-                      )),
+                  // Obx(() => _buildEnhancedButton(
+                  //       text: 'إنشاء حساب',
+                  //       // onPressed: authController.signUp,
+                  //       isLoading: authController.isLoading.value,
+                  //       isPrimary: true,
+                  //     )),
 
                   const SizedBox(height: 24),
 

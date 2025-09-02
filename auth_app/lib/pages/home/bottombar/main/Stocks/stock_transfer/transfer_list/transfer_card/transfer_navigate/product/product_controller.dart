@@ -37,8 +37,8 @@ class ProductManagementController extends GetxController {
   // Track changes
   var hasUnsavedChanges = false.obs;
   var modifiedLines = <int, TransferLine>{}.obs;
-  var newLines = <TransferLine>[].obs;
   var deletedLines = <int>[].obs;
+  var newLines = <TransferLine>[].obs;
 
   @override
   void onInit() {
@@ -554,119 +554,6 @@ class ProductManagementController extends GetxController {
           ),
         ),
       );
-
-      // عرض النافذة مطابقة للصورة
-      // Get.dialog(
-      //   Dialog(
-      //     shape: RoundedRectangleBorder(
-      //       borderRadius: BorderRadius.circular(8),
-      //     ),
-      //     child: Container(
-      //       width: 700,
-      //       constraints: const BoxConstraints(maxHeight: 600),
-      //       child: Column(
-      //         mainAxisSize: MainAxisSize.min,
-      //         children: [
-      //           // رأس النافذة
-      //           Container(
-      //             padding: const EdgeInsets.all(16),
-      //             decoration: BoxDecoration(
-      //               color: Colors.grey[100],
-      //               borderRadius: const BorderRadius.only(
-      //                 topLeft: Radius.circular(8),
-      //                 topRight: Radius.circular(8),
-      //               ),
-      //             ),
-      //             child: Row(
-      //               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      //               children: [
-      //                 Text(
-      //                   'اختيار الوحدة - ${line.itemCode}',
-      //                   style: const TextStyle(
-      //                     fontSize: 18,
-      //                     fontWeight: FontWeight.bold,
-      //                   ),
-      //                 ),
-      //                 IconButton(
-      //                   onPressed: () => Get.back(),
-      //                   icon: const Icon(Icons.close),
-      //                   iconSize: 20,
-      //                 ),
-      //               ],
-      //             ),
-      //           ),
-
-      //           // رأس الجدول
-      //           Container(
-      //             color: Colors.grey[300],
-      //             child: Table(
-      //               columnWidths: const {
-      //                 0: FlexColumnWidth(1), // #
-      //                 1: FlexColumnWidth(2), // UomEntry
-      //                 2: FlexColumnWidth(3), // اسم الوحدة
-      //                 3: FlexColumnWidth(2), // الكمية الأساسية
-      //                 4: FlexColumnWidth(2), // الكمية
-      //                 5: FlexColumnWidth(1.5), // اختر
-      //               },
-      //               children: [
-      //                 TableRow(
-      //                   children: [
-      //                     _buildTableHeader('#'),
-      //                     _buildTableHeader('UomEntry'),
-      //                     _buildTableHeader('اسم الوحدة'),
-      //                     _buildTableHeader('الكمية الأساسية'),
-      //                     _buildTableHeader('الكمية'),
-      //                     _buildTableHeader('اختر'),
-      //                   ],
-      //                 ),
-      //               ],
-      //             ),
-      //           ),
-
-      //           // محتوى الجدول
-      //           Flexible(
-      //             child: Container(
-      //               decoration: BoxDecoration(
-      //                 border: Border.all(color: Colors.grey[300]!),
-      //               ),
-      //               child: Table(
-      //                 columnWidths: const {
-      //                   0: FlexColumnWidth(1), // #
-      //                   1: FlexColumnWidth(2), // UomEntry
-      //                   2: FlexColumnWidth(3), // اسم الوحدة
-      //                   3: FlexColumnWidth(2), // الكمية الأساسية
-      //                   4: FlexColumnWidth(2), // الكمية
-      //                   5: FlexColumnWidth(1.5), // اختر
-      //                 },
-      //                 children: sortedUnits.asMap().entries.map((entry) {
-      //                   int index = entry.key;
-      //                   ItemUnit unit = entry.value;
-      //                   bool isSelected = unit.uomName == line.uomCode;
-
-      //                   return TableRow(
-      //                     decoration: BoxDecoration(
-      //                       color: isSelected
-      //                           ? Colors.blue[50]
-      //                           : (index % 2 == 0 ? Colors.white : Colors.grey[50]),
-      //                     ),
-      //                     children: [
-      //                       _buildTableCell((index + 1).toString()),
-      //                       _buildTableCell(unit.uomEntry.toString()),
-      //                       _buildTableCell(unit.uomName),
-      //                       _buildTableCell(unit.baseQty.toString()),
-      //                       _buildTableCell(unit.baseQty.toString()),
-      //                       _buildSelectButton(unit, line, isSelected),
-      //                     ],
-      //                   );
-      //                 }).toList(),
-      //               ),
-      //             ),
-      //           ),
-      //         ],
-      //       ),
-      //     ),
-      //   ),
-      // );
     } catch (e) {
       logMessage('Transfer', 'Error in showUnitSelectionDialog: ${e.toString()}');
       Get.snackbar(
@@ -701,22 +588,6 @@ class ProductManagementController extends GetxController {
     );
   }
 
-  // دالة مساعدة لبناء رأس الجدول
-  // Widget _buildTableHeader(String text) {
-  //   return Container(
-  //     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-  //     child: Text(
-  //       text,
-  //       style: const TextStyle(
-  //         fontWeight: FontWeight.bold,
-  //         fontSize: 14,
-  //         color: Colors.black87,
-  //       ),
-  //       textAlign: TextAlign.center,
-  //     ),
-  //   );
-  // }
-
 // Widget محسن لرأس الجدول
   Widget _buildEnhancedTableHeader(String text, IconData icon) {
     return Container(
@@ -748,24 +619,6 @@ class ProductManagementController extends GetxController {
     );
   }
 
-// دالة مساعدة لبناء خلايا الجدول
-  // Widget _buildTableCell(String text) {
-  //   return Container(
-  //     padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-  //     decoration: BoxDecoration(
-  //       border: Border(
-  //         right: BorderSide(color: Colors.grey[300]!, width: 0.5),
-  //         bottom: BorderSide(color: Colors.grey[300]!, width: 0.5),
-  //       ),
-  //     ),
-  //     child: Text(
-  //       text,
-  //       style: const TextStyle(fontSize: 14),
-  //       textAlign: TextAlign.center,
-  //     ),
-  //   );
-  // }
-
 // Widget محسن لخلايا الجدول
   Widget _buildEnhancedTableCell(String text, {bool isNumber = false, bool isSelected = false}) {
     return Container(
@@ -782,39 +635,6 @@ class ProductManagementController extends GetxController {
       ),
     );
   }
-
-  // دالة مساعدة لبناء زر الاختيار
-  // Widget _buildSelectButton(ItemUnit unit, TransferLine line, bool isSelected) {
-  //   return Container(
-  //     padding: const EdgeInsets.all(8),
-  //     decoration: BoxDecoration(
-  //       border: Border(
-  //         bottom: BorderSide(color: Colors.grey[300]!, width: 0.5),
-  //       ),
-  //     ),
-  //     child: Center(
-  //       child: ElevatedButton(
-  //         onPressed: () {
-  //           Get.back();
-  //           updateProductUnit(
-  //             line,
-  //             unit.uomName, // استخدام uomName كـ uomCode
-  //             unit.baseQty,
-  //             unit.uomEntry,
-  //           );
-  //         },
-  //         style: ElevatedButton.styleFrom(
-  //           backgroundColor: isSelected ? Colors.blue : Colors.green,
-  //           foregroundColor: Colors.white,
-  //           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-  //           minimumSize: const Size(80, 32),
-  //           textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
-  //         ),
-  //         child: Text(isSelected ? 'محدد' : 'اختيار'),
-  //       ),
-  //     ),
-  //   );
-  // }
 
   Widget _buildEnhancedSelectButton(ItemUnit unit, TransferLine line, bool isSelected) {
     return Container(
@@ -1019,23 +839,6 @@ class ProductManagementController extends GetxController {
     modifiedLines.clear();
     newLines.clear();
     deletedLines.clear();
-  }
-
-  // void updateSearch(String query) {
-  //   searchQuery.value = query;
-  //   _applyFilter();
-  // }
-
-  // إضافة دالة مساعدة للـ error handling
-  void _showErrorSnackbar(String title, String message, {Exception? exception}) {
-    String fullMessage = exception != null ? '$message: ${exception.toString()}' : message;
-    Get.snackbar(
-      title,
-      fullMessage,
-      backgroundColor: Colors.red,
-      colorText: Colors.white,
-      duration: const Duration(seconds: 3),
-    );
   }
 
   Timer? _searchTimer;
@@ -1255,30 +1058,97 @@ class ProductManagementController extends GetxController {
   }
 
   // حذف منتج
+  // void deleteProduct(TransferLine line) {
+  //   try {
+  //     // إزالة من القائمة الرئيسية
+  //     transferLines
+  //         .removeWhere((item) => item.lineNum == line.lineNum && item.itemCode == line.itemCode);
+
+  //     // تتبع الحذف
+  //     if (line.lineNum != null && line.lineNum! > 0) {
+  //       // إذا كان سطر موجود في الخادم
+  //       deletedLines.add(line.lineNum!);
+  //       hasUnsavedChanges.value = true;
+  //     } else {
+  //       // إذا كان سطر جديد لم يُحفظ بعد
+  //       newLines.removeWhere((newLine) => newLine.itemCode == line.itemCode);
+  //     }
+
+  //     _applyFilter();
+
+  //     Get.snackbar(
+  //       'نجح',
+  //       'تم حذف المنتج بنجاح',
+  //       backgroundColor: Colors.green,
+  //       colorText: Colors.white,
+  //     );
+  //   } catch (e) {
+  //     logMessage('Transfer', 'Error in deleteProduct: ${e.toString()}');
+  //     Get.snackbar(
+  //       'خطأ',
+  //       'فشل في حذف المنتج: ${e.toString()}',
+  //       backgroundColor: Colors.red,
+  //       colorText: Colors.white,
+  //     );
+  //   }
+  // }
+
   void deleteProduct(TransferLine line) {
     try {
-      // إزالة من القائمة الرئيسية
-      transferLines
-          .removeWhere((item) => item.lineNum == line.lineNum && item.itemCode == line.itemCode);
+      // التحقق من نوع السطر
+      bool isNewLine = line.lineNum == null || line.lineNum! < 0;
+      bool isExistingLine = line.lineNum != null && line.lineNum! > 0;
 
-      // تتبع الحذف
-      if (line.lineNum != null && line.lineNum! > 0) {
-        // إذا كان سطر موجود في الخادم
+      if (isNewLine) {
+        // السطر جديد لم يُحفظ في قاعدة البيانات بعد
+        // إزالة من القائمة المحلية فقط
+        transferLines
+            .removeWhere((item) => item.lineNum == line.lineNum && item.itemCode == line.itemCode);
+
+        // إزالة من قائمة الأسطر الجديدة
+        newLines.removeWhere(
+            (newLine) => newLine.itemCode == line.itemCode && newLine.lineNum == line.lineNum);
+
+        // تحديث حالة التغييرات
+        _updateUnsavedChangesStatus();
+
+        _applyFilter();
+
+        Get.snackbar(
+          'نجح',
+          'تم حذف الصنف الجديد محلياً',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+        );
+      } else if (isExistingLine) {
+        // السطر موجود في قاعدة البيانات
+        // إضافة إلى قائمة الحذف للحفظ لاحقاً
         deletedLines.add(line.lineNum!);
+
+        // إزالة من قائمة التعديلات إذا كان موجود
+        modifiedLines.remove(line.lineNum!);
+
+        // تحديث العرض ليظهر السطر كمحذوف
+        _markLineAsDeleted(line);
+
         hasUnsavedChanges.value = true;
+        _applyFilter();
+
+        Get.snackbar(
+          'نجح',
+          'تم تحديد السطر للحذف (يتطلب حفظ)',
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+        );
       } else {
-        // إذا كان سطر جديد لم يُحفظ بعد
-        newLines.removeWhere((newLine) => newLine.itemCode == line.itemCode);
+        // حالة غير متوقعة
+        Get.snackbar(
+          'خطأ',
+          'لا يمكن تحديد نوع السطر للحذف',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+        );
       }
-
-      _applyFilter();
-
-      Get.snackbar(
-        'نجح',
-        'تم حذف المنتج بنجاح',
-        backgroundColor: Colors.green,
-        colorText: Colors.white,
-      );
     } catch (e) {
       logMessage('Transfer', 'Error in deleteProduct: ${e.toString()}');
       Get.snackbar(
@@ -1288,6 +1158,18 @@ class ProductManagementController extends GetxController {
         colorText: Colors.white,
       );
     }
+  }
+
+// دالة مساعدة جديدة لتحديث حالة التغييرات
+  void _updateUnsavedChangesStatus() {
+    hasUnsavedChanges.value =
+        newLines.isNotEmpty || modifiedLines.isNotEmpty || deletedLines.isNotEmpty;
+  }
+
+// دالة مساعدة لتحديد السطر كمحذوف في العرض
+  void _markLineAsDeleted(TransferLine line) {
+    // يمكن إضافة خاصية deleted للسطر أو استخدام deletedLines list
+    // الكود الحالي يعتمد على deletedLines.contains(line.lineNum) في UI
   }
 
   // نسخ منتج
@@ -1361,7 +1243,6 @@ class ProductManagementController extends GetxController {
     return -(maxLineNum + 1); // استخدام أرقام سالبة للأسطر الجديدة
   }
 
-  // حفظ جميع التغييرات على الخادم
   Future<void> saveAllChangesToServer() async {
     if (!hasUnsavedChanges.value) {
       Get.snackbar(
@@ -1377,49 +1258,66 @@ class ProductManagementController extends GetxController {
       isSaving.value = true;
       int successCount = 0;
       int errorCount = 0;
+      List<String> errorMessages = [];
 
-      // 1. حفظ الأسطر الجديدة
-      for (TransferLine newLine in newLines) {
+      // 1. حفظ الأسطر الجديدة أولاً
+      List<TransferLine> newLinesToSave = List.from(newLines);
+      for (TransferLine newLine in newLinesToSave) {
         var result = await _saveNewLine(newLine);
         if (result['success'] == true) {
           successCount++;
-          // تحديث lineNum من الاستجابة
-          if (result['lineNum'] != null) {
-            _updateLineNumInList(newLine, result['lineNum']);
-          }
+          // إزالة من قائمة الأسطر الجديدة بعد الحفظ الناجح
+          newLines.removeWhere(
+              (line) => line.itemCode == newLine.itemCode && line.lineNum == newLine.lineNum);
         } else {
           errorCount++;
+          errorMessages.add('فشل حفظ سطر جديد: ${result['error']}');
         }
       }
 
       // 2. حفظ الأسطر المعدلة
-      for (TransferLine modifiedLine in modifiedLines.values) {
+      List<TransferLine> modifiedLinesToSave = modifiedLines.values.toList();
+      for (TransferLine modifiedLine in modifiedLinesToSave) {
         var result = await _saveModifiedLine(modifiedLine);
         if (result['success'] == true) {
           successCount++;
+          // إزالة من قائمة التعديلات بعد الحفظ الناجح
+          modifiedLines.remove(modifiedLine.lineNum);
         } else {
           errorCount++;
+          errorMessages.add('فشل تحديث السطر ${modifiedLine.lineNum}: ${result['error']}');
         }
       }
 
-      // 3. حذف الأسطر المحذوفة
-      for (int deletedLineNum in deletedLines) {
+      // 3. حذف الأسطر المحذوفة من قاعدة البيانات
+      List<int> linesToDelete = List.from(deletedLines);
+      for (int deletedLineNum in linesToDelete) {
         var result = await _deleteLineFromServer(deletedLineNum);
         if (result['success'] == true) {
           successCount++;
+          // إزالة من قائمة الحذف بعد الحذف الناجح
+          deletedLines.remove(deletedLineNum);
+
+          // إزالة السطر نهائياً من العرض
+          transferLines.removeWhere((line) => line.lineNum == deletedLineNum);
         } else {
           errorCount++;
+          errorMessages.add('فشل حذف السطر $deletedLineNum: ${result['error']}');
         }
       }
 
+      // تحديث حالة التغييرات
+      _updateUnsavedChangesStatus();
+      _applyFilter();
+
       // عرض النتائج
       if (errorCount == 0) {
-        _resetChangeTracking();
         Get.snackbar(
           'نجح',
           'تم حفظ جميع التغييرات بنجاح ($successCount عملية)',
           backgroundColor: Colors.green,
           colorText: Colors.white,
+          duration: const Duration(seconds: 3),
         );
 
         // إعادة تحميل البيانات من الخادم للتأكد من التطابق
@@ -1427,11 +1325,44 @@ class ProductManagementController extends GetxController {
           await loadTransferLines(transferId.value!);
         }
       } else {
-        Get.snackbar(
-          'تحذير',
-          'تم حفظ $successCount عملية بنجاح، فشل في $errorCount عملية',
-          backgroundColor: Colors.orange,
-          colorText: Colors.white,
+        // عرض تفاصيل الأخطاء
+        String errorSummary = errorMessages.length <= 3
+            ? errorMessages.join('\n')
+            : '${errorMessages.take(2).join('\n')}\nو ${errorMessages.length - 2} أخطاء أخرى...';
+
+        Get.dialog(
+          AlertDialog(
+            title: const Text('تحذير - حفظ جزئي'),
+            content: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text('تم حفظ $successCount عملية بنجاح'),
+                  Text('فشل في $errorCount عملية'),
+                  const SizedBox(height: 12),
+                  const Text('تفاصيل الأخطاء:', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  Text(errorSummary, style: const TextStyle(fontSize: 12)),
+                ],
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Get.back(),
+                child: const Text('موافق'),
+              ),
+              if (errorCount > 0)
+                ElevatedButton(
+                  onPressed: () {
+                    Get.back();
+                    // إعادة المحاولة للعمليات الفاشلة
+                    saveAllChangesToServer();
+                  },
+                  child: const Text('إعادة المحاولة'),
+                ),
+            ],
+          ),
         );
       }
     } catch (e) {
@@ -1447,12 +1378,12 @@ class ProductManagementController extends GetxController {
     }
   }
 
-  // حفظ سطر جديد
+// تحديث دالة _saveNewLine لمعالجة الأسطر الجديدة بشكل صحيح
   Future<Map<String, dynamic>> _saveNewLine(TransferLine line) async {
     try {
       var response = await transferApi.upsertTransferLine(
         docEntry: line.docEntry ?? transferId.value!,
-        lineNum: null, // أو -1 أو 0 للإضافة الجديدة
+        lineNum: null, // للإضافة الجديدة
         itemCode: line.itemCode!,
         description: line.description ?? '',
         quantity: line.quantity ?? 0.0,
@@ -1467,15 +1398,23 @@ class ProductManagementController extends GetxController {
       );
 
       if (response['status'] == 'success') {
-        return {
-          'success': true,
-          'lineNum': response['data']?['lineNum'], // lineNum الجديد من الخادم
-        };
+        // الحصول على lineNum الجديد من الاستجابة
+        int? newLineNum = response['data']?['lineNum'];
+
+        if (newLineNum != null) {
+          // تحديث lineNum في القائمة المحلية
+          _updateLineNumInList(line, newLineNum);
+
+          return {'success': true, 'lineNum': newLineNum, 'message': 'تم حفظ السطر الجديد بنجاح'};
+        } else {
+          return {'success': true, 'message': 'تم حفظ السطر ولكن لم يتم استلام رقم السطر'};
+        }
       } else {
-        return {'success': false, 'error': response['message']};
+        return {'success': false, 'error': response['message'] ?? 'فشل في حفظ السطر الجديد'};
       }
     } catch (e) {
-      return {'success': false, 'error': e.toString()};
+      logMessage('Transfer', 'Exception in _saveNewLine: ${e.toString()}');
+      return {'success': false, 'error': 'خطأ في حفظ السطر الجديد: ${e.toString()}'};
     }
   }
 
@@ -1586,11 +1525,128 @@ class ProductManagementController extends GetxController {
   }
 
   // دالة مساعدة للتسجيل
-  // void logMessage(String tag, String message) {
-  //   print('[$tag] $message');
-  // }
-  // دالة مساعدة للتسجيل
   void logMessage(String tag, String message) {
     print('[$tag] $message');
   }
 }
+
+
+
+
+  // حفظ جميع التغييرات على الخادم
+  // Future<void> saveAllChangesToServer() async {
+  //   if (!hasUnsavedChanges.value) {
+  //     Get.snackbar(
+  //       'تنبيه',
+  //       'لا توجد تغييرات للحفظ',
+  //       backgroundColor: Colors.blue,
+  //       colorText: Colors.white,
+  //     );
+  //     return;
+  //   }
+
+  //   try {
+  //     isSaving.value = true;
+  //     int successCount = 0;
+  //     int errorCount = 0;
+
+  //     // 1. حفظ الأسطر الجديدة
+  //     for (TransferLine newLine in newLines) {
+  //       var result = await _saveNewLine(newLine);
+  //       if (result['success'] == true) {
+  //         successCount++;
+  //         // تحديث lineNum من الاستجابة
+  //         if (result['lineNum'] != null) {
+  //           _updateLineNumInList(newLine, result['lineNum']);
+  //         }
+  //       } else {
+  //         errorCount++;
+  //       }
+  //     }
+
+  //     // 2. حفظ الأسطر المعدلة
+  //     for (TransferLine modifiedLine in modifiedLines.values) {
+  //       var result = await _saveModifiedLine(modifiedLine);
+  //       if (result['success'] == true) {
+  //         successCount++;
+  //       } else {
+  //         errorCount++;
+  //       }
+  //     }
+
+  //     // 3. حذف الأسطر المحذوفة
+  //     for (int deletedLineNum in deletedLines) {
+  //       var result = await _deleteLineFromServer(deletedLineNum);
+  //       if (result['success'] == true) {
+  //         successCount++;
+  //       } else {
+  //         errorCount++;
+  //       }
+  //     }
+
+  //     // عرض النتائج
+  //     if (errorCount == 0) {
+  //       _resetChangeTracking();
+  //       Get.snackbar(
+  //         'نجح',
+  //         'تم حفظ جميع التغييرات بنجاح ($successCount عملية)',
+  //         backgroundColor: Colors.green,
+  //         colorText: Colors.white,
+  //       );
+
+  //       // إعادة تحميل البيانات من الخادم للتأكد من التطابق
+  //       if (transferId.value != null) {
+  //         await loadTransferLines(transferId.value!);
+  //       }
+  //     } else {
+  //       Get.snackbar(
+  //         'تحذير',
+  //         'تم حفظ $successCount عملية بنجاح، فشل في $errorCount عملية',
+  //         backgroundColor: Colors.orange,
+  //         colorText: Colors.white,
+  //       );
+  //     }
+  //   } catch (e) {
+  //     logMessage('Transfer', 'Error in saveAllChangesToServer: ${e.toString()}');
+  //     Get.snackbar(
+  //       'خطأ',
+  //       'فشل في حفظ التغييرات: ${e.toString()}',
+  //       backgroundColor: Colors.red,
+  //       colorText: Colors.white,
+  //     );
+  //   } finally {
+  //     isSaving.value = false;
+  //   }
+  // }
+
+  // حفظ سطر جديد
+  // Future<Map<String, dynamic>> _saveNewLine(TransferLine line) async {
+  //   try {
+  //     var response = await transferApi.upsertTransferLine(
+  //       docEntry: line.docEntry ?? transferId.value!,
+  //       lineNum: null, // أو -1 أو 0 للإضافة الجديدة
+  //       itemCode: line.itemCode!,
+  //       description: line.description ?? '',
+  //       quantity: line.quantity ?? 0.0,
+  //       price: line.price ?? 0.0,
+  //       lineTotal: line.lineTotal ?? 0.0,
+  //       uomCode: line.uomCode ?? '',
+  //       uomCode2: line.uomCode2,
+  //       invQty: line.invQty,
+  //       baseQty1: line.baseQty1,
+  //       ugpEntry: line.ugpEntry,
+  //       uomEntry: line.uomEntry,
+  //     );
+
+  //     if (response['status'] == 'success') {
+  //       return {
+  //         'success': true,
+  //         'lineNum': response['data']?['lineNum'], // lineNum الجديد من الخادم
+  //       };
+  //     } else {
+  //       return {'success': false, 'error': response['message']};
+  //     }
+  //   } catch (e) {
+  //     return {'success': false, 'error': e.toString()};
+  //   }
+  // }

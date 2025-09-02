@@ -612,7 +612,7 @@ class ApiServices {
 
   // حذف سطر تحويل
   static String deleteTransferLine() {
-    return "$server/api/TransferApi/DeleteLine";
+    return "https://qitaf3.dynalias.net:44322/echo2/api/TransferApi/DeleteLine";
   }
 
   // تحديث معلومات التحويل (الهيدر)
@@ -708,6 +708,8 @@ class ApiServices {
     return basePattern.replaceAll('{action}', action).replaceAll('{itemCode}', itemCode);
   }
 }
+
+
 // class ApiServices {
 //   // أضف /echo في الـ base URL
 //   static String server = "https://qitaf3.dynalias.net:44322/echo";

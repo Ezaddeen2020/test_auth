@@ -13,7 +13,8 @@ class TransferScreen extends StatelessWidget {
     final controller = Get.find<TransferController>();
 
     return Scaffold(
-      backgroundColor: Colors.grey[50],
+      // backgroundColor: Colors.grey[50],
+      backgroundColor: Colors.white,
       appBar: _buildAppBar(controller),
       body: Column(
         children: [
@@ -26,7 +27,7 @@ class TransferScreen extends StatelessWidget {
     );
   }
 
-  //======================= AppBar
+  //======================= AppBar ==============================
   PreferredSizeWidget _buildAppBar(TransferController controller) => AppBar(
         title: const Text('قائمة التحويلات', style: TextStyle(fontSize: 18, color: Colors.white)),
         backgroundColor: const Color(0xFF0D47A1),
@@ -174,7 +175,7 @@ class TransferScreen extends StatelessWidget {
             : IconButton(icon: Icon(icon, color: Colors.white, size: 20), onPressed: onPressed),
       );
 
-  //============================ المحتوى الرئيسي
+  //============================ المحتوى الرئيسي ===============================
   Widget _buildContent(TransferController controller) => Obx(() {
         if (controller.statusRequest.value == StatusRequest.loading &&
             controller.transfers.isEmpty) {
@@ -275,13 +276,13 @@ class TransferScreen extends StatelessWidget {
             children: [
               _buildNavButton(
                   'السابق',
-                  Icons.chevron_right,
+                  Icons.chevron_left,
                   controller.currentPage.value > 1 && !controller.isLoading.value,
                   () => controller.goToPage(controller.currentPage.value - 1)),
               _buildPageInfo(controller),
               _buildNavButton(
                   'التالي',
-                  Icons.chevron_left,
+                  Icons.chevron_right,
                   controller.currentPage.value < controller.totalPages.value &&
                       !controller.isLoading.value,
                   () => controller.goToPage(controller.currentPage.value + 1)),

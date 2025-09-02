@@ -93,6 +93,38 @@ class PostGetPage {
       return const Left(StatusRequest.offlinefailure);
     }
   }
+
+  // أضف هذه الدالة في PostGetPage class
+  Future<Either<StatusRequest, dynamic>> deleteDataWithToken(
+      String link, Map<String, dynamic> data, String token) async {
+    try {
+      log('DELETE with Token URL: $link');
+      log('DELETE with Token Data: ${jsonEncode(data)}');
+
+      var res = await client.delete(
+        Uri.parse(link),
+        headers: ApiServices.headersWithToken(token),
+        body: jsonEncode(data),
+      );
+
+      log('DELETE Response Status: ${res.statusCode}');
+      log('DELETE Response Body: ${res.body}');
+
+      if (res.statusCode == 200 || res.statusCode == 201 || res.statusCode == 204) {
+        if (res.body.isNotEmpty) {
+          var resBody = jsonDecode(res.body);
+          return Right(resBody);
+        } else {
+          return const Right({'status': 'success', 'message': 'Deleted successfully'});
+        }
+      } else {
+        return const Left(StatusRequest.serverfailure);
+      }
+    } catch (e) {
+      log('DELETE Error: $e');
+      return const Left(StatusRequest.offlinefailure);
+    }
+  }
 }
 
 

@@ -267,6 +267,33 @@ class TransferApi {
   }
 
   /// 🟩 حذف سطر تحويل معين
+  // Future<Map<String, dynamic>> deleteTransferLine({
+  //   required int docEntry,
+  //   required int lineNum,
+  // }) async {
+  //   String token = Preferences.getString('auth_token');
+  //   if (token.isEmpty) {
+  //     return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
+  //   }
+
+  //   Map<String, dynamic> deleteData = {
+  //     'docEntry': docEntry,
+  //     'lineNum': lineNum,
+  //   };
+
+  //   logMessage('Transfer', 'Deleting line with docEntry: $docEntry, lineNum: $lineNum');
+
+  //   return handleEitherResult(
+  //     postGetPage.postDataWithToken(
+  //       ApiServices.deleteTransferLine(),
+  //       deleteData,
+  //       token,
+  //     ),
+  //     'Line Deleted Successfully',
+  //     'فشل في حذف السطر',
+  //   );
+  // }
+
   Future<Map<String, dynamic>> deleteTransferLine({
     required int docEntry,
     required int lineNum,
@@ -281,11 +308,13 @@ class TransferApi {
       'lineNum': lineNum,
     };
 
-    logMessage('Transfer', 'Deleting line with docEntry: $docEntry, lineNum: $lineNum');
+    logMessage(
+        'Transfer', 'Deleting line with DELETE method - docEntry: $docEntry, lineNum: $lineNum');
 
     return handleEitherResult(
-      postGetPage.postDataWithToken(
-        ApiServices.deleteTransferLine(),
+      postGetPage.deleteDataWithToken(
+        // استخدام DELETE method
+        "https://qitaf3.dynalias.net:44322/echo2/api/TransferApi/DeleteLine",
         deleteData,
         token,
       ),
