@@ -2,7 +2,7 @@ import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfe
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
-import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/product/product_controller.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/product/controller/product_controller.dart';
 
 class ProductCardWidget extends StatelessWidget {
   final dynamic line;

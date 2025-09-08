@@ -567,6 +567,7 @@ class StockPage extends StatelessWidget {
 
 
 
+
 // import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_check/model/stock_model.dart';
 // import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_check/controllers/stock_controller.dart';
 // import 'package:flutter/material.dart';

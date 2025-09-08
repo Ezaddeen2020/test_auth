@@ -383,6 +383,12 @@ class TransferScreen extends StatelessWidget {
       );
 }
 
+
+
+
+
+
+
 // import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/controllers/transfer_controller.dart';
 // import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/screens/widgets/transfer_card.dart';
 // import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/screens/widgets/transfer_dialog.dart';

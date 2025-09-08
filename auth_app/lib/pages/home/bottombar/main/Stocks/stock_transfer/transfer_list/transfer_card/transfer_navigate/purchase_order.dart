@@ -5,7 +5,7 @@ import 'package:get/get.dart';
 
 // استيراد الصفحات المطلوبة
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/Invoic/invice_page.dart';
-import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/product/product_page.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/product/screen/product_page.dart';
 
 class TransferDetailsNavigationScreen extends StatelessWidget {
   const TransferDetailsNavigationScreen({super.key});
