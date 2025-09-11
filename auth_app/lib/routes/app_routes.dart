@@ -1,5 +1,6 @@
 import 'package:auth_app/pages/auth/controllers/auth_controller.dart';
 import 'package:auth_app/pages/configration/screens/configration_page.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/search/screen/search_page.dart';
 import 'package:auth_app/pages/home/home_controller.dart';
 import 'package:auth_app/pages/home/home_page.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/Invoic/invice_page.dart';

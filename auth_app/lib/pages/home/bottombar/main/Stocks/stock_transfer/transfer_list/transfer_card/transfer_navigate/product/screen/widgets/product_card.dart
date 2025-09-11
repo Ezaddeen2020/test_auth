@@ -1,4 +1,4 @@
-import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/product/widgets/product_dialog.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/product/screen/widgets/product_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -73,6 +73,7 @@ class ProductCardWidget extends StatelessWidget {
     );
   }
 
+// دالة خاصة تحدد حالة البطاقة (جديد، معدل، محذوف).
   ProductCardState _getCardState() {
     bool isNewLine = line.lineNum != null && line.lineNum! < 0;
     bool isModifiedLine = controller.modifiedLines.containsKey(line.lineNum);
