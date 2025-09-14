@@ -1,5 +1,6 @@
 // pages/home/product/controllers/product_management_controller.dart
 
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_check/model/stock_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:auth_app/functions/status_request.dart';
@@ -239,6 +240,28 @@ class ProductManagementController extends GetxController {
       );
     }
   }
+
+  // دالة إضافة منتج من نتائج البحث
+  void addProductFromSearch(StockModel item) {
+    Map<String, dynamic> productData = {
+      'itemCode': item.itemCode,
+      'description': item.itemName,
+      'quantity': item.totalOnHand > 0 ? item.totalOnHand : 1.0,
+      'price': item.avgPrice > 0 ? item.avgPrice : 0.0,
+      'uomCode': item.uomCode ?? 'حبة',
+      'baseQty1': 1,
+      'uomEntry': 1,
+    };
+
+    addProduct(productData);
+    Get.back(); // إغلاق صفحة البحث بعد الإضافة
+  }
+
+  // // دالة مسح نتائج البحث
+  // void clearSearchResults() {
+  //   searchResults.clear();
+  //   pulledItem.value = null;
+  // }
 
   // إضافة منتج جديد
   void addProduct(Map<String, dynamic> productData) {

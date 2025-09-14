@@ -396,14 +396,6 @@ class ProductDialogs {
     // ✅ الحل: التحقق من الوحدة بعناية
     String selectedUnit = unitController.text.trim();
 
-    // // طباعة مفصلة للتشخيص
-    // print('=== إضافة منتج - تشخيص الوحدة ===');
-    // print('النص الخام في حقل الوحدة: "${unitController.text}"');
-    // print('النص بعد trim: "$selectedUnit"');
-    // print('طول النص: ${selectedUnit.length}');
-    // print('الوحدة فارغة؟ ${selectedUnit.isEmpty}');
-    // print('السعر: $price');
-
     // التحقق من أن الوحدة ليست رقماً (للتأكد من عدم الخلط)
     if (selectedUnit.isNotEmpty && double.tryParse(selectedUnit) != null) {
       Get.snackbar(

@@ -147,6 +147,15 @@ enum StockStatus {
   available // متوفر
 }
 
+
+
+
+
+
+
+
+
+
 // // models/stock_model.dart
 // class StockModel {
 //   final String itemCode;

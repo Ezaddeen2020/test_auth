@@ -1,128 +1,389 @@
+// import 'dart:convert';
+// import 'dart:developer';
+// import 'package:auth_app/functions/status_request.dart';
+// import 'package:auth_app/services/api_service.dart';
+// import 'package:dartz/dartz.dart';
+// import 'package:http/io_client.dart';
+
+// class PostGetPage {
+//   final IOClient client;
+
+//   // ================== الدوال الأصلية - بدون تغيير ==================
+//   PostGetPage({IOClient? client}) : client = client ?? IOClient();
+
+//   /// POST request without token (الدالة الأصلية)
+//   Future<Either<StatusRequest, Map<String, dynamic>>> postData(
+//       String link, Map<String, dynamic> data) async {
+//     try {
+//       log('POST URL: $link');
+//       log('POST Data: ${jsonEncode(data)}');
+
+//       var res = await client.post(
+//         Uri.parse(link),
+//         headers: ApiServices.headers,
+//         body: jsonEncode(data),
+//       );
+
+//       log('POST Response Status: ${res.statusCode}');
+//       log('POST Response Body: ${res.body}');
+
+//       if (res.statusCode == 200 || res.statusCode == 201) {
+//         var resBody = jsonDecode(res.body);
+//         return Right(resBody);
+//       } else {
+//         return const Left(StatusRequest.serverfailure);
+//       }
+//     } catch (e) {
+//       log('POST Error: $e');
+//       return const Left(StatusRequest.offlinefailure);
+//     }
+//   }
+
+//   /// GET request with token (الدالة الأصلية)
+//   Future<Either<StatusRequest, dynamic>> getDataWithToken(String link, String token) async {
+//     try {
+//       log('GET with Token URL: $link');
+
+//       var res = await client.get(
+//         Uri.parse(link),
+//         headers: ApiServices.headersWithToken(token),
+//       );
+
+//       log('GET Response Status: ${res.statusCode}');
+//       log('GET Response Body: ${res.body}');
+
+//       if (res.statusCode == 200 || res.statusCode == 201) {
+//         var resBody = jsonDecode(res.body);
+//         return Right(resBody);
+//       } else {
+//         return const Left(StatusRequest.serverfailure);
+//       }
+//     } catch (e) {
+//       log('GET Error: $e');
+//       return const Left(StatusRequest.failure);
+//     }
+//   }
+
+//   // ================== الدوال الجديدة المضافة بأمان ==================
+
+//   /// POST request with token (دالة جديدة للتحويلات)
+//   Future<Either<StatusRequest, dynamic>> postDataWithToken(
+//       String link, Map<String, dynamic> data, String token) async {
+//     try {
+//       log('POST with Token URL: $link');
+//       log('POST with Token Data: ${jsonEncode(data)}');
+
+//       var res = await client.post(
+//         Uri.parse(link),
+//         headers: ApiServices.headersWithToken(token),
+//         body: jsonEncode(data),
+//       );
+
+//       log('POST with Token Response Status: ${res.statusCode}');
+//       log('POST with Token Response Body: ${res.body}');
+
+//       if (res.statusCode == 200 || res.statusCode == 201) {
+//         var resBody = jsonDecode(res.body);
+//         return Right(resBody);
+//       } else {
+//         return const Left(StatusRequest.serverfailure);
+//       }
+//     } catch (e) {
+//       log('POST with Token Error: $e');
+//       return const Left(StatusRequest.offlinefailure);
+//     }
+//   }
+
+//   // أضف هذه الدالة في PostGetPage class
+//   Future<Either<StatusRequest, dynamic>> deleteDataWithToken(
+//       String link, Map<String, dynamic> data, String token) async {
+//     try {
+//       log('DELETE with Token URL: $link');
+//       log('DELETE with Token Data: ${jsonEncode(data)}');
+
+//       var res = await client.delete(
+//         Uri.parse(link),
+//         headers: ApiServices.headersWithToken(token),
+//         body: jsonEncode(data),
+//       );
+
+//       log('DELETE Response Status: ${res.statusCode}');
+//       log('DELETE Response Body: ${res.body}');
+
+//       if (res.statusCode == 200 || res.statusCode == 201 || res.statusCode == 204) {
+//         if (res.body.isNotEmpty) {
+//           var resBody = jsonDecode(res.body);
+//           return Right(resBody);
+//         } else {
+//           return const Right({'status': 'success', 'message': 'Deleted successfully'});
+//         }
+//       } else {
+//         return const Left(StatusRequest.serverfailure);
+//       }
+//     } catch (e) {
+//       log('DELETE Error: $e');
+//       return const Left(StatusRequest.offlinefailure);
+//     }
+//   }
+// }
+
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:io';
 import 'package:auth_app/functions/status_request.dart';
-import 'package:auth_app/services/api_service.dart';
 import 'package:dartz/dartz.dart';
 import 'package:http/io_client.dart';
 
 class PostGetPage {
   final IOClient client;
 
-  // ================== الدوال الأصلية - بدون تغيير ==================
-  PostGetPage({IOClient? client}) : client = client ?? IOClient();
+  PostGetPage({IOClient? client}) : client = client ?? _createHttpClient();
 
-  /// POST request without token (الدالة الأصلية)
+  // إنشاء HTTP client محسّن لـ Android
+  static IOClient _createHttpClient() {
+    final httpClient = HttpClient();
+
+    // إعدادات timeout محسّنة لـ Android
+    httpClient.connectionTimeout = const Duration(seconds: 15);
+    httpClient.idleTimeout = const Duration(seconds: 30);
+
+    // تجاهل مشاكل SSL المؤقتة (للتطوير فقط)
+    httpClient.badCertificateCallback = (X509Certificate cert, String host, int port) {
+      log('تجاهل شهادة SSL غير صالحة للـ host: $host');
+      return true;
+    };
+
+    // إعدادات User Agent لـ Android
+    httpClient.userAgent = 'Flutter-Android-Auth-App/1.0';
+
+    return IOClient(httpClient);
+  }
+
+  /// POST request without token - محسّن لـ Android
   Future<Either<StatusRequest, Map<String, dynamic>>> postData(
       String link, Map<String, dynamic> data) async {
     try {
-      log('POST URL: $link');
-      log('POST Data: ${jsonEncode(data)}');
+      log('🚀 POST Request - Android');
+      log('📍 URL: $link');
+      log('📦 Data: ${jsonEncode(data)}');
 
-      var res = await client.post(
-        Uri.parse(link),
-        headers: ApiServices.headers,
-        body: jsonEncode(data),
-      );
+      // Headers محسّنة لـ Android
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'User-Agent': 'Flutter-Android/1.0',
+        'Connection': 'keep-alive',
+        'Accept-Encoding': 'gzip, deflate',
+      };
 
-      log('POST Response Status: ${res.statusCode}');
-      log('POST Response Body: ${res.body}');
+      final response = await client
+          .post(
+            Uri.parse(link),
+            headers: headers,
+            body: jsonEncode(data),
+          )
+          .timeout(const Duration(seconds: 30));
 
-      if (res.statusCode == 200 || res.statusCode == 201) {
-        var resBody = jsonDecode(res.body);
+      log('✅ Response Status: ${response.statusCode}');
+      log('📄 Response Headers: ${response.headers}');
+      log('📝 Response Body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.body.isEmpty) {
+          return const Right({'status': 'success', 'message': 'Empty response'});
+        }
+
+        final resBody = jsonDecode(response.body);
         return Right(resBody);
       } else {
+        log('❌ Server Error: ${response.statusCode} - ${response.reasonPhrase}');
         return const Left(StatusRequest.serverfailure);
       }
+    } on SocketException catch (e) {
+      log('🌐 Network Error: $e');
+      return const Left(StatusRequest.offlinefailure);
+    } on HttpException catch (e) {
+      log('🔧 HTTP Error: $e');
+      return const Left(StatusRequest.serverfailure);
+    } on FormatException catch (e) {
+      log('📋 JSON Format Error: $e');
+      return const Left(StatusRequest.serverfailure);
     } catch (e) {
-      log('POST Error: $e');
+      log('⚠️ Unexpected Error: $e');
       return const Left(StatusRequest.offlinefailure);
     }
   }
 
-  /// GET request with token (الدالة الأصلية)
+  /// GET request with token - محسّن لـ Android
   Future<Either<StatusRequest, dynamic>> getDataWithToken(String link, String token) async {
     try {
-      log('GET with Token URL: $link');
+      log('🚀 GET Request with Token - Android');
+      log('📍 URL: $link');
+      log('🔑 Token: ${token.length > 20 ? '${token.substring(0, 20)}...' : token}');
 
-      var res = await client.get(
-        Uri.parse(link),
-        headers: ApiServices.headersWithToken(token),
-      );
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+        'User-Agent': 'Flutter-Android/1.0',
+        'Connection': 'keep-alive',
+      };
 
-      log('GET Response Status: ${res.statusCode}');
-      log('GET Response Body: ${res.body}');
+      final response = await client
+          .get(
+            Uri.parse(link),
+            headers: headers,
+          )
+          .timeout(const Duration(seconds: 30));
 
-      if (res.statusCode == 200 || res.statusCode == 201) {
-        var resBody = jsonDecode(res.body);
+      log('✅ Response Status: ${response.statusCode}');
+      log('📝 Response Body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.body.isEmpty) {
+          return const Right([]);
+        }
+
+        final resBody = jsonDecode(response.body);
         return Right(resBody);
       } else {
+        log('❌ Server Error: ${response.statusCode} - ${response.reasonPhrase}');
         return const Left(StatusRequest.serverfailure);
       }
+    } on SocketException catch (e) {
+      log('🌐 Network Error: $e');
+      return const Left(StatusRequest.offlinefailure);
+    } on HttpException catch (e) {
+      log('🔧 HTTP Error: $e');
+      return const Left(StatusRequest.serverfailure);
+    } on FormatException catch (e) {
+      log('📋 JSON Format Error: $e');
+      return const Left(StatusRequest.serverfailure);
     } catch (e) {
-      log('GET Error: $e');
+      log('⚠️ Unexpected Error: $e');
       return const Left(StatusRequest.failure);
     }
   }
 
-  // ================== الدوال الجديدة المضافة بأمان ==================
-
-  /// POST request with token (دالة جديدة للتحويلات)
+  /// POST request with token - محسّن لـ Android
   Future<Either<StatusRequest, dynamic>> postDataWithToken(
       String link, Map<String, dynamic> data, String token) async {
     try {
-      log('POST with Token URL: $link');
-      log('POST with Token Data: ${jsonEncode(data)}');
+      log('🚀 POST Request with Token - Android');
+      log('📍 URL: $link');
+      log('📦 Data: ${jsonEncode(data)}');
 
-      var res = await client.post(
-        Uri.parse(link),
-        headers: ApiServices.headersWithToken(token),
-        body: jsonEncode(data),
-      );
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+        'User-Agent': 'Flutter-Android/1.0',
+        'Connection': 'keep-alive',
+      };
 
-      log('POST with Token Response Status: ${res.statusCode}');
-      log('POST with Token Response Body: ${res.body}');
+      final response = await client
+          .post(
+            Uri.parse(link),
+            headers: headers,
+            body: jsonEncode(data),
+          )
+          .timeout(const Duration(seconds: 30));
 
-      if (res.statusCode == 200 || res.statusCode == 201) {
-        var resBody = jsonDecode(res.body);
+      log('✅ Response Status: ${response.statusCode}');
+      log('📝 Response Body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        if (response.body.isEmpty) {
+          return const Right({'status': 'success'});
+        }
+
+        final resBody = jsonDecode(response.body);
         return Right(resBody);
       } else {
+        log('❌ Server Error: ${response.statusCode} - ${response.reasonPhrase}');
         return const Left(StatusRequest.serverfailure);
       }
+    } on SocketException catch (e) {
+      log('🌐 Network Error: $e');
+      return const Left(StatusRequest.offlinefailure);
+    } on HttpException catch (e) {
+      log('🔧 HTTP Error: $e');
+      return const Left(StatusRequest.serverfailure);
+    } on FormatException catch (e) {
+      log('📋 JSON Format Error: $e');
+      return const Left(StatusRequest.serverfailure);
     } catch (e) {
-      log('POST with Token Error: $e');
+      log('⚠️ Unexpected Error: $e');
       return const Left(StatusRequest.offlinefailure);
     }
   }
 
-  // أضف هذه الدالة في PostGetPage class
+  /// DELETE request with token - محسّن لـ Android
   Future<Either<StatusRequest, dynamic>> deleteDataWithToken(
       String link, Map<String, dynamic> data, String token) async {
     try {
-      log('DELETE with Token URL: $link');
-      log('DELETE with Token Data: ${jsonEncode(data)}');
+      log('🚀 DELETE Request with Token - Android');
+      log('📍 URL: $link');
+      log('📦 Data: ${jsonEncode(data)}');
 
-      var res = await client.delete(
-        Uri.parse(link),
-        headers: ApiServices.headersWithToken(token),
-        body: jsonEncode(data),
-      );
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+        'User-Agent': 'Flutter-Android/1.0',
+        'Connection': 'keep-alive',
+      };
 
-      log('DELETE Response Status: ${res.statusCode}');
-      log('DELETE Response Body: ${res.body}');
+      final response = await client
+          .delete(
+            Uri.parse(link),
+            headers: headers,
+            body: jsonEncode(data),
+          )
+          .timeout(const Duration(seconds: 30));
 
-      if (res.statusCode == 200 || res.statusCode == 201 || res.statusCode == 204) {
-        if (res.body.isNotEmpty) {
-          var resBody = jsonDecode(res.body);
-          return Right(resBody);
-        } else {
+      log('✅ Response Status: ${response.statusCode}');
+      log('📝 Response Body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 204) {
+        if (response.body.isEmpty) {
           return const Right({'status': 'success', 'message': 'Deleted successfully'});
         }
+
+        final resBody = jsonDecode(response.body);
+        return Right(resBody);
       } else {
+        log('❌ Server Error: ${response.statusCode} - ${response.reasonPhrase}');
         return const Left(StatusRequest.serverfailure);
       }
-    } catch (e) {
-      log('DELETE Error: $e');
+    } on SocketException catch (e) {
+      log('🌐 Network Error: $e');
       return const Left(StatusRequest.offlinefailure);
+    } on HttpException catch (e) {
+      log('🔧 HTTP Error: $e');
+      return const Left(StatusRequest.serverfailure);
+    } on FormatException catch (e) {
+      log('📋 JSON Format Error: $e');
+      return const Left(StatusRequest.serverfailure);
+    } catch (e) {
+      log('⚠️ Unexpected Error: $e');
+      return const Left(StatusRequest.offlinefailure);
+    }
+  }
+
+  // دالة اختبار الاتصال
+  Future<bool> testConnection() async {
+    try {
+      log('🧪 Testing Connection...');
+      final response = await client
+          .get(Uri.parse('https://httpbin.org/get'))
+          .timeout(const Duration(seconds: 10));
+
+      log('🧪 Test Result: ${response.statusCode == 200 ? 'SUCCESS' : 'FAILED'}');
+      return response.statusCode == 200;
+    } catch (e) {
+      log('🧪 Test Connection Error: $e');
+      return false;
     }
   }
 }

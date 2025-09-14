@@ -8,6 +8,7 @@ class SearchController1 extends GetxController {
   final RxBool isSearching = false.obs;
   final RxString searchText = ''.obs;
   final RxList<String> results = <String>[].obs;
+  var hasSearched = false.obs;
 
   @override
   void onInit() {
@@ -44,6 +45,59 @@ class SearchController1 extends GetxController {
       duration: const Duration(seconds: 2),
     );
   }
+
+  // void _showErrorSnackbar(String title, String message) {
+  //   Get.snackbar(
+  //     title,
+  //     message,
+  //     backgroundColor: Colors.red.withOpacity(0.8),
+  //     colorText: Colors.white,
+  //     icon: const Icon(Icons.error, color: Colors.white),
+  //     snackPosition: SnackPosition.BOTTOM,
+  //     duration: const Duration(seconds: 3),
+  //   );
+  // }
+
+  // Future<void> searchStock() async {
+  //   String itemCode = searchController.text.trim();
+
+  //   if (itemCode.isEmpty) {
+  //     _showErrorSnackbar('خطأ', 'يرجى إدخال رقم الصنف');
+  //     return;
+  //   }
+
+  //   // تجنب البحث المتكرر إذا كان نفس الرقم
+  //   if (hasSearched.value && stockItems.isNotEmpty && stockItems.first.itemCode == itemCode) {
+  //     return;
+  //   }
+
+  //   isLoading.value = true;
+  //   EasyLoading.show(status: 'جاري البحث...');
+
+  //   try {
+  //     var response = await stockApi.getStockByItemCode(itemCode);
+
+  //     if (response['status'] == 'success') {
+  //       List<dynamic> data = response['data'] ?? [];
+  //       stockItems.value = data.map((item) => StockModel.fromJson(item)).toList();
+  //       hasSearched.value = true;
+
+  //       if (stockItems.isEmpty) {
+  //         _showWarningSnackbar('نتيجة البحث', 'لا توجد بيانات مخزون لهذا الصنف');
+  //       } else {
+  //         _showSuccessSnackbar('نجح البحث', 'تم العثور على ${stockItems.length} عنصر');
+  //       }
+  //     } else {
+  //       _handleApiError(response['message'] ?? 'حدث خطأ أثناء البحث');
+  //     }
+  //   } catch (e) {
+  //     print('Stock search error: $e'); // للتشخيص
+  //     _handleNetworkError();
+  //   } finally {
+  //     isLoading.value = false;
+  //     EasyLoading.dismiss();
+  //   }
+  // }
 
   String getSearchTypeLabel() {
     switch (selectedSearchType.value) {

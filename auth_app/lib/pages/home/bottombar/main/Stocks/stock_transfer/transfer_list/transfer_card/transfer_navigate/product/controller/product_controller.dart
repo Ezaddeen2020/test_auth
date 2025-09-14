@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_check/controllers/stock_controller.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_check/model/stock_model.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/product/model/uom_model.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -40,6 +41,9 @@ class ProductManagementController extends GetxController {
   // إضافة مرجع لـ StockController للاستفادة من وظائف البحث
   late StockController stockController;
 
+  // المتغيرات الحالية...
+  final pulledItem = Rx<StockModel?>(null);
+  final searchResults = <StockModel>[].obs;
   @override
   void onInit() {
     super.onInit();

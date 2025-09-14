@@ -1,6 +1,5 @@
-// تحديث ApiServices مع الـ endpoint الصحيح
+//  ApiServices مع الـ endpoint الصحيح
 class ApiServices {
-  // أضف /echo في الـ base URL
   static String server = "https://qitaf3.dynalias.net:44322/echo";
 
   static const headers = {'Accept': 'application/json', 'Content-Type': 'application/json'};
@@ -8,7 +7,7 @@ class ApiServices {
   // Authentication endpoints
   static String login = "$server/api/Account/login";
   static String register = "$server/api/Account/register";
-  static String testApi = "$server/api/SalesDataVTec/Test";
+  static String testApi = "$server/api/w/Test";
 
   // Stock endpoints
   static String getStockItem(String code) {
