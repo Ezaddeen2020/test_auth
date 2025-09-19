@@ -1,3 +1,7 @@
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/screens/widgets/delete_diaglog.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/services/get_transfer_api.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/services/get_transfer_detailsApi.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/services/send_recive_transfer_api.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/product/screen/product_page.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/models/details_model.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/purchase_order.dart';
@@ -40,6 +44,9 @@ class TransferController extends GetxController {
 
   // API
   late TransferApi transferApi;
+  late GetTransferApi gettransferApi;
+  late GetTransferDetailsApi gettransferdetailsApi;
+  late SendReciveTransferApi sendreciveTransfeApi;
 
   // Search debounce timer
   Timer? _searchDebounce;
@@ -50,6 +57,9 @@ class TransferController extends GetxController {
     searchController = TextEditingController();
     scrollController = ScrollController();
     transferApi = TransferApi(PostGetPage());
+    gettransferApi = GetTransferApi(PostGetPage());
+    gettransferdetailsApi = GetTransferDetailsApi(PostGetPage());
+    sendreciveTransfeApi = SendReciveTransferApi(PostGetPage());
 
     // تحميل البيانات الأولية
     getTransfersList();
@@ -80,7 +90,7 @@ class TransferController extends GetxController {
 
       statusRequest.value = StatusRequest.loading;
 
-      var response = await transferApi.getTransfersList(
+      var response = await gettransferApi.getTransfersList(
         page: targetPage,
         pageSize: itemsPerPage.value,
       );
@@ -231,7 +241,7 @@ class TransferController extends GetxController {
     try {
       isLoading.value = true;
 
-      var response = await transferApi.sendTransfer(transferId);
+      var response = await sendreciveTransfeApi.sendTransfer(transferId);
 
       if (response['status'] == 'success') {
         // تحديث البيانات محلياً
@@ -294,7 +304,7 @@ class TransferController extends GetxController {
     try {
       isLoading.value = true;
 
-      var response = await transferApi.receiveTransfer(transferId);
+      var response = await sendreciveTransfeApi.receiveTransfer(transferId);
 
       if (response['status'] == 'success') {
         // تحديث البيانات محلياً
@@ -350,6 +360,87 @@ class TransferController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+// Add this method to your TransferController class
+
+  /// حذف التحويل
+  Future<void> deleteTransfer(int transferId) async {
+    try {
+      isLoading.value = true;
+
+      var response = await transferApi.cancelTransfer(transferId);
+
+      if (response['status'] == 'success') {
+        // إزالة التحويل من القائمة محلياً
+        transfers.removeWhere((t) => t.id == transferId);
+
+        // تطبيق الفلاتر مرة أخرى
+        applyFilters();
+
+        // إذا كانت الصفحة الحالية فارغة وليست الصفحة الأولى، انتقل للصفحة السابقة
+        if (filteredTransfers.isEmpty && currentPage.value > 1) {
+          await goToPage(currentPage.value - 1);
+        } else {
+          // إعادة تحميل البيانات للتأكد من التزامن
+          await getTransfersList(pageNumber: currentPage.value);
+        }
+
+        Get.snackbar(
+          'نجح',
+          'تم حذف التحويل بنجاح',
+          backgroundColor: Colors.green,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 2),
+        );
+      } else {
+        Get.snackbar(
+          'خطأ',
+          response['message'] ?? 'فشل في حذف التحويل',
+          backgroundColor: Colors.red,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 3),
+        );
+      }
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'حدث خطأ غير متوقع',
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+      );
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// التحقق من إمكانية حذف التحويل
+  bool canDeleteTransfer(TransferModel transfer) {
+    // يمكن حذف التحويل فقط إذا لم يتم إرساله أو ترحيله إلى SAP
+    return !transfer.isSended && !transfer.sapPost;
+  }
+
+  /// عرض نافذة تأكيد الحذف
+  void showDeleteConfirmation(TransferModel transfer) {
+    if (!canDeleteTransfer(transfer)) {
+      Get.snackbar(
+        'تنبيه',
+        'لا يمكن حذف هذا التحويل لأنه تم إرساله أو ترحيله إلى SAP',
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+        duration: const Duration(seconds: 3),
+      );
+      return;
+    }
+
+    Get.dialog(
+      DeleteConfirmationDialog(
+        transfer: transfer,
+        onConfirm: () => deleteTransfer(transfer.id),
+      ),
+      barrierDismissible: false,
+    );
   }
 
   // ترحيل إلى SAP
@@ -500,7 +591,7 @@ class TransferController extends GetxController {
     try {
       isLoadingDetails.value = true;
 
-      var response = await transferApi.getTransferDetails(transferId);
+      var response = await gettransferdetailsApi.getTransferDetails(transferId);
 
       if (response['status'] == 'success') {
         TransferDetailDto transferDetails = TransferDetailDto.fromJson(response['data']);
@@ -573,6 +664,12 @@ class TransferController extends GetxController {
     }).toList();
   }
 }
+
+
+
+
+
+
 
 
 // import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/product/screen/product_page.dart';

@@ -271,7 +271,7 @@ class SearchPage extends StatelessWidget {
                 },
                 icon: const Icon(Icons.save, color: Colors.white),
                 label: const Text(
-                  'اضافة الصنف الى النظام',
+                  'اضافة صنف الى التحويل',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

@@ -1,5 +1,6 @@
 // ignore_for_file: file_names
 
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/services/get_transfer_detailsApi.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/product/screen/product_page.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/services/transfer_api.dart';
 import 'package:flutter/material.dart';
@@ -18,11 +19,14 @@ class InvoiceController extends GetxController {
 
   // API
   late TransferApi transferApi;
+  late GetTransferDetailsApi gettransferdetailsApi;
 
   @override
   void onInit() {
     super.onInit();
     transferApi = TransferApi(PostGetPage());
+    gettransferdetailsApi = GetTransferDetailsApi(PostGetPage());
+
     // إعادة تعيين الحالة عند بدء الكنترولر
     resetLoadingState();
   }
@@ -39,7 +43,7 @@ class InvoiceController extends GetxController {
       isLoading.value = true;
       statusRequest.value = StatusRequest.loading;
 
-      var response = await transferApi.getTransferDetails(transferId);
+      var response = await gettransferdetailsApi.getTransferDetails(transferId);
 
       if (response['status'] == 'success') {
         TransferDetailDto details = TransferDetailDto.fromJson(response['data']);

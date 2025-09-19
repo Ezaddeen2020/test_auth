@@ -1,6 +1,7 @@
 // pages/home/product/controllers/product_management_controller.dart
 
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_check/model/stock_model.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/services/get_transfer_detailsApi.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:auth_app/functions/status_request.dart';
@@ -25,12 +26,14 @@ class ProductManagementController extends GetxController {
 
   // API
   late TransferApi transferApi;
+  late GetTransferDetailsApi gettransferdetailsApi;
 
   @override
   void onInit() {
     super.onInit();
     searchController = TextEditingController();
     transferApi = TransferApi(PostGetPage());
+    gettransferdetailsApi = GetTransferDetailsApi(PostGetPage());
   }
 
   @override
@@ -46,7 +49,7 @@ class ProductManagementController extends GetxController {
       statusRequest.value = StatusRequest.loading;
       transferId.value = selectedTransferId;
 
-      var response = await transferApi.getTransferDetails(selectedTransferId);
+      var response = await gettransferdetailsApi.getTransferDetails(selectedTransferId);
 
       if (response['status'] == 'success') {
         TransferDetailDto details = TransferDetailDto.fromJson(response['data']);

@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_check/controllers/stock_controller.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_check/model/stock_model.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/services/get_transfer_detailsApi.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/services/upsert_transfer_api.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/product/model/uom_model.dart';
+import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/product/services/get_unit_api.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:auth_app/functions/status_request.dart';
@@ -31,6 +34,9 @@ class ProductManagementController extends GetxController {
 
   // API
   late TransferApi transferApi;
+  late UpsertTransferApi upsertTransferApi;
+  late GetTransferDetailsApi gettransferdetailsApi;
+  late GetUnitApi getUnitApi;
 
   // Track changes
   var hasUnsavedChanges = false.obs;
@@ -49,6 +55,10 @@ class ProductManagementController extends GetxController {
     super.onInit();
     searchController = TextEditingController();
     transferApi = TransferApi(PostGetPage());
+    upsertTransferApi = UpsertTransferApi(PostGetPage());
+    getUnitApi = GetUnitApi(PostGetPage());
+    gettransferdetailsApi = GetTransferDetailsApi(PostGetPage());
+
     // تهيئة StockController
     stockController = Get.put(StockController());
   }
@@ -197,7 +207,7 @@ class ProductManagementController extends GetxController {
       logMessage('Transfer', 'Loading units from server for: $itemCode');
       isLoadingUnits.value = true;
 
-      var response = await transferApi.getItemUnits(itemCode.trim());
+      var response = await getUnitApi.getItemUnits(itemCode.trim());
       logMessage('Transfer', 'Units API response: ${response.toString()}');
 
       if (response['status'] == 'success' && response['data'] != null) {
@@ -1080,7 +1090,7 @@ class ProductManagementController extends GetxController {
       statusRequest.value = StatusRequest.loading;
       transferId.value = selectedTransferId;
 
-      var response = await transferApi.getTransferDetails(selectedTransferId);
+      var response = await gettransferdetailsApi.getTransferDetails(selectedTransferId);
 
       if (response['status'] == 'success') {
         TransferDetailDto details = TransferDetailDto.fromJson(response['data']);
@@ -1733,7 +1743,7 @@ class ProductManagementController extends GetxController {
   // تحديث دالة _saveNewLine لمعالجة الأسطر الجديدة بشكل صحيح
   Future<Map<String, dynamic>> _saveNewLine(TransferLine line) async {
     try {
-      var response = await transferApi.upsertTransferLine(
+      var response = await upsertTransferApi.upsertTransferLine(
         docEntry: line.docEntry ?? transferId.value!,
         lineNum: null, // للإضافة الجديدة
         itemCode: line.itemCode!,
@@ -1753,14 +1763,10 @@ class ProductManagementController extends GetxController {
         // الحصول على lineNum الجديد من الاستجابة
         int? newLineNum = response['data']?['lineNum'];
 
-        if (newLineNum != null) {
-          // تحديث lineNum في القائمة المحلية
-          _updateLineNumInList(line, newLineNum);
+        // تحديث lineNum في القائمة المحلية
+        _updateLineNumInList(line, newLineNum!);
 
-          return {'success': true, 'lineNum': newLineNum, 'message': 'تم حفظ السطر الجديد بنجاح'};
-        } else {
-          return {'success': true, 'message': 'تم حفظ السطر ولكن لم يتم استلام رقم السطر'};
-        }
+        return {'success': true, 'lineNum': newLineNum, 'message': 'تم حفظ السطر الجديد بنجاح'};
       } else {
         return {'success': false, 'error': response['message'] ?? 'فشل في حفظ السطر الجديد'};
       }
@@ -1773,7 +1779,7 @@ class ProductManagementController extends GetxController {
   // حفظ سطر معدل
   Future<Map<String, dynamic>> _saveModifiedLine(TransferLine line) async {
     try {
-      var response = await transferApi.upsertTransferLine(
+      var response = await upsertTransferApi.upsertTransferLine(
         docEntry: line.docEntry!,
         lineNum: line.lineNum!, // lineNum موجود للتعديل
         itemCode: line.itemCode!,
