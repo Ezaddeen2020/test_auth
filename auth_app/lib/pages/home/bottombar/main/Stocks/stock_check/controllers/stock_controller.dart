@@ -354,6 +354,9 @@ class StockController extends GetxController {
         .toList();
   }
 }
+
+
+
 // import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_check/services/stock_api.dart';
 // import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_check/model/stock_model.dart';
 // import 'package:flutter_easyloading/flutter_easyloading.dart';
