@@ -333,7 +333,7 @@ class TransferScreen extends StatelessWidget {
         ),
       );
 
-  //========================== نافذة اختيار الصفحة
+  //========================== نافذة اختيار الصفحة ================================================
   void _showPageDialog(TransferController controller) => Get.dialog(
         AlertDialog(
           title: const Text('اختر الصفحة'),

@@ -349,7 +349,7 @@ class TransferModel {
 class TransferResponse {
   final int currentPage;
   final int totalPages;
-  final int? totalItems; // إضافة العد الكلي للعناصر
+  final int? totalItems; // إضافة العدد الكلي للعناصر
   final int itemsPerPage; // عدد العناصر في كل صفحة
   final List<TransferModel> data;
 
