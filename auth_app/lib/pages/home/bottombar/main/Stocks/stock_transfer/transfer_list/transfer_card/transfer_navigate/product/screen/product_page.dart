@@ -13,8 +13,8 @@ class ProductManagementScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final ProductManagementController controller = Get.put(ProductManagementController());
-
+    // final ProductManagementController controller = Get.put(ProductManagementController());
+    final ProductManagementController controller = Get.find<ProductManagementController>();
     final int? transferId = Get.arguments?['transferId'];
 
     if (transferId != null) {

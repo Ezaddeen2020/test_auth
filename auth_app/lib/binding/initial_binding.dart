@@ -10,6 +10,8 @@ import 'package:auth_app/services/api/post_get_api.dart';
 import 'package:auth_app/check_internet/internet_controller.dart';
 import 'package:get/get.dart';
 
+import '../pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/product/controllers/product_controller.dart';
+
 class InitialBinding extends Bindings {
   @override
   void dependencies() {
@@ -19,6 +21,7 @@ class InitialBinding extends Bindings {
 
       // تسجيل Controllers الأساسية
       Get.lazyPut<InternetConnectionController>(() => InternetConnectionController(), fenix: true);
+      Get.lazyPut<ProductManagementController>(() => ProductManagementController(), fenix: true);
 
       Get.lazyPut<AuthController>(() => AuthController(), fenix: true);
 
@@ -80,6 +83,9 @@ class AuthBinding extends Bindings {
     }
   }
 }
+
+
+
 
 // import 'package:auth_app/pages/auth/controllers/auth_controller.dart';
 // import 'package:auth_app/pages/configration/controllers/network_controller.dart';
