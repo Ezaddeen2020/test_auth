@@ -1410,7 +1410,7 @@ class ProductDialogs {
       if (stockController.stockItems.isNotEmpty) {
         var stockItem = stockController.stockItems.first;
 
-        descriptionController.text = stockItem.itemName ?? '';
+        descriptionController.text = stockItem.itemName;
 
         if (stockItem.totalOnHand > 0) {
           quantityController.text = stockItem.totalOnHand.toString();
