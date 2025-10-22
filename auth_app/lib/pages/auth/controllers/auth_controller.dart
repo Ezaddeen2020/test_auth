@@ -36,7 +36,7 @@ class AuthController extends GetxController {
       bool isLoggedIn = Preferences.getBoolean(Preferences.isLogin);
       String? savedToken = Preferences.getString('auth_token');
 
-      if (isLoggedIn && savedToken != null && savedToken.isNotEmpty) {
+      if (isLoggedIn && savedToken.isNotEmpty) {
         authToken = savedToken;
         log('Found saved auth token: $authToken');
         // إزالة التنقل التلقائي من هنا - يتم التعامل معه في main.dart
@@ -126,12 +126,12 @@ class AuthController extends GetxController {
         log('Login Error: $e');
         EasyLoading.dismiss();
 
-        Get.showSnackbar(GetSnackBar(
+        Get.showSnackbar(const GetSnackBar(
           title: 'خطأ',
           message: 'اسم المستخدم أو كلمة المرور غير صحيحة',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red,
-          duration: const Duration(seconds: 3),
+          duration: Duration(seconds: 3),
         ));
       } finally {
         isLoading.value = false;
