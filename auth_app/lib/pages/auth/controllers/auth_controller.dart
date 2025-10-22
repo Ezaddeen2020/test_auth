@@ -192,6 +192,9 @@ class AuthController extends GetxController {
   }
 }
 
+
+
+
 // import 'dart:developer';
 // import 'package:auth_app/classes/shared_preference.dart';
 // import 'package:auth_app/functions/handling_data.dart';
