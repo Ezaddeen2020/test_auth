@@ -122,6 +122,19 @@ class TransferController extends GetxController {
             duration: const Duration(seconds: 2),
           );
         }
+      } else if (response['status'] == 'unauthorized') {
+        // إذا انتهت صلاحية التوكن، إعادة توجيه المستخدم لتسجيل الدخول
+        statusRequest.value = StatusRequest.failure;
+        Get.snackbar(
+          'انتهت الصلاحية',
+          'يرجى تسجيل الدخول مرة أخرى',
+          backgroundColor: Colors.orange,
+          colorText: Colors.white,
+          duration: const Duration(seconds: 3),
+        );
+        
+        // إعادة توجيه المستخدم إلى صفحة تسجيل الدخول
+        Get.offAllNamed('/login');
       } else {
         statusRequest.value = StatusRequest.failure;
         Get.snackbar(

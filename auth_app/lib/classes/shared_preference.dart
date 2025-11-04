@@ -13,7 +13,7 @@ class Preferences {
   static const userId = "userID";
   static const email = "email";
   static const password = "password";
-  static const token = "token";
+  static const token = "auth_token";
 
   static late SharedPreferences pref;
 

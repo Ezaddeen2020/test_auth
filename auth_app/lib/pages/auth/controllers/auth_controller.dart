@@ -34,7 +34,7 @@ class AuthController extends GetxController {
   void checkExistingAuth() {
     try {
       bool isLoggedIn = Preferences.getBoolean(Preferences.isLogin);
-      String? savedToken = Preferences.getString('auth_token');
+      String? savedToken = Preferences.getString(Preferences.token);
 
       if (isLoggedIn && savedToken.isNotEmpty) {
         authToken = savedToken;
@@ -90,7 +90,7 @@ class AuthController extends GetxController {
 
           // حفظ البيانات
           await Preferences.setBoolean(Preferences.isLogin, true);
-          await Preferences.setString('auth_token', authToken!);
+          await Preferences.setString(Preferences.token, authToken!);
 
           UserModel loggedUser = UserModel(
             name: usernameController.text.trim(),
@@ -158,10 +158,60 @@ class AuthController extends GetxController {
     }
   }
 
+  /// تحديث التوكن إذا انتهت صلاحيته
+  Future<bool> refreshToken() async {
+    try {
+      log('🔄 Attempting to refresh token...');
+      
+      // في هذا التطبيق، نستخدم إعادة تسجيل الدخول كطريقة لتحديث التوكن
+      // يمكنك تعديل هذا الجزء إذا كان لديك API مخصص لتحديث التوكن
+      
+      // الحصول على بيانات المستخدم الحالية
+      UserModel? currentUser = getCurrentUser();
+      if (currentUser == null || currentUser.name.isEmpty || currentUser.password == null) {
+        log('❌ Cannot refresh token: User data not available');
+        return false;
+      }
+
+      // محاولة تسجيل الدخول مرة أخرى للحصول على توكن جديد
+      UserModel userModel = UserModel(
+        name: currentUser.name,
+        password: currentUser.password,
+      );
+
+      final res = await authApi.postlogin(userModel);
+      
+      if (res['status'] == 'success' && res['data'] != null && res['data']['token'] != null) {
+        authToken = res['data']['token'];
+        
+        // تحديث التوكن في التخزين المحلي
+        await Preferences.setString(Preferences.token, authToken!);
+        
+        // تحديث بيانات المستخدم
+        UserModel updatedUser = UserModel(
+          name: currentUser.name,
+          token: authToken,
+          password: currentUser.password,
+        );
+        
+        await Preferences.setDataUser(updatedUser);
+        
+        log('✅ Token refreshed successfully');
+        return true;
+      } else {
+        log('❌ Failed to refresh token: ${res['message']}');
+        return false;
+      }
+    } catch (e) {
+      log('❌ Token refresh error: $e');
+      return false;
+    }
+  }
+
   Future<void> logout() async {
     try {
       await Preferences.setBoolean(Preferences.isLogin, false);
-      await Preferences.removeString('auth_token');
+      await Preferences.removeString(Preferences.token);
       authToken = null;
       clearForm();
 

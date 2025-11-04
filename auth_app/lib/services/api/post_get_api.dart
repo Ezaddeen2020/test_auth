@@ -239,6 +239,12 @@ class PostGetPage {
       log('✅ Response Status: ${response.statusCode}');
       log('📝 Response Body: ${response.body}');
 
+      // إذا كان رمز الاستجابة 401، التوكن غير صالح
+      if (response.statusCode == 401) {
+        log('❌ Token expired or invalid');
+        return const Left(StatusRequest.unauthorized);
+      }
+
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (response.body.isEmpty) {
           return const Right([]);
@@ -291,6 +297,12 @@ class PostGetPage {
 
       log('✅ Response Status: ${response.statusCode}');
       log('📝 Response Body: ${response.body}');
+
+      // إذا كان رمز الاستجابة 401، التوكن غير صالح
+      if (response.statusCode == 401) {
+        log('❌ Token expired or invalid');
+        return const Left(StatusRequest.unauthorized);
+      }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         if (response.body.isEmpty) {
@@ -345,6 +357,12 @@ class PostGetPage {
       log('✅ Response Status: ${response.statusCode}');
       log('📝 Response Body: ${response.body}');
 
+      // إذا كان رمز الاستجابة 401، التوكن غير صالح
+      if (response.statusCode == 401) {
+        log('❌ Token expired or invalid');
+        return const Left(StatusRequest.unauthorized);
+      }
+
       if (response.statusCode == 200 || response.statusCode == 201 || response.statusCode == 204) {
         if (response.body.isEmpty) {
           return const Right({'status': 'success', 'message': 'Deleted successfully'});
@@ -383,6 +401,36 @@ class PostGetPage {
       return response.statusCode == 200;
     } catch (e) {
       log('🧪 Test Connection Error: $e');
+      return false;
+    }
+  }
+
+  /// التحقق من صلاحية التوكن
+  Future<bool> validateToken(String token) async {
+    try {
+      log('🔍 Validating token...');
+      
+      final headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Authorization': 'Bearer $token',
+        'User-Agent': 'Flutter-Android/1.0',
+      };
+
+      // استخدام endpoint بسيط للتحقق من صلاحية التوكن
+      final response = await client
+          .get(
+            Uri.parse('https://qitaf3.dynalias.net:44322/echo/api/Account/validate-token'),
+            headers: headers,
+          )
+          .timeout(const Duration(seconds: 10));
+
+      log('🔍 Token validation result: ${response.statusCode}');
+      
+      // إذا كان رمز الاستجابة 200، التوكن صالح
+      return response.statusCode == 200;
+    } catch (e) {
+      log('🔍 Token validation error: $e');
       return false;
     }
   }

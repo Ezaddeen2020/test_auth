@@ -9,7 +9,7 @@ class StockApi {
   StockApi(this.postGetPage);
 
   Future<Map<String, dynamic>> getStockByItemCode(String itemCode) async {
-    String token = Preferences.getString('auth_token');
+    String token = Preferences.getString(Preferences.token);
 
     if (token.isEmpty) {
       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};

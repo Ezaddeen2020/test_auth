@@ -14,7 +14,7 @@ class GetTransferApi {
     int pageSize = 20,
   }) async {
     // الحصول على التوكن من التخزين المحلي
-    String token = Preferences.getString('auth_token');
+    String token = Preferences.getString(Preferences.token);
 
     // التحقق من أن المستخدم مسجل الدخول
     if (token.isEmpty) {

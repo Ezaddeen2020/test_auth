@@ -64,6 +64,12 @@ class StockController extends GetxController {
         } else {
           _showSuccessSnackbar('نجح البحث', 'تم العثور على ${stockItems.length} عنصر');
         }
+      } else if (response['status'] == 'unauthorized') {
+        // إذا انتهت صلاحية التوكن، إعادة توجيه المستخدم لتسجيل الدخول
+        _showErrorSnackbar('انتهت الصلاحية', 'يرجى تسجيل الدخول مرة أخرى');
+        
+        // إعادة توجيه المستخدم إلى صفحة تسجيل الدخول
+        Get.offAllNamed('/login');
       } else {
         _handleApiError(response['message'] ?? 'حدث خطأ أثناء البحث');
       }
@@ -105,6 +111,12 @@ class StockController extends GetxController {
         } else {
           _showSuccessSnackbar('نجح البحث', 'تم العثور على ${stockItems.length} عنصر');
         }
+      } else if (response['status'] == 'unauthorized') {
+        // إذا انتهت صلاحية التوكن، إعادة توجيه المستخدم لتسجيل الدخول
+        _showErrorSnackbar('انتهت الصلاحية', 'يرجى تسجيل الدخول مرة أخرى');
+        
+        // إعادة توجيه المستخدم إلى صفحة تسجيل الدخول
+        Get.offAllNamed('/login');
       } else {
         _handleApiError(response['message'] ?? 'حدث خطأ أثناء البحث');
       }

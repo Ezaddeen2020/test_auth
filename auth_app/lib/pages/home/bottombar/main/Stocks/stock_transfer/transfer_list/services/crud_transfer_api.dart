@@ -16,7 +16,7 @@ class CrudTransferApi {
     String? careNum,
     String? note,
   }) async {
-    String token = Preferences.getString('auth_token');
+    String token = Preferences.getString(Preferences.token);
     if (token.isEmpty) {
       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
     }
@@ -56,7 +56,7 @@ class CrudTransferApi {
     String? careNum,
     String? note,
   }) async {
-    String token = Preferences.getString('auth_token');
+    String token = Preferences.getString(Preferences.token);
     if (token.isEmpty) {
       return {'status': 'error', 'message': 'يجب تسجيل الدخول أولاً'};
     }
