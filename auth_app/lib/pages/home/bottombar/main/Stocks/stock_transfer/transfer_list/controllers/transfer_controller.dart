@@ -126,13 +126,13 @@ class TransferController extends GetxController {
         // إذا انتهت صلاحية التوكن، إعادة توجيه المستخدم لتسجيل الدخول
         statusRequest.value = StatusRequest.failure;
         Get.snackbar(
-          'انتهت الصلاحية',
+          'انتهت صلاحية الجلسة ',
           'يرجى تسجيل الدخول مرة أخرى',
           backgroundColor: Colors.orange,
           colorText: Colors.white,
           duration: const Duration(seconds: 3),
         );
-        
+
         // إعادة توجيه المستخدم إلى صفحة تسجيل الدخول
         Get.offAllNamed('/login');
       } else {

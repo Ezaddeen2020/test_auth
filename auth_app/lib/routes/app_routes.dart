@@ -1,6 +1,7 @@
 import 'package:auth_app/pages/auth/controllers/auth_controller.dart';
 import 'package:auth_app/pages/configration/screens/configration_page.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/search_product/screen/search_page.dart';
+import 'package:auth_app/pages/home/bottombar/main/addBarcode/add_barcode.dart';
 import 'package:auth_app/pages/home/home_controller.dart';
 import 'package:auth_app/pages/home/home_page.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/Invoic/invice_page.dart';
@@ -21,6 +22,7 @@ class AppRoutes {
   static const transfer = '/transfer';
   static const search = '/search';
   static const invoice = '/invoice';
+  static const addBar = '/addbar';
 
   static final routes = [
     GetPage(
@@ -56,6 +58,11 @@ class AppRoutes {
     GetPage(
       name: stock,
       page: () => const StockPage(),
+      transition: Transition.rightToLeft,
+    ),
+    GetPage(
+      name: addBar,
+      page: () => const AddBarcode(),
       transition: Transition.rightToLeft,
     ),
     GetPage(
