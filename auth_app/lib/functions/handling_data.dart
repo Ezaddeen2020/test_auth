@@ -17,7 +17,7 @@ Future<Map<String, dynamic>> handleEitherResult(
     return result.fold(
       (failure) {
         logMessage('API Error', failure.toString());
-        
+
         // إذا كان الخطأ بسبب انتهاء صلاحية التوكن
         if (failure == StatusRequest.unauthorized) {
           return {
@@ -25,7 +25,7 @@ Future<Map<String, dynamic>> handleEitherResult(
             'message': 'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مرة أخرى',
           };
         }
-        
+
         return {
           'status': 'failure',
           'message': failureMessage,

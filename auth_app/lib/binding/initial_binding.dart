@@ -7,6 +7,7 @@ import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfe
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/transfer_card/transfer_navigate/purchase_controller.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_transfer/transfer_list/controllers/transfer_controller.dart';
 import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_check/controllers/stock_controller.dart';
+import 'package:auth_app/pages/home/bottombar/main/addBarcode/controller/addBar_controller.dart';
 import 'package:auth_app/pages/home/home_controller.dart';
 import 'package:auth_app/services/api/post_get_api.dart';
 import 'package:auth_app/check_internet/internet_controller.dart';
@@ -40,6 +41,7 @@ class InitialBinding extends Bindings {
       Get.lazyPut<TransferController>(() => TransferController(), fenix: true);
 
       Get.lazyPut<InvoiceController>(() => InvoiceController(), fenix: true);
+      Get.lazyPut<BarcodeController>(() => BarcodeController());
 
       // HomeController للصفحة الرئيسية
       Get.lazyPut<HomeController>(() => HomeController(), fenix: true);

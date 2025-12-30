@@ -19,15 +19,30 @@ class GetUnitApi {
 
     // استخدام الـ endpoint الصحيح من الاستجابة المقدمة
     String endpoint = "${ApiServices.server}/Uom/GetUoms?itemCode=${Uri.encodeComponent(itemCode)}";
-
+    // print('***************************************' + endpoint);
     try {
-      return handleEitherResult(
+      final result = await handleEitherResult(
         postGetPage.getDataWithToken(endpoint, token),
         'Item Units Retrieved Successfully',
         'فشل في جلب وحدات الصنف',
       );
+      print('================= بيانات الوحدات المستلمة من API =================');
+      print(result);
+      if (result['status'] == 'success' && result['data'] != null && result['data'] is List) {
+        print('--- قائمة الوحدات لهذا الصنف ($itemCode) ---');
+        for (var unit in result['data']) {
+          if (unit is Map && unit.containsKey('uomName')) {
+            print('الوحدة: ${unit['uomName']}');
+          } else {
+            print(unit.toString());
+          }
+        }
+        print('--- نهاية قائمة الوحدات ---');
+      }
+      print('================= نهاية بيانات الوحدات =================');
+      return result;
     } catch (e) {
-      logMessage('Transfer', 'Error getting item units: ${e.toString()}');
+      logMessage('Transfer', 'Error getting item units: [31m${e.toString()}[0m');
       return {'status': 'error', 'message': 'فشل في جلب وحدات الصنف: ${e.toString()}'};
     }
   }

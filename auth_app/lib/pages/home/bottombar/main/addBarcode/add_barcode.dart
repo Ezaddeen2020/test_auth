@@ -1,4 +1,4 @@
-import 'package:auth_app/pages/home/bottombar/main/addBarcode/addBar_controller.dart';
+import 'package:auth_app/pages/home/bottombar/main/addBarcode/controller/addBar_controller.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:barcode_widget/barcode_widget.dart';
@@ -8,7 +8,8 @@ class AddBarcode extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final controller = Get.put(BarcodeController());
+    // final controller = Get.put(BarcodeController());
+    final controller = Get.find<BarcodeController>();
 
     return Scaffold(
       backgroundColor: Colors.grey[50],
@@ -198,7 +199,7 @@ class AddBarcode extends StatelessWidget {
         hintText: hint,
         prefixIcon: Icon(icon, color: Colors.blue[700]),
         filled: true,
-        fillColor: Colors.grey[100],
+        // fillColor: Colors.grey[100],
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide.none,
@@ -232,7 +233,7 @@ class AddBarcode extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              'الباركود المُنشأ',
+              'الباركود ',
               style: TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,

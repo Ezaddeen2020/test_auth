@@ -202,7 +202,12 @@ class ProductManagementController extends GetxController {
       String cacheKey = itemCode.trim().toUpperCase();
       if (itemUnitsCache.containsKey(cacheKey)) {
         logMessage('Transfer', 'Units loaded from cache for: $itemCode');
-        return itemUnitsCache[cacheKey]!;
+        final cachedUnits = itemUnitsCache[cacheKey]!;
+        print('-- ($itemCode) ---');
+        for (var unit in cachedUnits) {
+          print('الوحدة: ${unit.uomName}');
+        }
+        return cachedUnits;
       }
 
       logMessage('Transfer', 'Loading units from server for: $itemCode');
@@ -1286,9 +1291,6 @@ class ProductManagementController extends GetxController {
     print('[$tag] $message');
   }
 }
-
-
-
 
 // import 'dart:async';
 // import 'package:auth_app/pages/home/bottombar/main/Stocks/stock_check/controllers/stock_controller.dart';

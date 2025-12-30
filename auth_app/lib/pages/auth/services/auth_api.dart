@@ -26,6 +26,7 @@ class AuthApi {
     );
   }
 }
+
   // Future<Map<String, dynamic>> getStockInfo(String stockCode, String token) async {
   //   logMessage('Stock Info', 'Getting stock info for code: $stockCode');
   //   return handleEitherResult(
@@ -38,44 +39,3 @@ class AuthApi {
 
 
 
-
-
-
-
-  // Future<Map<String, dynamic>> testApiWithToken(String token) async {
-  //   _log('Test API', 'Testing API with token: $token');
-  //   return _handleResult(
-  //     postGetPage.getDataWithToken(ApiServices.salesDataTest, token),
-  //     'Test API Success',
-  //     'فشل في اختبار API',
-  //   );
-  // }
-
-  // Future<Map<String, dynamic>> getStockInfo(String stockCode, String token) async {
-  //   _log('Stock Info', 'Getting stock info for code: $stockCode');
-  //   return _handleResult(
-  //     postGetPage.getDataWithToken(ApiServices.stockInfo(stockCode), token),
-  //     'Stock API Success',
-  //     'فشل في جلب بيانات المخزون',
-  //   );
-  // }
-
-  // Future<Map<String, dynamic>> getSalesData(String token) async {
-  //   _log('Sales Data', 'Getting sales data with token: $token');
-  //   return _handleResult(
-  //     postGetPage.getDataWithToken(ApiServices.salesData, token),
-  //     'Sales Data API Success',
-  //     'فشل في جلب بيانات المبيعات',
-  //   );
-  // }
-
-  // Future<Map<String, dynamic>> testEchoEndpoint(String stockCode, String token) async {
-  //   _log('Echo Endpoint', 'Testing echo endpoint with stock code: $stockCode');
-  //   return _handleResult(
-  //     postGetPage.getDataWithToken("${ApiServices.echo}/$stockCode", token),
-  //     'Echo API Success',
-  //     'فشل في اختبار Echo',
-  //   );
-  // }
-
-  

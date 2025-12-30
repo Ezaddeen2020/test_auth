@@ -17,10 +17,14 @@ class StockApi {
 
     logMessage('Stock', 'Getting stock for item code: $itemCode');
 
-    return handleEitherResult(
+    final result = await handleEitherResult(
       postGetPage.getDataWithToken(ApiServices.getStockItem(itemCode), token),
       'Stock Data Retrieved Successfully',
       ' فشل جلب البيانات تحقق من رقم الصنف او من التوكن',
     );
+
+    print('//////////////////////////////////////////' + result.toString());
+
+    return result;
   }
 }
